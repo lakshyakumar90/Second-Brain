@@ -10,6 +10,7 @@ export interface IUser {
     avatar?: string;
     bio?: string;
     role: UserRole;
+    completedSteps: number;
   
     subscription: {
       plan: SubscriptionPlan;

@@ -6,7 +6,7 @@ const UserSchema = new mongoose.Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
-    name: { type: String, required: true, trim: true },
+    name: { type: String, trim: true },
     username: { type: String, unique: true, sparse: true },
     avatar: { type: String },
     bio: { type: String, maxlength: 500 },
@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema<IUser>(
       enum: ["user", "admin", "moderator"],
       default: "user",
     },
+    completedSteps: { type: Number, default: 0 },
 
     subscription: {
       plan: {
@@ -41,7 +42,7 @@ const UserSchema = new mongoose.Schema<IUser>(
         default: "grid",
       },
       aiEnabled: { type: Boolean, default: true },
-      emailNotifications: { type: Boolean, default: true },
+      emailNotifications: { type: Boolean, default: false },
       publicProfile: { type: Boolean, default: false },
       autoSave: { type: Boolean, default: true },
       language: { type: String, default: "en" },
