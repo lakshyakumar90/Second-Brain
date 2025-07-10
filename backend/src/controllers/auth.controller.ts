@@ -1,7 +1,9 @@
 import User from "../models/user.model";
 import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
 import {
+  loginSchema,
   registerStep1Schema,
   registerStep2Schema,
   registerStep3Schema,
@@ -112,7 +114,7 @@ export const registerStep3 = async (
       bio,
       preferences: {
         theme,
-        emailNotifications
+        emailNotifications,
       },
       completedSteps,
       isVerified: true,
@@ -135,4 +137,40 @@ export const registerStep3 = async (
     maxAge: 12 * 60 * 60 * 1000,
   });
   res.status(200).json({ message: "User updated successfully", user, token });
+};
+
+export const login = async (req: Request, res: Response): Promise<void> => {
+  const { email, password } = req.body;
+  const { error } = loginSchema.safeParse(req.body);
+  if (error) {
+    res.status(400).json({ message: error.message });
+    return;
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(400).json({ message: "Invalid email or password" });
+    return;
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    res.status(400).json({ message: "Invalid email or password" });
+    return;
+  }
+
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, {
+    expiresIn: "12h",
+  });
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 12 * 60 * 60 * 1000,
+  });
+  res.status(200).json({ message: "Login successful", user, token });
+};
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logout successful" });
 };

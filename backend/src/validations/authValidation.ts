@@ -2,7 +2,11 @@ import * as z from "zod";
 
 const registerStep1Schema = z.object({
     email: z.email(),
-    password: z.string().min(8),
+    password: z.string()
+      .min(8)
+      .max(20)
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,20}$/, 
+        "Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character"),
 });
 
 const registerStep2Schema = z.object({
@@ -17,4 +21,9 @@ const registerStep3Schema = z.object({
     emailNotifications: z.boolean(),
 });
 
-export { registerStep1Schema, registerStep2Schema, registerStep3Schema };
+const loginSchema = z.object({
+    email: z.email(),
+    password: z.string().min(8).max(20),
+});
+
+export { registerStep1Schema, registerStep2Schema, registerStep3Schema, loginSchema };
