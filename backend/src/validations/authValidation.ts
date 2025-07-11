@@ -26,4 +26,15 @@ const loginSchema = z.object({
     password: z.string().min(8).max(20),
 });
 
-export { registerStep1Schema, registerStep2Schema, registerStep3Schema, loginSchema };
+// OTP verification schema
+const verifyOTPSchema = z.object({
+    email: z.email(),
+    otp: z.string().length(6).regex(/^\d{6}$/, "OTP must be 6 digits"),
+});
+
+// Resend OTP schema
+const resendOTPSchema = z.object({
+    email: z.email(),
+});
+
+export { registerStep1Schema, registerStep2Schema, registerStep3Schema, loginSchema, verifyOTPSchema, resendOTPSchema };

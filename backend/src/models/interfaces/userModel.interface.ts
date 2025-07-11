@@ -43,6 +43,10 @@ export interface IUser {
     verificationToken?: string;
     resetPasswordToken?: string;
     resetPasswordExpires?: Date;
+    // OTP fields for email verification
+    emailOtp?: string;
+    emailOtpExpires?: Date;
+    emailVerified: boolean;
   
     createdAt: Date;
     updatedAt: Date;

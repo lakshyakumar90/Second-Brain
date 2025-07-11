@@ -68,6 +68,10 @@ const UserSchema = new mongoose.Schema<IUser>(
     verificationToken: { type: String },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    // OTP fields for email verification
+    emailOtp: { type: String },
+    emailOtpExpires: { type: Date },
+    emailVerified: { type: Boolean, default: false },
   },
   {
     timestamps: true,
