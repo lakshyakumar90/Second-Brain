@@ -1,319 +1,338 @@
-# API Documentation - Email OTP Verification System
+# Second Brain API Documentation
 
 ## Authentication Endpoints
 
-### 1. Register Step 1 - Create Account
-**POST** `/api/auth/register/step1`
+### 1. User Registration (Multi-step)
 
-Creates a new user account and sends OTP verification email.
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com",
-  "password": "SecurePass123!"
-}
-```
-
-**Response (201):**
-```json
-{
-  "message": "User created successfully. Please check your email for verification OTP.",
-  "user": {
-    "_id": "user_id",
+#### Step 1: Initial Registration
+- **POST** `/api/auth/register/step1`
+- **Description**: Create a new user account with email and password
+- **Body**:
+  ```json
+  {
     "email": "user@example.com",
-    "completedSteps": 1,
-    "emailVerified": false
-  },
-  "token": "jwt_token"
-}
-```
-
-**Validation Rules:**
-- Email must be valid format
-- Password must be 8-20 characters with uppercase, lowercase, number, and special character
-
----
-
-### 2. Verify OTP
-**POST** `/api/auth/verify-otp`
-
-Verifies the email OTP and activates the user account.
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com",
-  "otp": "123456"
-}
-```
-
-**Response (200):**
-```json
-{
-  "message": "Email verified successfully!",
-  "user": {
-    "_id": "user_id",
-    "email": "user@example.com",
-    "completedSteps": 2,
-    "emailVerified": true
-  },
-  "token": "jwt_token"
-}
-```
-
-**Error Responses:**
-- `400` - Invalid OTP format
-- `400` - OTP expired
-- `400` - Invalid OTP
-- `400` - Email already verified
-- `404` - User not found
-
----
-
-### 3. Resend OTP
-**POST** `/api/auth/resend-otp`
-
-Sends a new OTP to the user's email.
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com"
-}
-```
-
-**Response (200):**
-```json
-{
-  "message": "New OTP sent successfully. Please check your email."
-}
-```
-
-**Error Responses:**
-- `400` - Email already verified
-- `404` - User not found
-- `500` - Email sending failed
-
----
-
-### 4. Register Step 2 - Profile Information
-**POST** `/api/auth/register/step2`
-
-Updates user profile information (requires email verification).
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Request Body:**
-```json
-{
-  "name": "John Doe",
-  "username": "johndoe"
-}
-```
-
-**Response (200):**
-```json
-{
-  "message": "User updated successfully",
-  "user": {
-    "_id": "user_id",
-    "name": "John Doe",
-    "username": "johndoe",
-    "completedSteps": 2
-  },
-  "token": "jwt_token"
-}
-```
-
-**Validation Rules:**
-- Name: 3-20 characters
-- Username: 3-20 characters, unique
-- Requires email verification
-
----
-
-### 5. Register Step 3 - Preferences
-**POST** `/api/auth/register/step3`
-
-Sets user preferences and completes registration.
-
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Request Body:**
-```json
-{
-  "avatar": "https://example.com/avatar.jpg",
-  "bio": "Software developer",
-  "theme": "dark",
-  "emailNotifications": true
-}
-```
-
-**Response (200):**
-```json
-{
-  "message": "User updated successfully",
-  "user": {
-    "_id": "user_id",
-    "avatar": "https://example.com/avatar.jpg",
-    "bio": "Software developer",
-    "preferences": {
-      "theme": "dark",
-      "emailNotifications": true
+    "password": "SecurePass123!"
+  }
+  ```
+- **Response**: 
+  ```json
+  {
+    "message": "User created successfully. Please check your email for verification OTP.",
+    "user": {
+      "_id": "user_id",
+      "email": "user@example.com",
+      "completedSteps": 1,
+      "emailVerified": false
     },
-    "completedSteps": 3,
-    "isVerified": true,
-    "isActive": true
-  },
-  "token": "jwt_token"
-}
-```
+    "token": "jwt_token"
+  }
+  ```
 
----
-
-### 6. Login
-**POST** `/api/auth/login`
-
-Authenticates user and returns JWT token.
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com",
-  "password": "SecurePass123!"
-}
-```
-
-**Response (200):**
-```json
-{
-  "message": "Login successful",
-  "user": {
-    "_id": "user_id",
+#### Step 2: Email Verification
+- **POST** `/api/auth/verify-otp`
+- **Description**: Verify email with OTP sent to user's email
+- **Body**:
+  ```json
+  {
     "email": "user@example.com",
+    "otp": "123456"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "Email verified successfully!",
+    "user": {
+      "_id": "user_id",
+      "email": "user@example.com",
+      "completedSteps": 2,
+      "emailVerified": true
+    },
+    "token": "jwt_token"
+  }
+  ```
+
+#### Step 3: Profile Setup
+- **POST** `/api/auth/register/step2`
+- **Headers**: `Authorization: Bearer <token>`
+- **Description**: Complete basic profile information
+- **Body**:
+  ```json
+  {
     "name": "John Doe",
-    "emailVerified": true
-  },
-  "token": "jwt_token"
-}
-```
+    "username": "johndoe"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "User updated successfully",
+    "user": {
+      "_id": "user_id",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "username": "johndoe",
+      "completedSteps": 2
+    },
+    "token": "jwt_token"
+  }
+  ```
 
-**Error Responses:**
-- `400` - Invalid credentials
-- `400` - Email not verified (with `requiresVerification: true`)
+#### Step 4: Final Setup
+- **POST** `/api/auth/register/step3`
+- **Headers**: `Authorization: Bearer <token>`
+- **Description**: Complete final profile setup and preferences
+- **Body**:
+  ```json
+  {
+    "avatar": "https://example.com/avatar.jpg",
+    "bio": "Software developer passionate about productivity",
+    "theme": "dark",
+    "emailNotifications": true
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "User updated successfully",
+    "user": {
+      "_id": "user_id",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "username": "johndoe",
+      "avatar": "https://example.com/avatar.jpg",
+      "bio": "Software developer passionate about productivity",
+      "preferences": {
+        "theme": "dark",
+        "emailNotifications": true
+      },
+      "completedSteps": 3,
+      "isVerified": true,
+      "isActive": true
+    },
+    "token": "jwt_token"
+  }
+  ```
 
----
+### 2. Login & Logout
 
-### 7. Logout
-**POST** `/api/auth/logout`
+#### Login
+- **POST** `/api/auth/login`
+- **Description**: Authenticate user with email and password
+- **Body**:
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "SecurePass123!"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "Login successful",
+    "user": {
+      "_id": "user_id",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "username": "johndoe"
+    },
+    "token": "jwt_token"
+  }
+  ```
 
-Logs out user by clearing JWT cookie.
+#### Logout
+- **POST** `/api/auth/logout`
+- **Description**: Logout user and clear session
+- **Response**:
+  ```json
+  {
+    "message": "Logout successful"
+  }
+  ```
 
-**Response (200):**
+### 3. Password Reset
+
+#### Forgot Password
+- **POST** `/api/auth/forgot-password`
+- **Description**: Initiate password reset process
+- **Body**:
+  ```json
+  {
+    "email": "user@example.com"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "If an account with this email exists, a password reset OTP has been sent."
+  }
+  ```
+
+#### Verify Password Reset OTP
+- **POST** `/api/auth/verify-password-reset-otp`
+- **Description**: Verify the password reset OTP (Step 1 of password reset)
+- **Body**:
+  ```json
+  {
+    "email": "user@example.com",
+    "otp": "123456"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "Password reset OTP verified successfully! You can now set your new password."
+  }
+  ```
+
+#### Reset Password
+- **POST** `/api/auth/reset-password`
+- **Description**: Set new password after OTP verification (Step 2 of password reset)
+- **Body**:
+  ```json
+  {
+    "email": "user@example.com",
+    "newPassword": "NewSecurePass123!"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "Password reset successfully!"
+  }
+  ```
+
+### 4. Token Management
+
+#### Refresh Token
+- **POST** `/api/auth/refresh-token`
+- **Description**: Refresh JWT access token
+- **Body**:
+  ```json
+  {
+    "refreshToken": "jwt_refresh_token"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "Token refreshed successfully",
+    "token": "new_jwt_token",
+    "user": {
+      "_id": "user_id",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "username": "johndoe",
+      "completedSteps": 3,
+      "emailVerified": true
+    }
+  }
+  ```
+
+### 5. Registration Status
+
+#### Check Registration Step
+- **GET** `/api/auth/registration-step`
+- **Headers**: `Authorization: Bearer <token>`
+- **Description**: Get current registration step and user status
+- **Response**:
+  ```json
+  {
+    "completedSteps": 3,
+    "emailVerified": true,
+    "isVerified": true,
+    "isActive": true,
+    "user": {
+      "_id": "user_id",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "username": "johndoe",
+      "avatar": "https://example.com/avatar.jpg",
+      "bio": "Software developer passionate about productivity",
+      "preferences": {
+        "theme": "dark",
+        "emailNotifications": true
+      }
+    }
+  }
+  ```
+
+### 6. OTP Management
+
+#### Resend OTP
+- **POST** `/api/auth/resend-otp`
+- **Description**: Resend email verification OTP
+- **Body**:
+  ```json
+  {
+    "email": "user@example.com"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "message": "New OTP sent successfully. Please check your email."
+  }
+  ```
+
+## Error Responses
+
+All endpoints may return the following error responses:
+
+### 400 Bad Request
 ```json
 {
-  "message": "Logout successful"
+  "message": "Please enter a valid email address"
 }
 ```
 
----
+**Common validation error messages:**
+- `"Please enter a valid email address"` - Invalid email format
+- `"Password must be at least 8 characters long"` - Password too short
+- `"Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character"` - Password complexity requirement
+- `"OTP must be exactly 6 digits"` - Invalid OTP format
+- `"Name must be at least 3 characters long"` - Name too short
+- `"Username must be at least 3 characters long"` - Username too short
+- `"Please enter a valid URL for your avatar"` - Invalid avatar URL
+- `"Bio cannot exceed 500 characters"` - Bio too long
 
-## User Model Schema
-
-```typescript
-interface IUser {
-  _id: ObjectId;
-  email: string;
-  password: string;
-  name?: string;
-  username?: string;
-  avatar?: string;
-  bio?: string;
-  role: "user" | "admin" | "moderator";
-  completedSteps: number;
-  
-  // Email verification fields
-  emailVerified: boolean;
-  emailOtp?: string;
-  emailOtpExpires?: Date;
-  
-  // Other fields...
-  isVerified: boolean;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
----
-
-## Environment Variables
-
-Required environment variables for email functionality:
-
-```env
-# Email Configuration
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key
-
-# Database
-MONGODB_URI=mongodb://localhost:27017/second-brain
-```
-
----
-
-## Frontend Integration
-
-### Registration Flow
-1. User submits email/password → `POST /api/auth/register/step1`
-2. User receives OTP email
-3. User enters OTP → `POST /api/auth/verify-otp`
-4. User completes profile → `POST /api/auth/register/step2`
-5. User sets preferences → `POST /api/auth/register/step3`
-
-### Login Flow
-1. User submits credentials → `POST /api/auth/login`
-2. If email not verified, show OTP verification screen
-3. User verifies email → `POST /api/auth/verify-otp`
-4. User can then login normally
-
----
-
-## Security Features
-
-- **OTP Expiration**: 10 minutes
-- **JWT Token**: 12 hours expiration
-- **Password Requirements**: 8-20 chars with complexity
-- **Email Verification**: Required before account activation
-- **Rate Limiting**: Recommended for OTP endpoints
-- **HTTPS**: Required in production
-
----
-
-## Error Handling
-
-All endpoints return consistent error responses:
-
+### 401 Unauthorized
 ```json
 {
-  "message": "Error description"
+  "message": "User not authenticated"
 }
 ```
 
-Common HTTP status codes:
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request (validation errors)
-- `401` - Unauthorized
-- `404` - Not Found
-- `500` - Internal Server Error 
+### 404 Not Found
+```json
+{
+  "message": "User not found"
+}
+```
+
+### 500 Internal Server Error
+```json
+{
+  "message": "Failed to send verification email. Please try again."
+}
+```
+
+## Authentication
+
+Most endpoints require authentication via JWT token in the Authorization header:
+```
+Authorization: Bearer <jwt_token>
+```
+
+## Password Requirements
+
+Passwords must meet the following criteria:
+- Minimum 8 characters, maximum 20 characters
+- At least 1 uppercase letter
+- At least 1 lowercase letter
+- At least 1 number
+- At least 1 special character
+
+## OTP Expiration
+
+All OTPs (email verification and password reset) expire after 10 minutes for security reasons. 

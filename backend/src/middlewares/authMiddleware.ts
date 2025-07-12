@@ -12,7 +12,7 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
         return;
     }
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+        const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!);
         req.user = decoded;
         next();
     } catch (error) {

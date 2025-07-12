@@ -47,6 +47,10 @@ export interface IUser {
     emailOtp?: string;
     emailOtpExpires?: Date;
     emailVerified: boolean;
+    // OTP fields for password reset
+    passwordResetOtp?: string;
+    passwordResetOtpExpires?: Date;
+    passwordResetOtpVerified?: boolean;
   
     createdAt: Date;
     updatedAt: Date;
