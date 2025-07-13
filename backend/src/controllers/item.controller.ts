@@ -596,4 +596,93 @@ const deleteItem = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createItem, getItems, getItem, updateItem, deleteItem };
+const restoreItem = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate item ID parameter
+    const validationResult = itemIdSchema.safeParse(req.params);
+    if (!validationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: validationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const { id: itemId } = validationResult.data;
+
+    // Find the item and ensure it belongs to the authenticated user and is deleted
+    const existingItem = await Item.findOne({
+      _id: itemId,
+      userId: req.user.userId,
+      isDeleted: true, // Only find deleted items
+    });
+
+    if (!existingItem) {
+      res.status(404).json({
+        message: "Item not found",
+        error: "The requested item does not exist, is not deleted, or you don't have access to it",
+      });
+      return;
+    }
+
+    // Restore the item by setting isDeleted to false
+    const restoredItem = await Item.findByIdAndUpdate(
+      itemId,
+      {
+        isDeleted: false,
+        lastEditedAt: new Date(),
+        lastEditedBy: req.user.userId,
+        version: existingItem.version + 1, // Increment version for audit trail
+      },
+      { new: true, runValidators: true }
+    )
+      .populate("categories", "name")
+      .populate("workspace", "name")
+      .populate("lastEditedBy", "name");
+
+    if (!restoredItem) {
+      res.status(500).json({
+        message: "Error restoring item",
+        error: "Failed to restore the item",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Item restored successfully",
+      item: restoredItem,
+    });
+  } catch (error) {
+    console.error("Error restoring item:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid item ID",
+          error: "The provided item ID is not valid",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error restoring item",
+      error: "Internal server error",
+    });
+  }
+};
+
+export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem };
