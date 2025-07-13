@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { Category } from "../models/index";
 import {
   createCategorySchema,
@@ -61,7 +62,8 @@ const createCategory = async (req: AuthRequest, res: Response) => {
       if (!parentCategory) {
         res.status(404).json({
           message: "Parent category not found",
-          error: "The specified parent category does not exist or you don't have access to it",
+          error:
+            "The specified parent category does not exist or you don't have access to it",
         });
         return;
       }
@@ -87,8 +89,10 @@ const createCategory = async (req: AuthRequest, res: Response) => {
     const category = await Category.create(categoryData);
 
     // Populate references for response
-    const populatedCategory = await Category.findById(category._id)
-      .populate("parentId", "name color");
+    const populatedCategory = await Category.findById(category._id).populate(
+      "parentId",
+      "name color"
+    );
 
     res.status(201).json({
       message: "Category created successfully",
@@ -276,7 +280,8 @@ const getCategory = async (req: AuthRequest, res: Response) => {
     if (!category) {
       res.status(404).json({
         message: "Category not found",
-        error: "The requested category does not exist or you don't have access to it",
+        error:
+          "The requested category does not exist or you don't have access to it",
       });
       return;
     }
@@ -356,7 +361,8 @@ const updateCategory = async (req: AuthRequest, res: Response) => {
     if (!existingCategory) {
       res.status(404).json({
         message: "Category not found",
-        error: "The requested category does not exist or you don't have access to it",
+        error:
+          "The requested category does not exist or you don't have access to it",
       });
       return;
     }
@@ -399,17 +405,23 @@ const updateCategory = async (req: AuthRequest, res: Response) => {
         if (!parentCategory) {
           res.status(404).json({
             message: "Parent category not found",
-            error: "The specified parent category does not exist or you don't have access to it",
+            error:
+              "The specified parent category does not exist or you don't have access to it",
           });
           return;
         }
 
         // Prevent circular references by checking if the parent is a descendant of this category
-        const isCircular = await checkCircularReference(categoryId, validatedData.parentId, req.user.userId);
+        const isCircular = await checkCircularReference(
+          categoryId,
+          validatedData.parentId,
+          req.user.userId
+        );
         if (isCircular) {
           res.status(400).json({
             message: "Circular reference detected",
-            error: "Cannot set parent category as it would create a circular reference",
+            error:
+              "Cannot set parent category as it would create a circular reference",
           });
           return;
         }
@@ -494,7 +506,8 @@ const deleteCategory = async (req: AuthRequest, res: Response) => {
     if (!category) {
       res.status(404).json({
         message: "Category not found",
-        error: "The requested category does not exist or you don't have access to it",
+        error:
+          "The requested category does not exist or you don't have access to it",
       });
       return;
     }
@@ -509,7 +522,8 @@ const deleteCategory = async (req: AuthRequest, res: Response) => {
     if (childCategories > 0) {
       res.status(400).json({
         message: "Cannot delete category",
-        error: "This category has child categories. Please move or delete child categories first.",
+        error:
+          "This category has child categories. Please move or delete child categories first.",
       });
       return;
     }
@@ -518,7 +532,8 @@ const deleteCategory = async (req: AuthRequest, res: Response) => {
     if (category.itemCount > 0) {
       res.status(400).json({
         message: "Cannot delete category",
-        error: "This category contains items. Please move or delete all items first.",
+        error:
+          "This category contains items. Please move or delete all items first.",
       });
       return;
     }
@@ -594,7 +609,8 @@ const restoreCategory = async (req: AuthRequest, res: Response) => {
     if (!category) {
       res.status(404).json({
         message: "Deleted category not found",
-        error: "The requested deleted category does not exist or you don't have access to it",
+        error:
+          "The requested deleted category does not exist or you don't have access to it",
       });
       return;
     }
@@ -610,7 +626,8 @@ const restoreCategory = async (req: AuthRequest, res: Response) => {
       if (!parentCategory) {
         res.status(400).json({
           message: "Cannot restore category",
-          error: "The parent category no longer exists. Please restore the parent category first or remove the parent reference.",
+          error:
+            "The parent category no longer exists. Please restore the parent category first or remove the parent reference.",
         });
         return;
       }
@@ -627,7 +644,8 @@ const restoreCategory = async (req: AuthRequest, res: Response) => {
     if (existingCategoryWithSameName) {
       res.status(409).json({
         message: "Cannot restore category",
-        error: "A category with this name already exists. Please rename the category before restoring.",
+        error:
+          "A category with this name already exists. Please rename the category before restoring.",
       });
       return;
     }
@@ -662,6 +680,327 @@ const restoreCategory = async (req: AuthRequest, res: Response) => {
 
     res.status(500).json({
       message: "Error restoring category",
+      error: "Internal server error",
+    });
+  }
+};
+
+const bulkDeleteCategories = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate request body
+    const { ids: categoryIds } = req.body;
+
+    if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: "categoryIds must be a non-empty array",
+      });
+      return;
+    }
+
+    if (categoryIds.length > 50) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: "Cannot delete more than 50 categories at once",
+      });
+      return;
+    }
+
+    // Validate each category ID
+    for (const id of categoryIds) {
+      if (typeof id !== "string" || id.trim() === "") {
+        res.status(400).json({
+          message: "Validation failed",
+          error: "All category IDs must be valid strings",
+        });
+        return;
+      }
+      
+      // Validate ObjectId format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          message: "Validation failed",
+          error: `Invalid ObjectId format: ${id}`,
+        });
+        return;
+      }
+    }
+
+    // Find all categories that belong to the user and are not deleted
+    const categories = await Category.find({
+      _id: { $in: categoryIds },
+      userId: req.user.userId,
+      isDeleted: false,
+    });
+
+    if (categories.length === 0) {
+      res.status(404).json({
+        message: "No valid categories found",
+        error:
+          "None of the provided category IDs exist or you don't have access to them",
+      });
+      return;
+    }
+
+    // Check for categories with child categories
+    const categoryIdsToDelete = categories.map((cat) => cat._id.toString());
+    const categoriesWithChildren = await Category.find({
+      parentId: { $in: categoryIdsToDelete },
+      userId: req.user.userId,
+      isDeleted: false,
+    });
+
+    if (categoriesWithChildren.length > 0) {
+      const parentNames = categoriesWithChildren.map((child) => {
+        const parent = categories.find(
+          (cat) => cat._id.toString() === child.parentId?.toString()
+        );
+        return parent?.name || "Unknown";
+      });
+
+      res.status(400).json({
+        message: "Cannot delete categories",
+        error: `The following categories have child categories: ${parentNames.join(
+          ", "
+        )}. Please move or delete child categories first.`,
+      });
+      return;
+    }
+
+    // Check for categories with items
+    const categoriesWithItems = categories.filter((cat) => cat.itemCount > 0);
+    if (categoriesWithItems.length > 0) {
+      const categoryNames = categoriesWithItems
+        .map((cat) => cat.name)
+        .join(", ");
+
+      res.status(400).json({
+        message: "Cannot delete categories",
+        error: `The following categories contain items: ${categoryNames}. Please move or delete all items first.`,
+      });
+      return;
+    }
+
+    // Soft delete all categories
+    const deleteResult = await Category.updateMany(
+      {
+        _id: { $in: categoryIdsToDelete },
+        userId: req.user.userId,
+        isDeleted: false,
+      },
+      {
+        isDeleted: true,
+        deletedAt: new Date(),
+      }
+    );
+
+    // Get the deleted categories for response
+    const deletedCategories = await Category.find({
+      _id: { $in: categoryIdsToDelete },
+      userId: req.user.userId,
+      isDeleted: true,
+    }).populate("parentId", "name color");
+
+    res.status(200).json({
+      message: `Successfully deleted ${deleteResult.modifiedCount} categories`,
+      deletedCount: deleteResult.modifiedCount,
+      categories: deletedCategories,
+    });
+  } catch (error) {
+    console.error("Error bulk deleting categories:", error);
+    console.error("Request body:", req.body);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid category ID",
+          error: "One or more category IDs are not valid",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error bulk deleting categories",
+      error: "Internal server error",
+    });
+  }
+};
+
+const bulkRestoreCategories = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate request body
+    const { ids: categoryIds } = req.body;
+
+    if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: "categoryIds must be a non-empty array",
+      });
+      return;
+    }
+
+    if (categoryIds.length > 50) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: "Cannot restore more than 50 categories at once",
+      });
+      return;
+    }
+
+    // Validate each category ID
+    for (const id of categoryIds) {
+      if (typeof id !== "string" || id.trim() === "") {
+        res.status(400).json({
+          message: "Validation failed",
+          error: "All category IDs must be valid strings",
+        });
+        return;
+      }
+      
+      // Validate ObjectId format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          message: "Validation failed",
+          error: `Invalid ObjectId format: ${id}`,
+        });
+        return;
+      }
+    }
+
+    // Find all deleted categories that belong to the user
+    const deletedCategories = await Category.find({
+      _id: { $in: categoryIds },
+      userId: req.user.userId,
+      isDeleted: true,
+    });
+
+    if (deletedCategories.length === 0) {
+      res.status(404).json({
+        message: "No deleted categories found",
+        error:
+          "None of the provided category IDs exist as deleted categories or you don't have access to them",
+      });
+      return;
+    }
+
+    // Check if parent categories still exist for categories that had parents
+    const categoriesWithParents = deletedCategories.filter(
+      (cat) => cat.parentId
+    );
+    const parentIds = [
+      ...new Set(categoriesWithParents.map((cat) => cat.parentId)),
+    ];
+
+    if (parentIds.length > 0) {
+      const existingParents = await Category.find({
+        _id: { $in: parentIds },
+        userId: req.user.userId,
+        isDeleted: false,
+      });
+
+      const existingParentIds = existingParents.map((p) => p._id.toString());
+      const missingParentIds = parentIds.filter(
+        (id) => !existingParentIds.includes(id || "")
+      );
+
+      if (missingParentIds.length > 0) {
+        const categoriesWithMissingParents = deletedCategories.filter((cat) =>
+          missingParentIds.includes(cat.parentId?.toString() || "")
+        );
+
+        const categoryNames = categoriesWithMissingParents
+          .map((cat) => cat.name)
+          .join(", ");
+
+        res.status(400).json({
+          message: "Cannot restore categories",
+          error: `The following categories have missing parent categories: ${categoryNames}. Please restore parent categories first or remove parent references.`,
+        });
+        return;
+      }
+    }
+
+    // Check for name conflicts with existing categories
+    const categoryNames = deletedCategories.map((cat) => cat.name);
+    const existingCategoriesWithSameNames = await Category.find({
+      userId: req.user.userId,
+      name: { $in: categoryNames },
+      isDeleted: false,
+    });
+
+    if (existingCategoriesWithSameNames.length > 0) {
+      const conflictingNames = existingCategoriesWithSameNames
+        .map((cat) => cat.name)
+        .join(", ");
+
+      res.status(409).json({
+        message: "Cannot restore categories",
+        error: `The following category names already exist: ${conflictingNames}. Please rename these categories before restoring.`,
+      });
+      return;
+    }
+
+    // Restore all categories
+    const restoreResult = await Category.updateMany(
+      {
+        _id: { $in: categoryIds },
+        userId: req.user.userId,
+        isDeleted: true,
+      },
+      {
+        isDeleted: false,
+        deletedAt: undefined,
+      }
+    );
+
+    // Get the restored categories for response
+    const restoredCategories = await Category.find({
+      _id: { $in: categoryIds },
+      userId: req.user.userId,
+      isDeleted: false,
+    }).populate("parentId", "name color");
+
+    res.status(200).json({
+      message: `Successfully restored ${restoreResult.modifiedCount} categories`,
+      restoredCount: restoreResult.modifiedCount,
+      categories: restoredCategories,
+    });
+  } catch (error) {
+    console.error("Error bulk restoring categories:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid category ID",
+          error: "One or more category IDs are not valid",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error bulk restoring categories",
       error: "Internal server error",
     });
   }
@@ -702,4 +1041,13 @@ const checkCircularReference = async (
   return false;
 };
 
-export { createCategory, getCategories, getCategory, updateCategory, deleteCategory, restoreCategory };
+export {
+  createCategory,
+  getCategories,
+  getCategory,
+  updateCategory,
+  deleteCategory,
+  restoreCategory,
+  bulkDeleteCategories,
+  bulkRestoreCategories,
+};
