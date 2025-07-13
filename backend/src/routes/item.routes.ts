@@ -11,6 +11,8 @@ import {
   duplicateItem,
   favoriteItem,
   archiveItem,
+  uploadFiles,
+  getItemAnalytics,
 } from "../controllers/item.controller";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
@@ -27,5 +29,7 @@ router.patch("/:id/restore", authMiddleware, restoreItem);
 router.post("/duplicate/:id", authMiddleware, duplicateItem);
 router.post("/favorite/:id", authMiddleware, favoriteItem);
 router.post("/archive/:id", authMiddleware, archiveItem);
+router.post("/upload/:id", authMiddleware, uploadFiles);
+router.get("/analytics/:id", authMiddleware, getItemAnalytics);
 
 export default router;

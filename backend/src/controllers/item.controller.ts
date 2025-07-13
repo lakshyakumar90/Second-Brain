@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Item } from "../models/index";
+import { FILE_LIMITS } from "../config/constants";
 import {
   createItemSchema,
   getItemsQuerySchema,
@@ -1090,4 +1091,258 @@ const archiveItem = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore, duplicateItem, favoriteItem, archiveItem };
+const uploadFiles = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate item ID parameter
+    const validationResult = itemIdSchema.safeParse(req.params);
+    if (!validationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: validationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const { id: itemId } = validationResult.data;
+
+    // Check if files were uploaded
+    if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+      res.status(400).json({
+        message: "No files uploaded",
+        error: "Please select at least one file to upload",
+      });
+      return;
+    }
+
+    // Find the item and ensure it belongs to the authenticated user
+    const existingItem = await Item.findOne({
+      _id: itemId,
+      userId: req.user.userId,
+      isDeleted: false,
+    });
+
+    if (!existingItem) {
+      res.status(404).json({
+        message: "Item not found",
+        error: "The requested item does not exist or you don't have access to it",
+      });
+      return;
+    }
+
+    // Check if adding these files would exceed the limit
+    const currentFileCount = existingItem.files.length;
+    const filesArray = Array.isArray(req.files) ? req.files : [];
+    const newFileCount = filesArray.length;
+    
+    if (currentFileCount + newFileCount > FILE_LIMITS.MAX_FILES_PER_ITEM) {
+      res.status(400).json({
+        message: "Too many files",
+        error: `Maximum ${FILE_LIMITS.MAX_FILES_PER_ITEM} files allowed per item. Current: ${currentFileCount}, Adding: ${newFileCount}`,
+      });
+      return;
+    }
+
+    // Process uploaded files
+    const uploadedFiles = [];
+    
+    for (const file of filesArray) {
+      // Generate unique filename
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 15);
+      const filename = `${timestamp}_${randomString}_${file.originalname}`;
+      
+      // Create file object
+      const fileData = {
+        originalName: file.originalname,
+        filename: filename,
+        path: `/uploads/${filename}`, // You might want to adjust this path
+        size: file.size,
+        mimetype: file.mimetype,
+        isMain: existingItem.files.length === 0, // First file becomes main
+      };
+      
+      uploadedFiles.push(fileData);
+    }
+
+    // Update item with new files
+    const updatedItem = await Item.findByIdAndUpdate(
+      itemId,
+      {
+        $push: { files: { $each: uploadedFiles } },
+        lastEditedAt: new Date(),
+        lastEditedBy: req.user.userId,
+        version: existingItem.version + 1,
+      },
+      { new: true, runValidators: true }
+    )
+      .populate("categories", "name")
+      .populate("workspace", "name")
+      .populate("lastEditedBy", "name");
+
+    if (!updatedItem) {
+      res.status(500).json({
+        message: "Error uploading files",
+        error: "Failed to update the item",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Files uploaded successfully",
+      uploadedFiles: uploadedFiles,
+      item: updatedItem,
+      totalFiles: updatedItem.files.length,
+    });
+  } catch (error) {
+    console.error("Error uploading files:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid item ID",
+          error: "The provided item ID is not valid",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error uploading files",
+      error: "Internal server error",
+    });
+  }
+};
+
+const getItemAnalytics = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate item ID parameter
+    const validationResult = itemIdSchema.safeParse(req.params);
+    if (!validationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: validationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const { id: itemId } = validationResult.data;
+
+    // Find the item and ensure it belongs to the authenticated user
+    const item = await Item.findOne({
+      _id: itemId,
+      userId: req.user.userId,
+      isDeleted: false,
+    }).lean();
+
+    if (!item) {
+      res.status(404).json({
+        message: "Item not found",
+        error: "The requested item does not exist or you don't have access to it",
+      });
+      return;
+    }
+
+    // Get analytics data
+    const analytics = {
+      itemId: item._id,
+      title: item.title,
+      type: item.type,
+      
+      // View statistics
+      viewCount: item.viewCount,
+      lastViewedAt: item.lastViewedAt,
+      
+      // Edit statistics
+      version: item.version,
+      lastEditedAt: item.lastEditedAt,
+      lastEditedBy: item.lastEditedBy,
+      
+      // File statistics
+      fileCount: item.files.length,
+      totalFileSize: item.files.reduce((total, file) => total + (file.size || 0), 0),
+      
+      // Content statistics
+      contentLength: item.content ? item.content.length : 0,
+      wordCount: item.metadata?.wordCount || 0,
+      readingTime: item.metadata?.readingTime || 0,
+      
+      // Status flags
+      isPublic: item.isPublic,
+      isFavorite: item.isFavorite,
+      isArchived: item.isArchived,
+      
+      // Creation and update info
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      
+      // AI data statistics
+      aiData: {
+        hasSummary: !!item.aiData?.summary,
+        hasSentiment: !!item.aiData?.sentiment,
+        hasComplexity: !!item.aiData?.complexity,
+        suggestedTagsCount: item.aiData?.suggestedTags?.length || 0,
+        suggestedCategoriesCount: item.aiData?.suggestedCategories?.length || 0,
+        keyTopicsCount: item.aiData?.keyTopics?.length || 0,
+        extractedEntitiesCount: item.aiData?.extractedEntities?.length || 0,
+        lastProcessedAt: item.aiData?.lastProcessedAt,
+      },
+      
+      // Collaboration statistics
+      collaboratorsCount: item.collaborators?.length || 0,
+      
+      // Category and tag statistics
+      categoriesCount: item.categories?.length || 0,
+      tagsCount: item.tags?.length || 0,
+    };
+
+    res.status(200).json({
+      message: "Item analytics retrieved successfully",
+      analytics: analytics,
+    });
+  } catch (error) {
+    console.error("Error retrieving item analytics:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid item ID",
+          error: "The provided item ID is not valid",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error retrieving item analytics",
+      error: "Internal server error",
+    });
+  }
+};
+
+export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore, duplicateItem, favoriteItem, archiveItem, uploadFiles, getItemAnalytics };
