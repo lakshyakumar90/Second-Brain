@@ -40,7 +40,39 @@ export const getCategoriesQuerySchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("asc"),
 });
 
+// Reorder categories validation schema
+export const reorderCategoriesSchema = z.object({
+  categoryOrders: z.array(z.object({
+    categoryId: z.string().min(1, "Category ID is required"),
+    sortOrder: z.number().min(0, "Sort order must be non-negative"),
+  })).min(1, "At least one category order must be provided").max(100, "Cannot reorder more than 100 categories at once"),
+});
+
+// Get category items query validation schema
+export const getCategoryItemsQuerySchema = z.object({
+  page: z.string().transform(Number).pipe(z.number().min(1)).default(1),
+  limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).default(20),
+  type: z.enum(["text", "image", "video", "link", "document", "audio"]).optional(),
+  isPublic: z.string().transform(val => val === "true").optional(),
+  isFavorite: z.string().transform(val => val === "true").optional(),
+  isArchived: z.string().transform(val => val === "true").optional(),
+  search: z.string().optional(),
+  tags: z.string().optional(),
+  sortBy: z.enum(["title", "createdAt", "updatedAt", "viewCount", "lastViewedAt"]).default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+// Bulk categorize validation schema
+export const bulkCategorizeSchema = z.object({
+  itemIds: z.array(z.string().min(1, "Item ID is required")).min(1, "At least one item ID must be provided").max(100, "Cannot categorize more than 100 items at once"),
+  categoryIds: z.array(z.string().min(1, "Category ID is required")).min(1, "At least one category ID must be provided").max(20, "Cannot assign to more than 20 categories at once"),
+  operation: z.enum(["add", "replace", "remove"]).default("add"),
+});
+
 // Export types for TypeScript
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
-export type GetCategoriesQueryInput = z.infer<typeof getCategoriesQuerySchema>; 
+export type GetCategoriesQueryInput = z.infer<typeof getCategoriesQuerySchema>;
+export type ReorderCategoriesInput = z.infer<typeof reorderCategoriesSchema>;
+export type GetCategoryItemsQueryInput = z.infer<typeof getCategoryItemsQuerySchema>;
+export type BulkCategorizeInput = z.infer<typeof bulkCategorizeSchema>; 
