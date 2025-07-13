@@ -4,6 +4,7 @@ import {
   createItemSchema,
   getItemsQuerySchema,
   itemIdSchema,
+  updateItemSchema,
 } from "../validations/itemValidation";
 
 interface AuthRequest extends Request {
@@ -391,4 +392,119 @@ const getItem = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createItem, getItems, getItem };
+const updateItem = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate item ID parameter
+    const idValidationResult = itemIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: idValidationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    // Validate update data
+    const updateValidationResult = updateItemSchema.safeParse(req.body);
+    if (!updateValidationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: updateValidationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const { id: itemId } = idValidationResult.data;
+    const updateData = updateValidationResult.data;
+
+    // Find the item and ensure it belongs to the authenticated user
+    const existingItem = await Item.findOne({
+      _id: itemId,
+      userId: req.user.userId,
+      isDeleted: false,
+    });
+
+    if (!existingItem) {
+      res.status(404).json({
+        message: "Item not found",
+        error: "The requested item does not exist or you don't have access to it",
+      });
+      return;
+    }
+
+    // Prepare update object with tracking fields
+    const updateObject = {
+      ...updateData,
+      lastEditedAt: new Date(),
+      lastEditedBy: req.user.userId,
+      version: existingItem.version + 1, // Increment version
+    };
+
+    // Update the item
+    const updatedItem = await Item.findByIdAndUpdate(
+      itemId,
+      updateObject,
+      { new: true, runValidators: true }
+    )
+      .populate("categories", "name")
+      .populate("workspace", "name")
+      .populate("collaborators", "name email")
+      .populate("lastEditedBy", "name");
+
+    if (!updatedItem) {
+      res.status(500).json({
+        message: "Error updating item",
+        error: "Failed to update the item",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Item updated successfully",
+      item: updatedItem,
+    });
+  } catch (error) {
+    console.error("Error updating item:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid item ID",
+          error: "The provided item ID is not valid",
+        });
+        return;
+      }
+      
+      if (error.message.includes("duplicate key")) {
+        res.status(409).json({
+          message: "Item already exists",
+          error: "An item with this title already exists",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error updating item",
+      error: "Internal server error",
+    });
+  }
+};
+
+export { createItem, getItems, getItem, updateItem };
