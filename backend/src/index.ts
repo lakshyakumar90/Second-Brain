@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./database/db";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
+import itemRoutes from "./routes/item.routes";
 
 connectDB();
 
@@ -24,6 +25,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/items", itemRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");
