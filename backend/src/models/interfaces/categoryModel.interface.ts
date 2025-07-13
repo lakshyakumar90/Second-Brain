@@ -21,6 +21,10 @@ export interface ICategory {
     // Statistics
     itemCount: number;
     
+    // Soft delete fields
+    isDeleted: boolean;
+    deletedAt?: Date;
+    
     createdAt: Date;
     updatedAt: Date;
   }
