@@ -304,4 +304,190 @@ const getCategory = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createCategory, getCategories, getCategory };
+const updateCategory = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate category ID parameter
+    const idValidationResult = categoryIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: idValidationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    // Validate request body
+    const bodyValidationResult = updateCategorySchema.safeParse(req.body);
+    if (!bodyValidationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: bodyValidationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const { id: categoryId } = idValidationResult.data;
+    const validatedData = bodyValidationResult.data;
+
+    // Find the category and ensure it belongs to the authenticated user
+    const existingCategory = await Category.findOne({
+      _id: categoryId,
+      userId: req.user.userId,
+    });
+
+    if (!existingCategory) {
+      res.status(404).json({
+        message: "Category not found",
+        error: "The requested category does not exist or you don't have access to it",
+      });
+      return;
+    }
+
+    // If name is being updated, check for duplicates (excluding current category)
+    if (validatedData.name && validatedData.name !== existingCategory.name) {
+      const duplicateCategory = await Category.findOne({
+        userId: req.user.userId,
+        name: validatedData.name,
+        _id: { $ne: categoryId }, // Exclude current category
+      });
+
+      if (duplicateCategory) {
+        res.status(409).json({
+          message: "Category name already exists",
+          error: "A category with this name already exists",
+        });
+        return;
+      }
+    }
+
+    // If parentId is being updated, validate it exists and belongs to the user
+    if (validatedData.parentId !== undefined) {
+      // Prevent setting parent to itself
+      if (validatedData.parentId === categoryId) {
+        res.status(400).json({
+          message: "Invalid parent category",
+          error: "A category cannot be its own parent",
+        });
+        return;
+      }
+
+      // If setting a parent, validate it exists
+      if (validatedData.parentId) {
+        const parentCategory = await Category.findOne({
+          _id: validatedData.parentId,
+          userId: req.user.userId,
+        });
+
+        if (!parentCategory) {
+          res.status(404).json({
+            message: "Parent category not found",
+            error: "The specified parent category does not exist or you don't have access to it",
+          });
+          return;
+        }
+
+        // Prevent circular references by checking if the parent is a descendant of this category
+        const isCircular = await checkCircularReference(categoryId, validatedData.parentId, req.user.userId);
+        if (isCircular) {
+          res.status(400).json({
+            message: "Circular reference detected",
+            error: "Cannot set parent category as it would create a circular reference",
+          });
+          return;
+        }
+      }
+    }
+
+    // Update the category
+    const updatedCategory = await Category.findByIdAndUpdate(
+      categoryId,
+      {
+        ...validatedData,
+        updatedAt: new Date(),
+      },
+      { new: true, runValidators: true }
+    ).populate("parentId", "name color");
+
+    res.status(200).json({
+      message: "Category updated successfully",
+      category: updatedCategory,
+    });
+  } catch (error) {
+    console.error("Error updating category:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid category ID",
+          error: "The provided category ID is not valid",
+        });
+        return;
+      }
+      if (error.message.includes("duplicate key")) {
+        res.status(409).json({
+          message: "Category name already exists",
+          error: "A category with this name already exists",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error updating category",
+      error: "Internal server error",
+    });
+  }
+};
+
+// Helper function to check for circular references in category hierarchy
+const checkCircularReference = async (
+  categoryId: string,
+  newParentId: string,
+  userId: string
+): Promise<boolean> => {
+  let currentParentId: string | null = newParentId;
+  const visited = new Set<string>();
+
+  while (currentParentId) {
+    if (visited.has(currentParentId)) {
+      return true; // Circular reference detected
+    }
+
+    if (currentParentId === categoryId) {
+      return true; // Direct circular reference
+    }
+
+    visited.add(currentParentId);
+
+    const parent: any = await Category.findOne(
+      { _id: currentParentId, userId },
+      { parentId: 1 }
+    );
+
+    if (!parent) {
+      break;
+    }
+
+    currentParentId = parent.parentId?.toString() || null;
+  }
+
+  return false;
+};
+
+export { createCategory, getCategories, getCategory, updateCategory };
