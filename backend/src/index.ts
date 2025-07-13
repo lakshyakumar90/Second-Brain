@@ -6,6 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./database/db";
 import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
 
 connectDB();
 
@@ -22,6 +23,7 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");

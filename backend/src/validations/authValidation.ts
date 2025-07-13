@@ -67,6 +67,52 @@ const refreshTokenSchema = z.object({
     refreshToken: z.string().min(1, "Refresh token is required"),
 });
 
+// Update profile schema
+const updateProfileSchema = z.object({
+    name: z.string()
+        .min(3, "Name must be at least 3 characters long")
+        .max(20, "Name cannot exceed 20 characters")
+        .optional(),
+    username: z.string()
+        .min(3, "Username must be at least 3 characters long")
+        .max(20, "Username cannot exceed 20 characters")
+        .optional(),
+    email: z.email("Please enter a valid email address").optional(),
+    avatar: z.url("Please enter a valid URL for your avatar").optional(),
+    bio: z.string()
+        .max(500, "Bio cannot exceed 500 characters")
+        .optional(),
+});
+
+// Change password schema
+const changePasswordSchema = z.object({
+    oldPassword: z.string()
+        .min(8, "Password must be at least 8 characters long")
+        .max(20, "Password cannot exceed 20 characters"),
+    newPassword: z.string()
+        .min(8, "Password must be at least 8 characters long")
+        .max(20, "Password cannot exceed 20 characters")
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,20}$/, 
+            "Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character"),
+}).refine((data) => data.oldPassword !== data.newPassword, {
+    message: "New password must be different from the old password",
+    path: ["newPassword"],
+});
+
+// Update profile preferences schema
+const updateProfilePreferencesSchema = z.object({
+    preferences: z.object({
+        theme: z.enum(["light", "dark", "system"]).optional(),
+        defaultView: z.enum(["grid", "list"]).optional(),
+        aiEnabled: z.boolean().optional(),
+        emailNotifications: z.boolean().optional(),
+        publicProfile: z.boolean().optional(),
+        autoSave: z.boolean().optional(),
+        language: z.string().optional(),
+        timezone: z.string().optional(),
+    }).partial(),
+});
+
 export { 
     registerStep1Schema, 
     registerStep2Schema, 
@@ -77,5 +123,8 @@ export {
     forgotPasswordSchema,
     verifyPasswordResetOTPSchema,
     resetPasswordSchema,
-    refreshTokenSchema
+    refreshTokenSchema,
+    updateProfileSchema,
+    changePasswordSchema,
+    updateProfilePreferencesSchema
 };

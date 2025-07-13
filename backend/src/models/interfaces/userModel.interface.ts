@@ -24,7 +24,9 @@ export interface IUser {
       defaultView: "grid" | "list";
       aiEnabled: boolean;
       emailNotifications: boolean;
-      autosave: boolean;
+      autoSave: boolean;
+      language?: string;
+      timezone?: string;
     };
   
     usage: {
