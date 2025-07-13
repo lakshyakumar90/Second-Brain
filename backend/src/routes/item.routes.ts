@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { createItem, getItems, getItem, updateItem, deleteItem, restoreItem } from "../controllers/item.controller";
+import { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore } from "../controllers/item.controller";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
 router.post("/create", authMiddleware, createItem);
+router.delete("/bulk-delete", authMiddleware, bulkDelete);
+router.patch("/bulk-restore", authMiddleware, bulkRestore);
 router.get("/", authMiddleware, getItems);
 router.get("/:id", authMiddleware, getItem);
 router.put("/:id", authMiddleware, updateItem);

@@ -685,4 +685,108 @@ const restoreItem = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem };
+const bulkDelete = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate request body: must be an array of IDs
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0 || !ids.every(id => typeof id === "string" && id.length > 0)) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: "Request body must contain an array of item IDs.",
+      });
+      return;
+    }
+
+    // Only delete items that belong to the user and are not already deleted
+    const result = await Item.updateMany(
+      {
+        _id: { $in: ids },
+        userId: req.user.userId,
+        isDeleted: false,
+      },
+      {
+        $set: {
+          isDeleted: true,
+          lastEditedAt: new Date(),
+          lastEditedBy: req.user.userId,
+        },
+        $inc: { version: 1 },
+      }
+    );
+
+    res.status(200).json({
+      message: "Bulk delete completed",
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Error bulk deleting items:", error);
+    res.status(500).json({
+      message: "Error bulk deleting items",
+      error: "Internal server error",
+    });
+  }
+};
+
+const bulkRestore = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate request body: must be an array of IDs
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0 || !ids.every(id => typeof id === "string" && id.length > 0)) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: "Request body must contain an array of item IDs.",
+      });
+      return;
+    }
+
+    // Only restore items that belong to the user and are currently deleted
+    const result = await Item.updateMany(
+      {
+        _id: { $in: ids },
+        userId: req.user.userId,
+        isDeleted: true,
+      },
+      {
+        $set: {
+          isDeleted: false,
+          lastEditedAt: new Date(),
+          lastEditedBy: req.user.userId,
+        },
+        $inc: { version: 1 },
+      }
+    );
+
+    res.status(200).json({
+      message: "Bulk restore completed",
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Error bulk restoring items:", error);
+    res.status(500).json({
+      message: "Error bulk restoring items",
+      error: "Internal server error",
+    });
+  }
+};
+
+export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore };
