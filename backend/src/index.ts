@@ -9,6 +9,7 @@ import "./models/index";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import itemRoutes from "./routes/item.routes";
+import categoryRoutes from "./routes/category.routes";
 
 connectDB();
 
@@ -27,6 +28,7 @@ app.use(cookieParser());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/items", itemRoutes);
+app.use("/api/v1/categories", categoryRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");
