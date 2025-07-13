@@ -59,7 +59,16 @@ export const getItemsQuerySchema = z.object({
   search: z.string().optional(),
   tags: z.string().optional(),
   categories: z.string().optional(),
-  sortBy: z.enum(["createdAt", "updatedAt", "title", "viewCount"]).default("createdAt"),
+  workspace: z.string().optional(),
+  socialPlatform: z.enum([
+    "twitter", "instagram", "youtube", "linkedin", 
+    "tiktok", "reddit", "pinterest"
+  ]).optional(),
+  sentiment: z.enum(["positive", "negative", "neutral"]).optional(),
+  complexity: z.enum(["low", "medium", "high"]).optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  sortBy: z.enum(["createdAt", "updatedAt", "title", "viewCount", "lastViewedAt", "lastEditedAt"]).default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 

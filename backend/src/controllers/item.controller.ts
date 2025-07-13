@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Item from "../models/item.model";
+import { Item } from "../models/index";
 import {
   createItemSchema,
   getItemsQuerySchema,
@@ -111,4 +111,197 @@ const createItem = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createItem };
+const getItems = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate query parameters
+    const validationResult = getItemsQuerySchema.safeParse(req.query);
+    if (!validationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: validationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const {
+      page = 1,
+      limit = 20,
+      type,
+      isPublic,
+      isFavorite,
+      isArchived,
+      search,
+      tags,
+      categories,
+      workspace,
+      socialPlatform,
+      sentiment,
+      complexity,
+      dateFrom,
+      dateTo,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = validationResult.data;
+
+    // Build filter object
+    const filter: any = {
+      userId: req.user.userId,
+      isDeleted: false, // Always exclude deleted items
+    };
+
+    // Type filter
+    if (type) {
+      filter.type = type;
+    }
+
+    // Boolean filters
+    if (isPublic !== undefined) {
+      filter.isPublic = isPublic;
+    }
+
+    if (isFavorite !== undefined) {
+      filter.isFavorite = isFavorite;
+    }
+
+    if (isArchived !== undefined) {
+      filter.isArchived = isArchived;
+    }
+
+    // Search filter (search in title, content, and extracted text)
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { content: { $regex: search, $options: "i" } },
+        { "metadata.extractedText": { $regex: search, $options: "i" } },
+        { "metadata.description": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Tags filter
+    if (tags) {
+      const tagArray = tags.split(",").map((tag: string) => tag.trim());
+      filter.tags = { $in: tagArray };
+    }
+
+    // Categories filter
+    if (categories) {
+      const categoryArray = categories.split(",").map((cat: string) => cat.trim());
+      filter.categories = { $in: categoryArray };
+    }
+
+    // Workspace filter
+    if (workspace) {
+      filter.workspace = workspace;
+    }
+
+    // Social platform filter
+    if (socialPlatform) {
+      filter["metadata.socialPlatform"] = socialPlatform;
+    }
+
+    // AI sentiment filter
+    if (sentiment) {
+      filter["aiData.sentiment"] = sentiment;
+    }
+
+    // AI complexity filter
+    if (complexity) {
+      filter["aiData.complexity"] = complexity;
+    }
+
+    // Date range filters
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) {
+        filter.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        filter.createdAt.$lte = new Date(dateTo);
+      }
+    }
+
+    // Build sort object
+    const sort: any = {};
+    sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Execute query with pagination
+    const [items, totalItems] = await Promise.all([
+      Item.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .populate("categories", "name color icon")
+        .populate("workspace", "name description")
+        .populate("lastEditedBy", "name username")
+        .lean(),
+      Item.countDocuments(filter),
+    ]);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    // Prepare response
+    const response = {
+      message: "Items retrieved successfully",
+      data: {
+        items,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems,
+          itemsPerPage: limit,
+          hasNextPage,
+          hasPrevPage,
+        },
+        filters: {
+          applied: {
+            type,
+            isPublic,
+            isFavorite,
+            isArchived,
+            search,
+            tags: tags ? tags.split(",").map((tag: string) => tag.trim()) : undefined,
+            categories: categories ? categories.split(",").map((cat: string) => cat.trim()) : undefined,
+            workspace,
+            socialPlatform,
+            sentiment,
+            complexity,
+            dateFrom,
+            dateTo,
+            sortBy,
+            sortOrder,
+          },
+        },
+      },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error retrieving items:", error);
+
+    res.status(500).json({
+      message: "Error retrieving items",
+      error: "Internal server error",
+    });
+  }
+};
+
+
+export { createItem, getItems };

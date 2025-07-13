@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./database/db";
+import "./models/index";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import itemRoutes from "./routes/item.routes";
