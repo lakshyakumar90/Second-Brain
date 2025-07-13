@@ -789,4 +789,119 @@ const bulkRestore = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore };
+const duplicateItem = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate item ID parameter
+    const validationResult = itemIdSchema.safeParse(req.params);
+    if (!validationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: validationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const { id: itemId } = validationResult.data;
+
+    // Find the original item and ensure it belongs to the authenticated user
+    const originalItem = await Item.findOne({
+      _id: itemId,
+      userId: req.user.userId,
+      isDeleted: false,
+    }).lean();
+
+    if (!originalItem) {
+      res.status(404).json({
+        message: "Item not found",
+        error: "The requested item does not exist or you don't have access to it",
+      });
+      return;
+    }
+
+    // Create a copy of the item with new metadata
+    const duplicatedItemData = {
+      userId: req.user.userId,
+      type: originalItem.type,
+      title: `${originalItem.title} (Copy)`,
+      content: originalItem.content,
+      url: originalItem.url,
+      files: originalItem.files, // Copy files array
+      metadata: originalItem.metadata,
+      categories: originalItem.categories,
+      tags: originalItem.tags,
+      workspace: originalItem.workspace,
+      aiData: originalItem.aiData,
+      isPublic: false, // Default to private for copied items
+      collaborators: [], // Reset collaborators for copied item
+      isFavorite: false, // Reset favorite status
+      isArchived: false, // Reset archived status
+      isDeleted: false,
+      viewCount: 0, // Reset view count
+      lastViewedAt: new Date(),
+      lastEditedAt: new Date(),
+      lastEditedBy: req.user.userId,
+      version: 1, // Reset version
+      parentId: originalItem._id, // Reference to original item
+    };
+
+    // Create the duplicated item
+    const duplicatedItem = await Item.create(duplicatedItemData);
+
+    // Populate references for response
+    const populatedDuplicatedItem = await Item.findById(duplicatedItem._id)
+      .populate("categories", "name")
+      .populate("workspace", "name")
+      .populate("collaborators", "name email")
+      .populate("lastEditedBy", "name")
+      .populate("parentId", "title"); // Show original item title
+
+    res.status(201).json({
+      message: "Item duplicated successfully",
+      item: populatedDuplicatedItem,
+      originalItem: {
+        id: originalItem._id,
+        title: originalItem.title,
+      },
+    });
+  } catch (error) {
+    console.error("Error duplicating item:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid item ID",
+          error: "The provided item ID is not valid",
+        });
+        return;
+      }
+      
+      if (error.message.includes("duplicate key")) {
+        res.status(409).json({
+          message: "Item already exists",
+          error: "An item with this title already exists",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error duplicating item",
+      error: "Internal server error",
+    });
+  }
+};
+
+export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore, duplicateItem };

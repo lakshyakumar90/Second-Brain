@@ -1,5 +1,15 @@
 import { Router } from "express";
-import { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore } from "../controllers/item.controller";
+import {
+  createItem,
+  getItems,
+  getItem,
+  updateItem,
+  deleteItem,
+  restoreItem,
+  bulkDelete,
+  bulkRestore,
+  duplicateItem,
+} from "../controllers/item.controller";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -12,5 +22,6 @@ router.get("/:id", authMiddleware, getItem);
 router.put("/:id", authMiddleware, updateItem);
 router.delete("/:id", authMiddleware, deleteItem);
 router.patch("/:id/restore", authMiddleware, restoreItem);
+router.post("/duplicate/:id", authMiddleware, duplicateItem);
 
 export default router;
