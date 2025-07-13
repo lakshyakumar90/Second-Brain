@@ -507,4 +507,93 @@ const updateItem = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createItem, getItems, getItem, updateItem };
+const deleteItem = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    // Validate item ID parameter
+    const validationResult = itemIdSchema.safeParse(req.params);
+    if (!validationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: validationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const { id: itemId } = validationResult.data;
+
+    // Find the item and ensure it belongs to the authenticated user
+    const existingItem = await Item.findOne({
+      _id: itemId,
+      userId: req.user.userId,
+      isDeleted: false, // Only find non-deleted items
+    });
+
+    if (!existingItem) {
+      res.status(404).json({
+        message: "Item not found",
+        error: "The requested item does not exist or you don't have access to it",
+      });
+      return;
+    }
+
+    // Perform soft delete by setting isDeleted to true
+    const deletedItem = await Item.findByIdAndUpdate(
+      itemId,
+      {
+        isDeleted: true,
+        lastEditedAt: new Date(),
+        lastEditedBy: req.user.userId,
+        version: existingItem.version + 1, // Increment version for audit trail
+      },
+      { new: true, runValidators: true }
+    )
+      .populate("categories", "name")
+      .populate("workspace", "name")
+      .populate("lastEditedBy", "name");
+
+    if (!deletedItem) {
+      res.status(500).json({
+        message: "Error deleting item",
+        error: "Failed to delete the item",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Item deleted successfully",
+      item: deletedItem,
+    });
+  } catch (error) {
+    console.error("Error deleting item:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid item ID",
+          error: "The provided item ID is not valid",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error deleting item",
+      error: "Internal server error",
+    });
+  }
+};
+
+export { createItem, getItems, getItem, updateItem, deleteItem };
