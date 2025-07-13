@@ -83,8 +83,12 @@ const createItem = async (req: AuthRequest, res: Response) => {
     const item = await Item.create(itemData);
 
     // Populate references for response
-    const populatedItem = await Item.findById(item._id);
-        
+    const populatedItem = await Item.findById(item._id)
+      .populate("categories", "name")
+      .populate("workspace", "name")
+      .populate("collaborators", "name email")
+      .populate("lastEditedBy", "name");
+
     res.status(201).json({
       message: "Item created successfully",
       item: populatedItem,
@@ -303,5 +307,88 @@ const getItems = async (req: AuthRequest, res: Response) => {
   }
 };
 
+const getItem = async (req: AuthRequest, res: Response) => {
+  try {
+    // Validate user authentication
+    if (!req.user?.userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+        error: "Authentication required",
+      });
+      return;
+    }
 
-export { createItem, getItems };
+    // Validate item ID parameter
+    const validationResult = itemIdSchema.safeParse(req.params);
+    if (!validationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        error: validationResult.error.issues.map((err: any) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+      return;
+    }
+
+    const { id: itemId } = validationResult.data;
+
+    // Find the item and ensure it belongs to the authenticated user
+    const item = await Item.findOne({
+      _id: itemId,
+      userId: req.user.userId,
+      isDeleted: false,
+    })
+      .populate("categories", "name color icon")
+      .populate("workspace", "name description")
+      .populate("lastEditedBy", "name username")
+      .populate("collaborators", "name username email")
+      .lean();
+
+    if (!item) {
+      res.status(404).json({
+        message: "Item not found",
+        error: "The requested item does not exist or you don't have access to it",
+      });
+      return;
+    }
+
+    // Increment view count and update last viewed timestamp
+    await Item.findByIdAndUpdate(itemId, {
+      $inc: { viewCount: 1 },
+      lastViewedAt: new Date(),
+    });
+
+    // Add the updated view count to the response
+    const itemWithUpdatedViews = {
+      ...item,
+      viewCount: item.viewCount + 1,
+      lastViewedAt: new Date(),
+    };
+
+    res.status(200).json({
+      message: "Item retrieved successfully",
+      item: itemWithUpdatedViews,
+    });
+  } catch (error) {
+    console.error("Error retrieving item:", error);
+
+    // Handle specific errors
+    if (error instanceof Error) {
+      if (error.message.includes("Cast to ObjectId failed")) {
+        res.status(400).json({
+          message: "Invalid item ID",
+          error: "The provided item ID is not valid",
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      message: "Error retrieving item",
+      error: "Internal server error",
+    });
+  }
+};
+
+export { createItem, getItems, getItem };
