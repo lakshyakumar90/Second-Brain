@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Workspace from "../models/workspace.model";
 import { formatZodError } from "../utils/validationUtils";
-import { createWorkspaceSchema, workspaceIdSchema } from "../validations/workspaceValidation";
+import { createWorkspaceSchema, updateWorkspaceSchema, workspaceIdSchema } from "../validations/workspaceValidation";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -190,8 +190,148 @@ const getWorkspace = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 };
 
+const updateWorkspace = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    // Validate workspace ID parameter
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ 
+        message: "Validation failed", 
+        errors: idValidationResult.error.issues
+      });
+      return;
+    }
+
+    // Validate request body
+    const bodyValidationResult = updateWorkspaceSchema.safeParse(req.body);
+    if (!bodyValidationResult.success) {
+      res.status(400).json({ 
+        message: "Validation failed", 
+        errors: bodyValidationResult.error.issues
+      });
+      return;
+    }
+
+    const { workspaceId } = idValidationResult.data;
+    const updateData = bodyValidationResult.data;
+    const userId = req.user.userId;
+
+    // Find workspace and check if user has admin access
+    const workspace = await Workspace.findOne({
+      _id: workspaceId,
+      $or: [
+        { ownerId: userId },
+        { "members.userId": userId, "members.role": { $in: ["admin"] } }
+      ]
+    });
+
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found or access denied" });
+      return;
+    }
+
+    // Check if user is owner or admin
+    const userMember = workspace.members.find(
+      (member: any) => member.userId.toString() === userId
+    );
+    
+    const isOwner = workspace.ownerId.toString() === userId;
+    const isAdmin = userMember?.role === 'admin' || isOwner;
+
+    if (!isAdmin) {
+      res.status(403).json({ message: "Insufficient permissions to update workspace" });
+      return;
+    }
+
+    // If name is being updated, check for duplicates (excluding current workspace)
+    if (updateData.name && updateData.name.trim() !== workspace.name) {
+      const existingWorkspace = await Workspace.findOne({
+        ownerId: userId,
+        name: updateData.name.trim(),
+        _id: { $ne: workspaceId }
+      });
+
+      if (existingWorkspace) {
+        res.status(400).json({ message: "You already have a workspace with this name" });
+        return;
+      }
+    }
+
+    // Prepare update object
+    const updateObject: any = {};
+    
+    if (updateData.name !== undefined) {
+      updateObject.name = updateData.name.trim();
+    }
+    if (updateData.description !== undefined) {
+      updateObject.description = updateData.description?.trim();
+    }
+    if (updateData.isPublic !== undefined) {
+      updateObject.isPublic = updateData.isPublic;
+    }
+    if (updateData.allowInvites !== undefined) {
+      updateObject.allowInvites = updateData.allowInvites;
+    }
+    if (updateData.settings) {
+      updateObject.settings = {
+        ...workspace.settings,
+        ...updateData.settings
+      };
+    }
+
+    // Update the workspace
+    const updatedWorkspace = await Workspace.findByIdAndUpdate(
+      workspaceId,
+      updateObject,
+      { new: true, runValidators: true }
+    )
+    .populate('ownerId', 'name username email avatar')
+    .populate('members.userId', 'name username email avatar')
+    .populate('members.invitedBy', 'name username email avatar');
+
+    if (!updatedWorkspace) {
+      res.status(500).json({ message: "Error updating workspace" });
+      return;
+    }
+
+    // Determine user's role in the updated workspace
+    const updatedUserMember = updatedWorkspace.members.find(
+      (member: any) => member.userId._id.toString() === userId
+    );
+    
+    const userRole = updatedUserMember?.role || 
+      (updatedWorkspace.ownerId.toString() === userId ? 'admin' : 'view');
+
+    const updatedIsOwner = updatedWorkspace.ownerId.toString() === userId;
+
+    res.status(200).json({
+      message: "Workspace updated successfully",
+      workspace: {
+        _id: updatedWorkspace._id,
+        name: updatedWorkspace.name,
+        description: updatedWorkspace.description,
+        ownerId: updatedWorkspace.ownerId,
+        isPublic: updatedWorkspace.isPublic,
+        allowInvites: updatedWorkspace.allowInvites,
+        settings: updatedWorkspace.settings,
+        totalItems: updatedWorkspace.totalItems,
+        totalMembers: updatedWorkspace.totalMembers,
+        members: updatedWorkspace.members,
+        userRole,
+        isOwner: updatedIsOwner,
+        createdAt: updatedWorkspace.createdAt,
+        updatedAt: updatedWorkspace.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error("Error updating workspace:", error);
+    res.status(500).json({ message: "Error updating workspace" });
+  }
+};
+
 export {
   createWorkspace,
   getWorkspaces,
-  getWorkspace
+  getWorkspace,
+  updateWorkspace
 };
