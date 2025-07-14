@@ -42,6 +42,26 @@ const WorkspaceSchema = new mongoose.Schema<IWorkspace>(
     // Soft delete fields
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date },
+    // Invitation system
+    pendingInvites: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        invitedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        role: {
+          type: String,
+          enum: ["view", "edit", "admin"],
+          default: "view",
+        },
+        invitedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

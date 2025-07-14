@@ -30,6 +30,13 @@ export interface IWorkspace {
     // Soft delete
     isDeleted: boolean;
     deletedAt?: Date;
+    // Invitation system
+    pendingInvites: Array<{
+      userId: ObjectId;
+      invitedBy: ObjectId;
+      role: string;
+      invitedAt: Date;
+    }>;
     
     createdAt: Date;
     updatedAt: Date;

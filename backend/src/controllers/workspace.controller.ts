@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Workspace from "../models/workspace.model";
 import { formatZodError } from "../utils/validationUtils";
 import { createWorkspaceSchema, updateWorkspaceSchema, workspaceIdSchema } from "../validations/workspaceValidation";
+import User from "../models/user.model";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -385,10 +386,238 @@ const deleteWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
   }
 };
 
+const inviteMember = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    // Validate workspace ID parameter
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    const { workspaceId } = idValidationResult.data;
+    const { email, role = "view" } = req.body;
+    const userId = req.user.userId;
+
+    if (!email || typeof email !== "string") {
+      res.status(400).json({ message: "Email is required to invite a member." });
+      return;
+    }
+
+    // Find workspace
+    const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found" });
+      return;
+    }
+
+    // Check if invites are allowed
+    if (!workspace.allowInvites) {
+      res.status(403).json({ message: "Invites are not allowed for this workspace" });
+      return;
+    }
+
+    // Check if user is owner or admin
+    const userMember = workspace.members.find((member: any) => member.userId.toString() === userId);
+    const isOwner = workspace.ownerId.toString() === userId;
+    const isAdmin = userMember?.role === 'admin' || isOwner;
+    if (!isAdmin) {
+      res.status(403).json({ message: "Insufficient permissions to invite members" });
+      return;
+    }
+
+    // Find the user to invite
+    const invitedUser = await User.findOne({ email: email.toLowerCase() });
+    if (!invitedUser) {
+      res.status(404).json({ message: "User with this email does not exist" });
+      return;
+    }
+
+    // Check if already a member
+    const alreadyMember = workspace.members.some((member: any) => member.userId.toString() === invitedUser._id.toString());
+    if (alreadyMember || workspace.ownerId.toString() === invitedUser._id.toString()) {
+      res.status(400).json({ message: "User is already a member of this workspace" });
+      return;
+    }
+
+    // Check if already invited
+    const alreadyInvited = workspace.pendingInvites.some((invite: any) => invite.userId.toString() === invitedUser._id.toString());
+    if (alreadyInvited) {
+      res.status(400).json({ message: "User is already invited to this workspace" });
+      return;
+    }
+
+    // Add to pendingInvites
+    workspace.pendingInvites.push({
+      userId: invitedUser._id,
+      invitedBy: userId,
+      role,
+      invitedAt: new Date()
+    });
+    await workspace.save();
+
+    // Optionally, send an email notification here
+
+    res.status(200).json({
+      message: `User invited successfully to workspace as ${role}. Invitation pending acceptance.`,
+      invitedUser: {
+        _id: invitedUser._id,
+        name: invitedUser.name,
+        email: invitedUser.email,
+        role
+      }
+    });
+  } catch (error) {
+    console.error("Error inviting member:", error);
+    res.status(500).json({ message: "Error inviting member" });
+  }
+};
+
+const acceptInvite = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    const { workspaceId } = idValidationResult.data;
+    const userId = req.user.userId;
+
+    // Find workspace
+    const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found" });
+      return;
+    }
+
+    // Find invite
+    const inviteIndex = workspace.pendingInvites.findIndex((invite: any) => invite.userId.toString() === userId);
+    if (inviteIndex === -1) {
+      res.status(404).json({ message: "No pending invite found for this user" });
+      return;
+    }
+    const invite = workspace.pendingInvites[inviteIndex];
+
+    // Add to members
+    workspace.members.push({
+      userId: invite.userId,
+      role: invite.role as "view" | "edit" | "admin",
+      joinedAt: new Date(),
+      invitedBy: invite.invitedBy
+    });
+    workspace.totalMembers = workspace.members.length;
+    // Remove from pendingInvites
+    workspace.pendingInvites.splice(inviteIndex, 1);
+    await workspace.save();
+
+    res.status(200).json({ message: "Invite accepted. You are now a member of the workspace." });
+  } catch (error) {
+    console.error("Error accepting invite:", error);
+    res.status(500).json({ message: "Error accepting invite" });
+  }
+};
+
+const rejectInvite = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    const { workspaceId } = idValidationResult.data;
+    const userId = req.user.userId;
+
+    // Find workspace
+    const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found" });
+      return;
+    }
+
+    // Find invite
+    const inviteIndex = workspace.pendingInvites.findIndex((invite: any) => invite.userId.toString() === userId);
+    if (inviteIndex === -1) {
+      res.status(404).json({ message: "No pending invite found for this user" });
+      return;
+    }
+    // Remove from pendingInvites
+    workspace.pendingInvites.splice(inviteIndex, 1);
+    await workspace.save();
+
+    res.status(200).json({ message: "Invite rejected." });
+  } catch (error) {
+    console.error("Error rejecting invite:", error);
+    res.status(500).json({ message: "Error rejecting invite" });
+  }
+};
+
+const removeMember = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    // Validate workspace ID
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    const { workspaceId, userId } = req.params;
+    const actingUserId = req.user.userId;
+
+    if (!userId) {
+      res.status(400).json({ message: "User ID to remove is required." });
+      return;
+    }
+
+    // Find workspace
+    const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found" });
+      return;
+    }
+
+    // Cannot remove the owner
+    if (workspace.ownerId.toString() === userId) {
+      res.status(400).json({ message: "Cannot remove the owner from the workspace" });
+      return;
+    }
+
+    // Only owner or admin can remove
+    const actingMember = workspace.members.find((member: any) => member.userId.toString() === actingUserId);
+    const isOwner = workspace.ownerId.toString() === actingUserId;
+    const isAdmin = actingMember?.role === 'admin' || isOwner;
+    if (!isAdmin) {
+      res.status(403).json({ message: "Insufficient permissions to remove members" });
+      return;
+    }
+
+    // Check if user is a member
+    const memberIndex = workspace.members.findIndex((member: any) => member.userId.toString() === userId);
+    if (memberIndex === -1) {
+      res.status(404).json({ message: "User is not a member of this workspace" });
+      return;
+    }
+
+    // Remove member
+    workspace.members.splice(memberIndex, 1);
+    workspace.totalMembers = workspace.members.length;
+    await workspace.save();
+
+    res.status(200).json({
+      message: "Member removed successfully",
+      removedUserId: userId
+    });
+  } catch (error) {
+    console.error("Error removing member:", error);
+    res.status(500).json({ message: "Error removing member" });
+  }
+};
+
 export {
   createWorkspace,
   getWorkspaces,
   getWorkspace,
   updateWorkspace,
-  deleteWorkspace
+  deleteWorkspace,
+  inviteMember,
+  removeMember,
+  acceptInvite,
+  rejectInvite
 };
