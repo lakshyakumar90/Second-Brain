@@ -3,6 +3,7 @@ import Workspace from "../models/workspace.model";
 import { formatZodError } from "../utils/validationUtils";
 import { createWorkspaceSchema, updateWorkspaceSchema, workspaceIdSchema } from "../validations/workspaceValidation";
 import User from "../models/user.model";
+import { SharePermission } from "../config/common";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -610,6 +611,134 @@ const removeMember = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 };
 
+const updateMemberRole = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    const { workspaceId, userId } = req.params;
+    const { role } = req.body;
+    const actingUserId = req.user.userId;
+
+    if (!userId || !role) {
+      res.status(400).json({ message: "User ID and new role are required." });
+      return;
+    }
+    if (!['view', 'edit', 'admin'].includes(role)) {
+      res.status(400).json({ message: "Invalid role." });
+      return;
+    }
+
+    // Find workspace
+    const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found" });
+      return;
+    }
+
+    // Cannot change owner's role
+    if (workspace.ownerId.toString() === userId) {
+      res.status(400).json({ message: "Cannot change the owner's role" });
+      return;
+    }
+
+    // Only owner or admin can change
+    const actingMember = workspace.members.find((member: any) => member.userId.toString() === actingUserId);
+    const isOwner = workspace.ownerId.toString() === actingUserId;
+    const isAdmin = actingMember?.role === 'admin' || isOwner;
+    if (!isAdmin) {
+      res.status(403).json({ message: "Insufficient permissions to change member roles" });
+      return;
+    }
+
+    // Find member
+    const member = workspace.members.find((member: any) => member.userId.toString() === userId);
+    if (!member) {
+      res.status(404).json({ message: "User is not a member of this workspace" });
+      return;
+    }
+
+    member.role = role as SharePermission;
+    await workspace.save();
+
+    res.status(200).json({ message: "Member role updated successfully", userId, role });
+  } catch (error) {
+    console.error("Error updating member role:", error);
+    res.status(500).json({ message: "Error updating member role" });
+  }
+};
+
+const getWorkspaceMembers = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    const { workspaceId } = idValidationResult.data;
+
+    const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false })
+      .populate('members.userId', 'name email username avatar')
+      .populate('members.invitedBy', 'name email username')
+      .populate('pendingInvites.userId', 'name email username avatar')
+      .populate('pendingInvites.invitedBy', 'name email username');
+
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found" });
+      return;
+    }
+
+    res.status(200).json({
+      members: workspace.members,
+      pendingInvites: workspace.pendingInvites
+    });
+  } catch (error) {
+    console.error("Error getting workspace members:", error);
+    res.status(500).json({ message: "Error getting workspace members" });
+  }
+};
+
+const leaveWorkspace = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    const { workspaceId } = idValidationResult.data;
+    const userId = req.user.userId;
+
+    const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found" });
+      return;
+    }
+
+    // Owner cannot leave
+    if (workspace.ownerId.toString() === userId) {
+      res.status(400).json({ message: "Owner cannot leave the workspace" });
+      return;
+    }
+
+    // Remove from members
+    const memberIndex = workspace.members.findIndex((member: any) => member.userId.toString() === userId);
+    if (memberIndex === -1) {
+      res.status(404).json({ message: "You are not a member of this workspace" });
+      return;
+    }
+    workspace.members.splice(memberIndex, 1);
+    workspace.totalMembers = workspace.members.length;
+    await workspace.save();
+
+    res.status(200).json({ message: "You have left the workspace" });
+  } catch (error) {
+    console.error("Error leaving workspace:", error);
+    res.status(500).json({ message: "Error leaving workspace" });
+  }
+};
+
 export {
   createWorkspace,
   getWorkspaces,
@@ -619,5 +748,8 @@ export {
   inviteMember,
   removeMember,
   acceptInvite,
-  rejectInvite
+  rejectInvite,
+  updateMemberRole,
+  getWorkspaceMembers,
+  leaveWorkspace
 };
