@@ -39,6 +39,9 @@ const WorkspaceSchema = new mongoose.Schema<IWorkspace>(
 
     totalItems: { type: Number, default: 0 },
     totalMembers: { type: Number, default: 1 },
+    // Soft delete fields
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
   },
   {
     timestamps: true,

@@ -27,6 +27,9 @@ export interface IWorkspace {
     // Statistics
     totalItems: number;
     totalMembers: number;
+    // Soft delete
+    isDeleted: boolean;
+    deletedAt?: Date;
     
     createdAt: Date;
     updatedAt: Date;

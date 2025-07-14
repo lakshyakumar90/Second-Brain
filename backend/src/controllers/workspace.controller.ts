@@ -329,9 +329,66 @@ const updateWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
   }
 };
 
+const deleteWorkspace = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    // Validate workspace ID parameter
+    const idValidationResult = workspaceIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        errors: idValidationResult.error.issues
+      });
+      return;
+    }
+
+    const { workspaceId } = idValidationResult.data;
+    const userId = req.user.userId;
+
+    // Find workspace and check if user has admin access
+    const workspace = await Workspace.findOne({
+      _id: workspaceId,
+      isDeleted: false,
+      $or: [
+        { ownerId: userId },
+        { "members.userId": userId, "members.role": { $in: ["admin"] } }
+      ]
+    });
+
+    if (!workspace) {
+      res.status(404).json({ message: "Workspace not found or access denied" });
+      return;
+    }
+
+    // Check if user is owner or admin
+    const userMember = workspace.members.find(
+      (member: any) => member.userId.toString() === userId
+    );
+    const isOwner = workspace.ownerId.toString() === userId;
+    const isAdmin = userMember?.role === 'admin' || isOwner;
+    if (!isAdmin) {
+      res.status(403).json({ message: "Insufficient permissions to delete workspace" });
+      return;
+    }
+
+    // SOFT DELETE: Set isDeleted and deletedAt. A cron job will permanently delete records older than 1 day.
+    workspace.isDeleted = true;
+    workspace.deletedAt = new Date();
+    await workspace.save();
+
+    res.status(200).json({
+      message: "Workspace deleted (soft delete). Will be permanently deleted after 1 day.",
+      workspaceId: workspace._id
+    });
+  } catch (error) {
+    console.error("Error deleting workspace:", error);
+    res.status(500).json({ message: "Error deleting workspace" });
+  }
+};
+
 export {
   createWorkspace,
   getWorkspaces,
   getWorkspace,
-  updateWorkspace
+  updateWorkspace,
+  deleteWorkspace
 };
