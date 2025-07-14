@@ -74,7 +74,7 @@ export const getItemsQuerySchema = z.object({
 
 // Item ID validation schema
 export const itemIdSchema = z.object({
-  id: z.string().min(1, "Item ID is required"),
+  itemId: z.string().min(1, "Item ID is required"),
 });
 
 // Export types for TypeScript

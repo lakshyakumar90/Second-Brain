@@ -17,12 +17,12 @@ import { authMiddleware } from "../middlewares/authMiddleware";
 const router = Router();
 
 router.post("/create", authMiddleware, createCategory);
-router.get("/", authMiddleware, getCategories);
-router.get("/:id", authMiddleware, getCategory);
-router.get("/:id/items", authMiddleware, getCategoryItems);
-router.put("/:id", authMiddleware, updateCategory);
-router.delete("/:id", authMiddleware, deleteCategory);
-router.patch("/:id/restore", authMiddleware, restoreCategory);
+router.get("/all", authMiddleware, getCategories);
+router.get("/:categoryId", authMiddleware, getCategory);
+router.get("/:categoryId/items", authMiddleware, getCategoryItems);
+router.put("/:categoryId", authMiddleware, updateCategory);
+router.delete("/:categoryId", authMiddleware, deleteCategory);
+router.patch("/:categoryId/restore", authMiddleware, restoreCategory);
 router.delete("/bulk-delete", authMiddleware, bulkDeleteCategories);
 router.patch("/bulk-restore", authMiddleware, bulkRestoreCategories);
 router.post("/reorder", authMiddleware, reorderCategories);

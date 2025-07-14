@@ -269,7 +269,7 @@ const getCategory = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: categoryId } = validationResult.data;
+    const { categoryId } = validationResult.data;
 
     // Find the category and ensure it belongs to the authenticated user
     const category = await Category.findOne({
@@ -351,7 +351,7 @@ const updateCategory = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: categoryId } = idValidationResult.data;
+    const { categoryId } = idValidationResult.data;
     const validatedData = bodyValidationResult.data;
 
     // Find the category and ensure it belongs to the authenticated user
@@ -497,7 +497,7 @@ const deleteCategory = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: categoryId } = validationResult.data;
+    const { categoryId } = validationResult.data;
 
     // Find the category and ensure it belongs to the authenticated user
     const category = await Category.findOne({
@@ -600,7 +600,7 @@ const restoreCategory = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: categoryId } = validationResult.data;
+    const { categoryId } = validationResult.data;
 
     // Find the deleted category and ensure it belongs to the authenticated user
     const category = await Category.findOne({
@@ -1153,7 +1153,7 @@ const getCategoryItems = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: categoryId } = idValidationResult.data;
+    const { categoryId } = idValidationResult.data;
     const {
       page = 1,
       limit = 20,

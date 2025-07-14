@@ -25,7 +25,7 @@ export const updateCategorySchema = createCategorySchema.partial().extend({
 
 // Category ID validation schema
 export const categoryIdSchema = z.object({
-  id: z.string().min(1, "Category ID is required"),
+  categoryId: z.string().min(1, "Category ID is required"),
 });
 
 // Get categories query validation schema

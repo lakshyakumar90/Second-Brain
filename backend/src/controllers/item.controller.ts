@@ -333,7 +333,7 @@ const getItem = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = validationResult.data;
+    const { itemId } = validationResult.data;
 
     // Find the item and ensure it belongs to the authenticated user
     const item = await Item.findOne({
@@ -430,7 +430,7 @@ const updateItem = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = idValidationResult.data;
+    const { itemId } = idValidationResult.data;
     const updateData = updateValidationResult.data;
 
     // Find the item and ensure it belongs to the authenticated user
@@ -532,7 +532,7 @@ const deleteItem = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = validationResult.data;
+    const { itemId } = validationResult.data;
 
     // Find the item and ensure it belongs to the authenticated user
     const existingItem = await Item.findOne({
@@ -621,7 +621,7 @@ const restoreItem = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = validationResult.data;
+    const { itemId } = validationResult.data;
 
     // Find the item and ensure it belongs to the authenticated user and is deleted
     const existingItem = await Item.findOne({
@@ -814,7 +814,7 @@ const duplicateItem = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = validationResult.data;
+    const { itemId } = validationResult.data;
 
     // Find the original item and ensure it belongs to the authenticated user
     const originalItem = await Item.findOne({
@@ -929,7 +929,7 @@ const favoriteItem = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = validationResult.data;
+    const { itemId } = validationResult.data;
 
     // Find the item and ensure it belongs to the authenticated user
     const existingItem = await Item.findOne({
@@ -1022,7 +1022,7 @@ const archiveItem = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = validationResult.data;
+    const { itemId } = validationResult.data;
 
     // Find the item and ensure it belongs to the authenticated user
     const existingItem = await Item.findOne({
@@ -1115,7 +1115,7 @@ const uploadFiles = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = validationResult.data;
+    const { itemId } = validationResult.data;
 
     // Check if files were uploaded
     if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
@@ -1250,7 +1250,7 @@ const getItemAnalytics = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const { id: itemId } = validationResult.data;
+    const { itemId } = validationResult.data;
 
     // Find the item and ensure it belongs to the authenticated user
     const item = await Item.findOne({
