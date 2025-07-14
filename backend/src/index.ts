@@ -13,6 +13,7 @@ import categoryRoutes from "./routes/category.routes";
 import cleanupRoutes from "./routes/cleanup.routes";
 import workspaceRoutes from "./routes/workspace.routes";
 import cleanupService from "./services/cleanupService";
+import shareRoutes from "./routes/share.routes";
 
 connectDB();
 
@@ -33,6 +34,7 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/items", itemRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/workspaces", workspaceRoutes);
+app.use("/api/v1/shares", shareRoutes);
 app.use("/api/v1/cleanup", cleanupRoutes);
 
 app.get("/", (req, res) => {

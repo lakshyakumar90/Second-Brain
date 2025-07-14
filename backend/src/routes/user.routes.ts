@@ -13,12 +13,11 @@ import { uploadAvatar as uploadAvatarMiddleware, handleUploadError } from '../mi
 
 const router = Router();
 
-// Apply authentication middleware to all user routes
+router.get('/profile/:userId', getProfile);
+
 router.use(authMiddleware);
 
-// Profile routes
 router.get('/profile', getProfile);
-router.get('/profile/:userId', getProfile);
 router.put('/profile', updateProfile);
 router.put('/profile/preferences', updateProfilePreferences);
 
