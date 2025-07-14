@@ -5,10 +5,10 @@ class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: "gmail", // You can change this to your preferred email service
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD, // Use app password for Gmail
+        pass: process.env.EMAIL_PASSWORD, 
       },
     });
   }

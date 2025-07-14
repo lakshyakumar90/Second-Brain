@@ -10,6 +10,8 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import itemRoutes from "./routes/item.routes";
 import categoryRoutes from "./routes/category.routes";
+import cleanupRoutes from "./routes/cleanup.routes";
+import cleanupService from "./services/cleanupService";
 
 connectDB();
 
@@ -29,11 +31,43 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/items", itemRoutes);
 app.use("/api/v1/categories", categoryRoutes);
+app.use("/api/v1/cleanup", cleanupRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");
 });
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server is running on port ${process.env.PORT || 3000}`);
+// Start the cleanup service when the server starts
+// This will automatically clean up soft-deleted items after 1 day
+const startServer = async () => {
+    try {
+        // Start cleanup service
+        cleanupService.start();
+        console.log("✅ Cleanup service started successfully");
+        
+        // Start the server
+        const port = process.env.PORT || 3000;
+        app.listen(port, () => {
+            console.log(`🚀 Server is running on port ${port}`);
+            console.log(`🧹 Cleanup service will permanently delete soft-deleted items after 1 day`);
+        });
+    } catch (error) {
+        console.error("❌ Error starting server:", error);
+        process.exit(1);
+    }
+};
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    cleanupService.stop();
+    process.exit(0);
 });
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    cleanupService.stop();
+    process.exit(0);
+});
+
+startServer();
