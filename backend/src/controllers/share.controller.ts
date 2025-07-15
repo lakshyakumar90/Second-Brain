@@ -4,6 +4,7 @@ import { Item } from "../models/index";
 import { nanoid } from "nanoid";
 import { updateShareSchema, shareIdSchema } from "../validations/shareValidation";
 import bcrypt from "bcrypt";
+import Notification from "../models/notification.model";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -47,6 +48,19 @@ const createShare = async (req: AuthRequest, res: Response): Promise<void> => {
       showMetadata: true,
       expiresAt: undefined // or set to a date if you want expiration
     });
+    // Notify the item owner if someone else shared their item
+    if (item.userId.toString() !== userId) {
+      await Notification.create({
+        userId: item.userId,
+        type: "share",
+        title: "Your item was shared",
+        message: `Your item '${item.title}' was shared by another user`,
+        relatedId: item._id,
+        relatedType: "item",
+        senderId: userId,
+        actionUrl: `/items/${item._id}`
+      });
+    }
     res.status(201).json({ message: "Share link created", share });
   } catch (error) {
     // Error is handled by response only, not logged

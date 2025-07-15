@@ -15,6 +15,7 @@ import workspaceRoutes from "./routes/workspace.routes";
 import cleanupService from "./services/cleanupService";
 import shareRoutes from "./routes/share.routes";
 import commentRoutes from "./routes/comment.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 connectDB();
 
@@ -37,6 +38,7 @@ app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/workspaces", workspaceRoutes);
 app.use("/api/v1/shares", shareRoutes);
 app.use("/api/v1/comments", commentRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/cleanup", cleanupRoutes);
 
 app.get("/", (req, res) => {

@@ -12,6 +12,7 @@ import {
   reactionSchema,
   resolveCommentSchema,
 } from "../validations/commentValidation";
+import Notification from "../models/notification.model";
 
 interface AuthRequest extends Request {
   user?: { userId: string };
@@ -62,9 +63,9 @@ const createComment = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    // If this is a reply, check if parent comment exists
+    let parentComment: any = null;
     if (validatedData.parentId) {
-      const parentComment = await Comment.findById(validatedData.parentId);
+      parentComment = await Comment.findById(validatedData.parentId);
       if (!parentComment) {
         res.status(404).json({
           message: "Parent comment not found",
@@ -91,11 +92,42 @@ const createComment = async (req: AuthRequest, res: Response) => {
     const comment = await Comment.create(commentData);
 
     // If this is a reply, update parent comment's replies array
-    if (validatedData.parentId) {
+    if (parentComment) {
       await Comment.findByIdAndUpdate(
         validatedData.parentId,
         { $push: { replies: comment._id } }
       );
+    }
+
+    // Notify the item owner (if not the commenter)
+    if (item.userId.toString() !== req.user.userId) {
+      try {
+        await Notification.create({
+          userId: item.userId,
+          type: "comment",
+          title: "New comment on your item",
+          message: `A new comment was added to your item '${item.title}'.`,
+          relatedId: item._id,
+          relatedType: "item",
+          senderId: req.user.userId,
+          actionUrl: `/items/${item._id}`
+        });
+      } catch (e) { console.error('Notification creation error (item owner):', e); }
+    }
+    // If this is a reply, notify the parent comment author (if not the same as the commenter)
+    if (parentComment && parentComment.userId && parentComment.userId.toString() !== req.user.userId) {
+      try {
+        await Notification.create({
+          userId: parentComment.userId,
+          type: "comment",
+          title: "New reply to your comment",
+          message: `Someone replied to your comment on item '${item.title}'.`,
+          relatedId: item._id,
+          relatedType: "item",
+          senderId: req.user.userId,
+          actionUrl: `/items/${item._id}`
+        });
+      } catch (e) { console.error('Notification creation error (parent comment):', e); }
     }
 
     // Populate references for response

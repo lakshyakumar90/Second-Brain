@@ -10,7 +10,7 @@ const NotificationSchema = new mongoose.Schema<INotification>(
     },
     type: {
       type: String,
-      enum: ["share", "collaboration", "system", "ai_insight"],
+      enum: ["share", "collaboration", "system", "ai_insight", "comment"],
       required: true,
     },
     title: { type: String, required: true },

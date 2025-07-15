@@ -4,6 +4,7 @@ import { formatZodError } from "../utils/validationUtils";
 import { createWorkspaceSchema, updateWorkspaceSchema, workspaceIdSchema } from "../validations/workspaceValidation";
 import User from "../models/user.model";
 import { SharePermission } from "../config/common";
+import Notification from "../models/notification.model";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -456,6 +457,18 @@ const inviteMember = async (req: AuthRequest, res: Response): Promise<void> => {
     });
     await workspace.save();
 
+    // Notify the invited user
+    await Notification.create({
+      userId: invitedUser._id,
+      type: "collaboration",
+      title: "Workspace Invitation",
+      message: `You have been invited to join the workspace '${workspace.name}'.`,
+      relatedId: workspace._id,
+      relatedType: "workspace",
+      senderId: userId,
+      actionUrl: `/workspaces/${workspace._id}`
+    });
+
     // Optionally, send an email notification here
 
     res.status(200).json({
@@ -509,6 +522,20 @@ const acceptInvite = async (req: AuthRequest, res: Response): Promise<void> => {
     // Remove from pendingInvites
     workspace.pendingInvites.splice(inviteIndex, 1);
     await workspace.save();
+
+    // Notify the inviter (if available)
+    if (invite.invitedBy) {
+      await Notification.create({
+        userId: invite.invitedBy,
+        type: "collaboration",
+        title: "Invitation Accepted",
+        message: `${req.user.name || "A user"} accepted your invitation to join workspace '${workspace.name}'.`,
+        relatedId: workspace._id,
+        relatedType: "workspace",
+        senderId: userId,
+        actionUrl: `/workspaces/${workspace._id}`
+      });
+    }
 
     res.status(200).json({ message: "Invite accepted. You are now a member of the workspace." });
   } catch (error) {
