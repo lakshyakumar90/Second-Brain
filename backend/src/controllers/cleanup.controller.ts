@@ -27,7 +27,7 @@ const startCleanupService = async (req: AuthRequest, res: Response) => {
       status: cleanupService.getStatus(),
     });
   } catch (error) {
-    console.error("Error starting cleanup service:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error starting cleanup service",
       error: "Internal server error",
@@ -57,7 +57,7 @@ const stopCleanupService = async (req: AuthRequest, res: Response) => {
       status: cleanupService.getStatus(),
     });
   } catch (error) {
-    console.error("Error stopping cleanup service:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error stopping cleanup service",
       error: "Internal server error",
@@ -87,7 +87,7 @@ const getCleanupStatus = async (req: AuthRequest, res: Response) => {
       status,
     });
   } catch (error) {
-    console.error("Error getting cleanup service status:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error getting cleanup service status",
       error: "Internal server error",
@@ -117,7 +117,7 @@ const triggerManualCleanup = async (req: AuthRequest, res: Response) => {
       stats,
     });
   } catch (error) {
-    console.error("Error triggering manual cleanup:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error triggering manual cleanup",
       error: "Internal server error",
@@ -156,7 +156,7 @@ const updateCleanupSettings = async (req: AuthRequest, res: Response) => {
       status: cleanupService.getStatus(),
     });
   } catch (error) {
-    console.error("Error updating cleanup settings:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error updating cleanup settings",
       error: "Internal server error",

@@ -75,7 +75,7 @@ const createWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
       }
     });
   } catch (error) {
-    console.error("Error creating workspace:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error creating workspace" });
   }
 };
@@ -124,7 +124,7 @@ const getWorkspaces = async (req: AuthRequest, res: Response): Promise<void> => 
       total: workspacesWithRole.length
     });
   } catch (error) {
-    console.error("Error fetching workspaces:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error fetching workspaces" });
   }
 };
@@ -187,7 +187,7 @@ const getWorkspace = async (req: AuthRequest, res: Response): Promise<void> => {
       }
     });
   } catch (error) {
-    console.error("Error fetching workspace:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error fetching workspace" });
   }
 };
@@ -326,7 +326,7 @@ const updateWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
       }
     });
   } catch (error) {
-    console.error("Error updating workspace:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error updating workspace" });
   }
 };
@@ -382,7 +382,7 @@ const deleteWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
       workspaceId: workspace._id
     });
   } catch (error) {
-    console.error("Error deleting workspace:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error deleting workspace" });
   }
 };
@@ -468,7 +468,7 @@ const inviteMember = async (req: AuthRequest, res: Response): Promise<void> => {
       }
     });
   } catch (error) {
-    console.error("Error inviting member:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error inviting member" });
   }
 };
@@ -512,7 +512,7 @@ const acceptInvite = async (req: AuthRequest, res: Response): Promise<void> => {
 
     res.status(200).json({ message: "Invite accepted. You are now a member of the workspace." });
   } catch (error) {
-    console.error("Error accepting invite:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error accepting invite" });
   }
 };
@@ -546,7 +546,7 @@ const rejectInvite = async (req: AuthRequest, res: Response): Promise<void> => {
 
     res.status(200).json({ message: "Invite rejected." });
   } catch (error) {
-    console.error("Error rejecting invite:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error rejecting invite" });
   }
 };
@@ -606,7 +606,7 @@ const removeMember = async (req: AuthRequest, res: Response): Promise<void> => {
       removedUserId: userId
     });
   } catch (error) {
-    console.error("Error removing member:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error removing member" });
   }
 };
@@ -665,7 +665,7 @@ const updateMemberRole = async (req: AuthRequest, res: Response): Promise<void> 
 
     res.status(200).json({ message: "Member role updated successfully", userId, role });
   } catch (error) {
-    console.error("Error updating member role:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error updating member role" });
   }
 };
@@ -695,7 +695,7 @@ const getWorkspaceMembers = async (req: AuthRequest, res: Response): Promise<voi
       pendingInvites: workspace.pendingInvites
     });
   } catch (error) {
-    console.error("Error getting workspace members:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error getting workspace members" });
   }
 };
@@ -734,7 +734,7 @@ const leaveWorkspace = async (req: AuthRequest, res: Response): Promise<void> =>
 
     res.status(200).json({ message: "You have left the workspace" });
   } catch (error) {
-    console.error("Error leaving workspace:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error leaving workspace" });
   }
 };

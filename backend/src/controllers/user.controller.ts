@@ -261,7 +261,6 @@ const uploadAvatar = async (req: AuthRequest, res: Response) => {
         });
 
     } catch (error) {
-        console.error('Avatar upload error:', error);
         res.status(500).json({ 
             message: "Error uploading avatar",
             error: "Failed to process image upload"

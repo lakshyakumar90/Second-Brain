@@ -3,6 +3,7 @@ import Share from "../models/share.model";
 import { Item } from "../models/index";
 import { nanoid } from "nanoid";
 import { updateShareSchema, shareIdSchema } from "../validations/shareValidation";
+import bcrypt from "bcrypt";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -48,7 +49,7 @@ const createShare = async (req: AuthRequest, res: Response): Promise<void> => {
     });
     res.status(201).json({ message: "Share link created", share });
   } catch (error) {
-    console.error("Error creating share:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error creating share" });
   }
 };
@@ -60,7 +61,7 @@ const getShares = async (req: AuthRequest, res: Response): Promise<void> => {
     const shares = await Share.find({ userId }).sort({ createdAt: -1 });
     res.status(200).json({ shares });
   } catch (error) {
-    console.error("Error getting shares:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error getting shares" });
   }
 };
@@ -96,7 +97,7 @@ const getShare = async (req: Request, res: Response): Promise<void> => {
     await share.save();
     res.status(200).json({ share, item });
   } catch (error) {
-    console.error("Error getting share:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error getting share" });
   }
 };
@@ -130,7 +131,7 @@ const updateShare = async (req: AuthRequest, res: Response): Promise<void> => {
     await share.save();
     res.status(200).json({ message: "Share updated successfully", share });
   } catch (error) {
-    console.error("Error updating share:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error updating share" });
   }
 };
@@ -155,9 +156,122 @@ const deleteShare = async (req: AuthRequest, res: Response): Promise<void> => {
     await share.deleteOne();
     res.status(200).json({ message: "Share deleted successfully" });
   } catch (error) {
-    console.error("Error deleting share:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({ message: "Error deleting share" });
   }
 };
 
-export { createShare, getShares, getShare, updateShare, deleteShare };
+// Public access to a share (increments analytics, checks password if set)
+const accessShare = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { shareId } = req.params;
+    const { password } = req.body;
+    if (!shareId) {
+      res.status(400).json({ message: "shareId is required" });
+      return;
+    }
+    // Find share
+    const share = await Share.findOne({ shareId, isPublic: true });
+    if (!share) {
+      res.status(404).json({ message: "Share link not found or not public" });
+      return;
+    }
+    // Check expiration
+    if (share.expiresAt && share.expiresAt < new Date()) {
+      res.status(410).json({ message: "Share link has expired" });
+      return;
+    }
+    // Check password if set
+    if (share.password) {
+      if (!password) {
+        res.status(401).json({ message: "Password required" });
+        return;
+      }
+      const isMatch = await bcrypt.compare(password, share.password);
+      if (!isMatch) {
+        res.status(401).json({ message: "Invalid password" });
+        return;
+      }
+    }
+    // Increment analytics
+    share.accessCount += 1;
+    share.lastAccessedAt = new Date();
+    // Optionally, log IP/userAgent
+    share.accessLog.push({
+      ip: req.ip || "",
+      userAgent: String(req.headers["user-agent"] || ""),
+      accessedAt: new Date(),
+    });
+    await share.save();
+    res.status(200).json({ message: "Share accessed", shareId });
+  } catch (error) {
+    // Error is handled by response only, not logged
+    res.status(500).json({ message: "Error accessing share" });
+  }
+};
+
+// Get share analytics (owner only)
+const getShareAnalytics = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { shareId } = req.params;
+    const userId = req.user.userId;
+    if (!shareId) {
+      res.status(400).json({ message: "shareId is required" });
+      return;
+    }
+    const share = await Share.findOne({ shareId, userId });
+    if (!share) {
+      res.status(404).json({ message: "Share not found or access denied" });
+      return;
+    }
+    // Return analytics fields
+    const analytics = {
+      accessCount: share.accessCount,
+      uniqueViews: share.uniqueViews,
+      lastAccessedAt: share.lastAccessedAt,
+      accessLog: share.accessLog,
+      createdAt: share.createdAt,
+      updatedAt: share.updatedAt,
+    };
+    res.status(200).json({ analytics });
+  } catch (error) {
+    // Error is handled by response only, not logged
+    res.status(500).json({ message: "Error getting share analytics" });
+  }
+};
+
+// Validate share password (public)
+const checkSharePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { shareId } = req.params;
+    const { password } = req.body;
+    if (!shareId) {
+      res.status(400).json({ message: "shareId is required" });
+      return;
+    }
+    const share = await Share.findOne({ shareId, isPublic: true });
+    if (!share) {
+      res.status(404).json({ message: "Share link not found or not public" });
+      return;
+    }
+    if (!share.password) {
+      res.status(400).json({ message: "This share does not require a password" });
+      return;
+    }
+    if (!password) {
+      res.status(400).json({ message: "Password is required" });
+      return;
+    }
+    const isMatch = await bcrypt.compare(password, share.password);
+    if (!isMatch) {
+      res.status(401).json({ message: "Invalid password" });
+      return;
+    }
+    res.status(200).json({ message: "Password is valid" });
+  } catch (error) {
+    // Error is handled by response only, not logged
+    res.status(500).json({ message: "Error checking share password" });
+  }
+};
+
+export { createShare, getShares, getShare, updateShare, deleteShare, accessShare, getShareAnalytics, checkSharePassword };

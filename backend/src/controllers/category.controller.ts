@@ -102,9 +102,7 @@ const createCategory = async (req: AuthRequest, res: Response) => {
       category: populatedCategory,
     });
   } catch (error) {
-    console.error("Error creating category:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("duplicate key")) {
         res.status(409).json({
@@ -236,8 +234,7 @@ const getCategories = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Error retrieving categories:", error);
-
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error retrieving categories",
       error: "Internal server error",
@@ -294,9 +291,7 @@ const getCategory = async (req: AuthRequest, res: Response) => {
       category: category,
     });
   } catch (error) {
-    console.error("Error retrieving category:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -446,9 +441,7 @@ const updateCategory = async (req: AuthRequest, res: Response) => {
       category: updatedCategory,
     });
   } catch (error) {
-    console.error("Error updating category:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -556,9 +549,7 @@ const deleteCategory = async (req: AuthRequest, res: Response) => {
       category: deletedCategory,
     });
   } catch (error) {
-    console.error("Error deleting category:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -668,9 +659,7 @@ const restoreCategory = async (req: AuthRequest, res: Response) => {
       category: restoredCategory,
     });
   } catch (error) {
-    console.error("Error restoring category:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -819,10 +808,7 @@ const bulkDeleteCategories = async (req: AuthRequest, res: Response) => {
       categories: deletedCategories,
     });
   } catch (error) {
-    console.error("Error bulk deleting categories:", error);
-    console.error("Request body:", req.body);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -989,9 +975,7 @@ const bulkRestoreCategories = async (req: AuthRequest, res: Response) => {
       categories: restoredCategories,
     });
   } catch (error) {
-    console.error("Error bulk restoring categories:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -1096,9 +1080,7 @@ const reorderCategories = async (req: AuthRequest, res: Response) => {
       categories: updatedCategories,
     });
   } catch (error) {
-    console.error("Error reordering categories:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -1292,9 +1274,7 @@ const getCategoryItems = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Error retrieving category items:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -1454,9 +1434,7 @@ const bulkCategorize = async (req: AuthRequest, res: Response) => {
       items: updatedItems,
     });
   } catch (error) {
-    console.error("Error bulk categorizing items:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -1514,7 +1492,6 @@ const updateCategoryItemCounts = async (categoryIds: string[], userId: string) =
       await Category.bulkWrite(updateOperations);
     }
   } catch (error) {
-    console.error("Error updating category item counts:", error);
     // Don't throw error as this is a background operation
   }
 };

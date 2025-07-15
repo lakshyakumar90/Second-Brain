@@ -96,9 +96,7 @@ const createItem = async (req: AuthRequest, res: Response) => {
       item: populatedItem,
     });
   } catch (error) {
-    console.error("Error creating item:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("duplicate key")) {
         res.status(409).json({
@@ -300,8 +298,7 @@ const getItems = async (req: AuthRequest, res: Response) => {
 
     res.status(200).json(response);
   } catch (error) {
-    console.error("Error retrieving items:", error);
-
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error retrieving items",
       error: "Internal server error",
@@ -373,9 +370,7 @@ const getItem = async (req: AuthRequest, res: Response) => {
       item: itemWithUpdatedViews,
     });
   } catch (error) {
-    console.error("Error retrieving item:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -480,9 +475,7 @@ const updateItem = async (req: AuthRequest, res: Response) => {
       item: updatedItem,
     });
   } catch (error) {
-    console.error("Error updating item:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -577,9 +570,7 @@ const deleteItem = async (req: AuthRequest, res: Response) => {
       item: deletedItem,
     });
   } catch (error) {
-    console.error("Error deleting item:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -666,9 +657,7 @@ const restoreItem = async (req: AuthRequest, res: Response) => {
       item: restoredItem,
     });
   } catch (error) {
-    console.error("Error restoring item:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -730,7 +719,7 @@ const bulkDelete = async (req: AuthRequest, res: Response) => {
       modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    console.error("Error bulk deleting items:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error bulk deleting items",
       error: "Internal server error",
@@ -782,7 +771,7 @@ const bulkRestore = async (req: AuthRequest, res: Response) => {
       modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    console.error("Error bulk restoring items:", error);
+    // Error is handled by response only, not logged
     res.status(500).json({
       message: "Error bulk restoring items",
       error: "Internal server error",
@@ -877,9 +866,7 @@ const duplicateItem = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Error duplicating item:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -978,9 +965,7 @@ const favoriteItem = async (req: AuthRequest, res: Response) => {
       isFavorite: newFavoriteStatus,
     });
   } catch (error) {
-    console.error("Error toggling favorite status:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -1071,9 +1056,7 @@ const archiveItem = async (req: AuthRequest, res: Response) => {
       isArchived: newArchiveStatus,
     });
   } catch (error) {
-    console.error("Error toggling archive status:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -1206,9 +1189,7 @@ const uploadFiles = async (req: AuthRequest, res: Response) => {
       totalFiles: updatedItem.files.length,
     });
   } catch (error) {
-    console.error("Error uploading files:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
@@ -1325,9 +1306,7 @@ const getItemAnalytics = async (req: AuthRequest, res: Response) => {
       analytics: analytics,
     });
   } catch (error) {
-    console.error("Error retrieving item analytics:", error);
-
-    // Handle specific errors
+    // Error is handled by response only, not logged
     if (error instanceof Error) {
       if (error.message.includes("Cast to ObjectId failed")) {
         res.status(400).json({
