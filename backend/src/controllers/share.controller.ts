@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Share from "../models/share.model";
 import { Item } from "../models/index";
 import { nanoid } from "nanoid";
+import { updateShareSchema, shareIdSchema } from "../validations/shareValidation";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -100,4 +101,63 @@ const getShare = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export { createShare, getShares, getShare };
+// Update share settings
+const updateShare = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    // Validate shareId param
+    const idValidationResult = shareIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    // Validate update body
+    const updateValidationResult = updateShareSchema.safeParse(req.body);
+    if (!updateValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: updateValidationResult.error.issues });
+      return;
+    }
+    const { shareId } = idValidationResult.data;
+    const updateData = updateValidationResult.data;
+    const userId = req.user.userId;
+    // Find share and check ownership
+    const share = await Share.findOne({ shareId, userId });
+    if (!share) {
+      res.status(404).json({ message: "Share not found or access denied" });
+      return;
+    }
+    // Update allowed fields
+    Object.assign(share, updateData);
+    await share.save();
+    res.status(200).json({ message: "Share updated successfully", share });
+  } catch (error) {
+    console.error("Error updating share:", error);
+    res.status(500).json({ message: "Error updating share" });
+  }
+};
+
+// Delete share
+const deleteShare = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    // Validate shareId param
+    const idValidationResult = shareIdSchema.safeParse(req.params);
+    if (!idValidationResult.success) {
+      res.status(400).json({ message: "Validation failed", errors: idValidationResult.error.issues });
+      return;
+    }
+    const { shareId } = idValidationResult.data;
+    const userId = req.user.userId;
+    // Find share and check ownership
+    const share = await Share.findOne({ shareId, userId });
+    if (!share) {
+      res.status(404).json({ message: "Share not found or access denied" });
+      return;
+    }
+    await share.deleteOne();
+    res.status(200).json({ message: "Share deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting share:", error);
+    res.status(500).json({ message: "Error deleting share" });
+  }
+};
+
+export { createShare, getShares, getShare, updateShare, deleteShare };
