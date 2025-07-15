@@ -16,6 +16,7 @@ import cleanupService from "./services/cleanupService";
 import shareRoutes from "./routes/share.routes";
 import commentRoutes from "./routes/comment.routes";
 import notificationRoutes from "./routes/notification.routes";
+import aiRoutes from './routes/ai.routes';
 
 connectDB();
 
@@ -40,6 +41,7 @@ app.use("/api/v1/shares", shareRoutes);
 app.use("/api/v1/comments", commentRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/cleanup", cleanupRoutes);
+app.use("/api/v1/ai", aiRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");

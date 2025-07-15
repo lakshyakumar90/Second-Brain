@@ -90,3 +90,18 @@ export const AI_LIMITS = {
     SHARED: 'Successfully shared',
     INVITED: 'Invitation sent successfully'
   } as const;
+
+export const GEMINI_CONFIG = {
+  API_KEY: process.env.GEMINI_API_KEY || '',
+  API_ENDPOINT: process.env.GEMINI_API_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/models',
+  MODELS: {
+    SUMMARIZATION: 'gemini-2.0-flash',
+    TAG_SUGGESTION: 'gemini-2.0-flash',
+    CATEGORIZATION: 'gemini-2.0-flash',
+    CHAT: 'gemini-2.0-flash',
+    INSIGHTS: 'gemini-2.0-flash',
+    GENERATION: 'gemini-2.0-flash',
+    EXTRACTION: 'gemini-2.0-flash',
+    ANALYSIS: 'gemini-2.0-flash',
+  }
+} as const;
