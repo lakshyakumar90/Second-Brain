@@ -1,19 +1,18 @@
 import { Router } from "express";
-import { createComment, getComments, getComment } from "../controllers/comment.controller";
+import { createComment, getComments, getComment, updateComment, deleteComment, replyToComment, addReaction, removeReaction, resolveComment } from "../controllers/comment.controller";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-// Apply authentication middleware to all comment routes
 router.use(authMiddleware);
-
-// Create a new comment
 router.post("/create", createComment);
-
-// Get comments for a specific item
 router.get("/item/:itemId", getComments);
-
-// Get a single comment by ID
 router.get("/:commentId", getComment);
+router.patch('/:commentId', updateComment);
+router.delete('/:commentId', deleteComment);
+router.post('/reply', replyToComment);
+router.post('/:commentId/reaction', addReaction);
+router.delete('/:commentId/reaction', removeReaction);
+router.patch('/:commentId/resolve', resolveComment);
 
 export default router; 

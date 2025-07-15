@@ -31,6 +31,27 @@ export const itemIdForCommentsSchema = z.object({
   itemId: z.string().min(1, "Item ID is required"),
 });
 
+// Update comment validation schema
+export const updateCommentSchema = z.object({
+  content: z.string().min(1, "Comment content is required").max(1000, "Comment must be less than 1000 characters"),
+});
+
+// Delete comment validation schema (just needs commentId)
+export const deleteCommentSchema = commentIdSchema;
+
+// Reply to comment validation schema (same as create, but parentId required)
+export const replyToCommentSchema = createCommentSchema.extend({
+  parentId: z.string().min(1, "Parent comment ID is required"),
+});
+
+// Add/remove reaction validation schema
+export const reactionSchema = z.object({
+  type: z.enum(["like", "love", "laugh", "wow", "sad", "angry"]),
+});
+
+// Resolve comment validation schema (just needs commentId)
+export const resolveCommentSchema = commentIdSchema;
+
 // Export types for TypeScript
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 export type GetCommentsQueryInput = z.infer<typeof getCommentsQuerySchema>; 

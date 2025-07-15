@@ -1,10 +1,16 @@
 import { Request, Response } from "express";
 import { Comment, Item } from "../models/index";
+import mongoose from "mongoose";
 import {
   createCommentSchema,
   getCommentsQuerySchema,
   commentIdSchema,
   itemIdForCommentsSchema,
+  updateCommentSchema,
+  deleteCommentSchema,
+  replyToCommentSchema,
+  reactionSchema,
+  resolveCommentSchema,
 } from "../validations/commentValidation";
 
 interface AuthRequest extends Request {
@@ -310,8 +316,214 @@ const getComment = async (req: AuthRequest, res: Response) => {
   }
 };
 
+const updateComment = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      res.status(401).json({ message: "Unauthorized", error: "Authentication required" });
+      return;
+    }
+    const idValidation = commentIdSchema.safeParse(req.params);
+    if (!idValidation.success) {
+      res.status(400).json({ message: "Validation failed", error: idValidation.error });
+      return;
+    }
+    const validationResult = updateCommentSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      res.status(400).json({ message: "Validation failed", error: validationResult.error });
+      return;
+    }
+    const { commentId } = idValidation.data;
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+    if (String(comment.userId) !== req.user.userId) {
+      res.status(403).json({ message: "Forbidden", error: "You can only edit your own comments" });
+      return;
+    }
+    comment.content = validationResult.data.content;
+    comment.isEdited = true;
+    await comment.save();
+    res.status(200).json({ message: "Comment updated successfully", comment });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating comment", error: "Internal server error" });
+  }
+};
+
+const deleteComment = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      res.status(401).json({ message: "Unauthorized", error: "Authentication required" });
+      return;
+    }
+    const idValidation = commentIdSchema.safeParse(req.params);
+    if (!idValidation.success) {
+      res.status(400).json({ message: "Validation failed", error: idValidation.error });
+      return;
+    }
+    const { commentId } = idValidation.data;
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+    if (String(comment.userId) !== req.user.userId) {
+      res.status(403).json({ message: "Forbidden", error: "You can only delete your own comments" });
+      return;
+    }
+    // Soft delete: set a flag or actually remove? Here, let's set a flag isDeleted
+    comment.isDeleted = true;
+    await comment.save();
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting comment", error: "Internal server error" });
+  }
+};
+
+const replyToComment = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      res.status(401).json({ message: "Unauthorized", error: "Authentication required" });
+      return;
+    }
+    const validationResult = replyToCommentSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      res.status(400).json({ message: "Validation failed", error: validationResult.error });
+      return;
+    }
+    // Reuse createComment logic, but parentId is required
+    req.body.parentId = validationResult.data.parentId;
+    return await createComment(req, res);
+  } catch (error) {
+    res.status(500).json({ message: "Error replying to comment", error: "Internal server error" });
+  }
+};
+
+const addReaction = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      res.status(401).json({ message: "Unauthorized", error: "Authentication required" });
+      return;
+    }
+    const idValidation = commentIdSchema.safeParse(req.params);
+    if (!idValidation.success) {
+      res.status(400).json({ message: "Validation failed", error: idValidation.error });
+      return;
+    }
+    const reactionValidation = reactionSchema.safeParse(req.body);
+    if (!reactionValidation.success) {
+      res.status(400).json({ message: "Validation failed", error: reactionValidation.error });
+      return;
+    }
+    const { commentId } = idValidation.data;
+    const { type } = reactionValidation.data;
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+    // Prevent duplicate reactions of the same type by the same user
+    const alreadyReacted = comment.reactions.some(
+      (r: any) => String(r.userId) === req.user!.userId && r.type === type
+    );
+    if (alreadyReacted) {
+      res.status(409).json({ message: "Already reacted" });
+      return;
+    }
+    comment.reactions.push({ userId: new mongoose.Types.ObjectId(req.user.userId) as any, type, createdAt: new Date() });
+    await comment.save();
+    res.status(200).json({ message: "Reaction added", comment });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding reaction", error: "Internal server error" });
+  }
+};
+
+const removeReaction = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      res.status(401).json({ message: "Unauthorized", error: "Authentication required" });
+      return;
+    }
+    const idValidation = commentIdSchema.safeParse(req.params);
+    if (!idValidation.success) {
+      res.status(400).json({ message: "Validation failed", error: idValidation.error });
+      return;
+    }
+    const reactionValidation = reactionSchema.safeParse(req.body);
+    if (!reactionValidation.success) {
+      res.status(400).json({ message: "Validation failed", error: reactionValidation.error });
+      return;
+    }
+    const { commentId } = idValidation.data;
+    const { type } = reactionValidation.data;
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+    const prevCount = comment.reactions.length;
+    comment.reactions = comment.reactions.filter(
+      (r: any) => !(String(r.userId) === req.user!.userId && r.type === type)
+    );
+    if (comment.reactions.length === prevCount) {
+      res.status(404).json({ message: "Reaction not found" });
+      return;
+    }
+    await comment.save();
+    res.status(200).json({ message: "Reaction removed", comment });
+  } catch (error) {
+    res.status(500).json({ message: "Error removing reaction", error: "Internal server error" });
+  }
+};
+
+const resolveComment = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.userId) {
+      res.status(401).json({ message: "Unauthorized", error: "Authentication required" });
+      return;
+    }
+    const idValidation = commentIdSchema.safeParse(req.params);
+    if (!idValidation.success) {
+      res.status(400).json({ message: "Validation failed", error: idValidation.error });
+      return;
+    }
+    const { commentId } = idValidation.data;
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+    // Only the comment author or item owner/collaborator can resolve
+    const item = await Item.findById(comment.itemId);
+    if (!item) {
+      res.status(404).json({ message: "Item not found" });
+      return;
+    }
+    if (
+      String(comment.userId) !== req.user.userId &&
+      String(item.userId) !== req.user.userId &&
+      !(item.collaborators && item.collaborators.map(String).includes(req.user.userId))
+    ) {
+      res.status(403).json({ message: "Forbidden", error: "You don't have permission to resolve this comment" });
+      return;
+    }
+    comment.isResolved = true;
+    await comment.save();
+    res.status(200).json({ message: "Comment marked as resolved", comment });
+  } catch (error) {
+    res.status(500).json({ message: "Error resolving comment", error: "Internal server error" });
+  }
+};
+
 export {
   createComment,
   getComments,
   getComment,
+  updateComment,
+  deleteComment,
+  replyToComment,
+  addReaction,
+  removeReaction,
+  resolveComment,
 };

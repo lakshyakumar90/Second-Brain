@@ -13,6 +13,7 @@ export interface IComment {
   // Status
   isResolved: boolean;
   isEdited: boolean;
+  isDeleted: boolean;
 
   // Reactions
   reactions: Array<{

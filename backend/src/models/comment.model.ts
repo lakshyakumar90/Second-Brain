@@ -11,6 +11,7 @@ const CommentSchema = new mongoose.Schema<IComment>({
     
     isResolved: { type: Boolean, default: false },
     isEdited: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
     
     reactions: [{
       userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
