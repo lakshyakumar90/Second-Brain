@@ -1,12 +1,23 @@
 import { ObjectId } from "mongoose";
 import { ContentType, SocialPlatform } from "../../config/common";
 
+export type BlockType = 'text' | 'heading' | 'code' | 'todo' | 'checklist';
+
+export interface Block {
+  id: string;
+  type: BlockType;
+  content: string | string[] | null;
+  checked?: boolean;
+  children?: Block[];
+}
+
 export interface IItem {
     _id: ObjectId;
     userId: ObjectId;
     type: ContentType;
     title: string;
     content?: string;
+    blocks?: Block[];
     url?: string;
     
     files: Array<{

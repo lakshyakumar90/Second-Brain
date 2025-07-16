@@ -5,6 +5,15 @@ export const createItemSchema = z.object({
   type: z.enum(["text", "image", "video", "link", "document", "audio"] as const),
   title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
   content: z.string().optional(),
+  blocks: z.array(
+    z.object({
+      id: z.string(),
+      type: z.enum(["text", "heading", "code", "todo", "checklist"] as const),
+      content: z.union([z.string(), z.array(z.string()), z.null()]),
+      checked: z.boolean().optional(),
+      children: z.array(z.any()).optional(), // recursive, but z.any for now
+    })
+  ).optional(),
   url: z.string().url().optional(),
   
   // Metadata
@@ -44,8 +53,55 @@ export const createItemSchema = z.object({
 });
 
 // Update item validation schema (partial)
-export const updateItemSchema = createItemSchema.partial().extend({
+export const updateItemSchema = z.object({
+  type: z.enum(["text", "image", "video", "link", "document", "audio"] as const).optional(),
   title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters").optional(),
+  content: z.string().optional(),
+  blocks: z.array(
+    z.object({
+      id: z.string(),
+      type: z.enum(["text", "heading", "code", "todo", "checklist"] as const),
+      content: z.union([z.string(), z.array(z.string()), z.null()]),
+      checked: z.boolean().optional(),
+      children: z.array(z.any()).optional(),
+    })
+  ).optional(),
+  url: z.string().url().optional(),
+  
+  // Metadata
+  metadata: z.object({
+    size: z.number().optional(),
+    duration: z.number().optional(),
+    dimensions: z.object({
+      width: z.number().optional(),
+      height: z.number().optional(),
+    }).optional(),
+    socialPlatform: z.enum([
+      "twitter", "instagram", "youtube", "linkedin", 
+      "tiktok", "reddit", "pinterest"
+    ] as const).optional(),
+    author: z.string().optional(),
+    description: z.string().optional(),
+    publishedAt: z.string().datetime().optional(),
+    language: z.string().optional(),
+    wordCount: z.number().optional(),
+    readingTime: z.number().optional(),
+    extractedText: z.string().optional(),
+  }).optional(),
+  
+  // Categories and tags
+  categories: z.array(z.string()).optional(),
+  tags: z.array(z.string().min(1, "Tag cannot be empty")).optional(),
+  workspace: z.string().optional(),
+  
+  // Settings
+  isPublic: z.boolean().default(false),
+  collaborators: z.array(z.string()).optional(),
+  isFavorite: z.boolean().default(false),
+  isArchived: z.boolean().default(false),
+  
+  // Parent item for versioning
+  parentId: z.string().optional(),
 });
 
 // Get items query validation schema

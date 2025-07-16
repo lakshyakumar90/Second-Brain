@@ -15,6 +15,18 @@ const ItemSchema = new mongoose.Schema<IItem>(
     },
     title: { type: String, required: true, trim: true },
     content: { type: String },
+    blocks: {
+      type: [
+        {
+          id: { type: String, required: true },
+          type: { type: String, required: true }, // e.g., 'text', 'heading', 'code', 'todo', etc.
+          content: { type: mongoose.Schema.Types.Mixed }, // string, array, or null
+          checked: { type: Boolean }, // for todo/checklist
+          children: { type: Array }, // array of blocks (nested)
+        },
+      ],
+      default: [],
+    },
     url: { type: String },
 
     files: [

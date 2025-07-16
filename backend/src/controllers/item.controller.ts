@@ -41,6 +41,7 @@ const createItem = async (req: AuthRequest, res: Response) => {
       type: validatedData.type,
       title: validatedData.title,
       content: validatedData.content,
+      blocks: validatedData.blocks, // support blocks
       url: validatedData.url,
 
       // Initialize empty files array (since we're only doing avatar uploads)
@@ -823,6 +824,7 @@ const duplicateItem = async (req: AuthRequest, res: Response) => {
       type: originalItem.type,
       title: `${originalItem.title} (Copy)`,
       content: originalItem.content,
+      blocks: originalItem.blocks, // copy blocks if present
       url: originalItem.url,
       files: originalItem.files, // Copy files array
       metadata: originalItem.metadata,
