@@ -19,6 +19,7 @@ const ActivityLogSchema = new mongoose.Schema<IActivityLog>(
         "comment",
         "collaborate",
         "aiChat",
+        "search", // Added 'search' as a valid action
       ],
       required: true,
     },
@@ -27,9 +28,10 @@ const ActivityLogSchema = new mongoose.Schema<IActivityLog>(
       enum: ["item", "category", "workspace", "share", "collaboration", "aiChat"],
       required: true,
     },
-    resourceId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    resourceId: { type: mongoose.Schema.Types.ObjectId, required: false }, // Make resourceId optional
 
     details: {
+      query: { type: String }, // Allow storing search queries
       oldValues: { type: mongoose.Schema.Types.Mixed },
       newValues: { type: mongoose.Schema.Types.Mixed },
       metadata: { type: mongoose.Schema.Types.Mixed },

@@ -23,21 +23,15 @@ const getProfile = async (req: AuthRequest, res: Response) => {
             return;
         }
 
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).lean();
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
         }
 
-        // Return sanitized user data
-        res.status(200).json({
-            _id: user._id,
-            name: user.name,
-            username: user.username,
-            email: user.email,
-            avatar: user.avatar,
-            bio: user.bio
-        });
+        // Exclude sensitive fields
+        const { password, resetPasswordToken, resetPasswordExpires, ...safeUser } = user;
+        res.status(200).json(safeUser);
     } catch (error) {
         res.status(500).json({ message: "Error fetching user profile" });
     }

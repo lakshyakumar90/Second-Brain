@@ -17,6 +17,7 @@ import shareRoutes from "./routes/share.routes";
 import commentRoutes from "./routes/comment.routes";
 import notificationRoutes from "./routes/notification.routes";
 import aiRoutes from './routes/ai.routes';
+import searchRoutes from "./routes/search.routes";
 
 connectDB();
 
@@ -42,6 +43,7 @@ app.use("/api/v1/comments", commentRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/cleanup", cleanupRoutes);
 app.use("/api/v1/ai", aiRoutes);
+app.use("/api/v1/search", searchRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");
