@@ -1,10 +1,7 @@
 import { Request, Response } from 'express';
 import { Item, Category, Share, AIUsage, ActivityLog } from '../models';
 import mongoose from 'mongoose';
-
-interface AuthRequest extends Request {
-  user?: { userId: string };
-}
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 
 export const getDashboardData = async (req: AuthRequest, res: Response) => {
   try {

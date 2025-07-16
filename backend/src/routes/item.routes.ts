@@ -14,22 +14,25 @@ import {
   uploadFiles,
   getItemAnalytics,
 } from "../controllers/item.controller";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { authMiddleware, registrationCompleteMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-router.post("/create", authMiddleware, createItem);
-router.delete("/bulk-delete", authMiddleware, bulkDelete);
-router.patch("/bulk-restore", authMiddleware, bulkRestore);
-router.get("/all", authMiddleware, getItems);
-router.get("/:itemId", authMiddleware, getItem);
-router.put("/:itemId", authMiddleware, updateItem);
-router.delete("/:itemId", authMiddleware, deleteItem);
-router.patch("/:itemId/restore", authMiddleware, restoreItem);
-router.post("/duplicate/:itemId", authMiddleware, duplicateItem);
-router.post("/favorite/:itemId", authMiddleware, favoriteItem);
-router.post("/archive/:itemId", authMiddleware, archiveItem);
-router.post("/upload/:itemId", authMiddleware, uploadFiles);
-router.get("/analytics/:itemId", authMiddleware, getItemAnalytics);
+router.use(authMiddleware);
+router.use(registrationCompleteMiddleware);
+
+router.post("/create", createItem);
+router.delete("/bulk-delete", bulkDelete);
+router.patch("/bulk-restore", bulkRestore);
+router.get("/all", getItems);
+router.get("/:itemId", getItem);
+router.put("/:itemId", updateItem);
+router.delete("/:itemId", deleteItem);
+router.patch("/:itemId/restore", restoreItem);
+router.post("/duplicate/:itemId", duplicateItem);
+router.post("/favorite/:itemId", favoriteItem);
+router.post("/archive/:itemId", archiveItem);
+router.post("/upload/:itemId", uploadFiles);
+router.get("/analytics/:itemId", getItemAnalytics);
 
 export default router;

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import { Category, Item } from "../models/index";
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 import {
   createCategorySchema,
   getCategoriesQuerySchema,
@@ -10,10 +11,6 @@ import {
   getCategoryItemsQuerySchema,
   bulkCategorizeSchema,
 } from "../validations/categoryValidation";
-
-interface AuthRequest extends Request {
-  user?: { userId: string };
-}
 
 const createCategory = async (req: AuthRequest, res: Response) => {
   try {

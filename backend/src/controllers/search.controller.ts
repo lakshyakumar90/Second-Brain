@@ -2,10 +2,7 @@ import { Request, Response } from "express";
 import { Item, Category, ActivityLog } from "../models";
 import * as aiService from "../services/aiService";
 import mongoose from "mongoose";
-
-interface AuthRequest extends Request {
-  user?: { userId: string };
-}
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 
 // Helper: Check if user can access item
 async function canAccessItem(userId: string, item: any): Promise<boolean> {

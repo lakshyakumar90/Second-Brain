@@ -16,23 +16,22 @@ import {
 } from "../validations/authValidation";
 import { formatZodError } from "../utils/validationUtils";
 import emailService from "../services/emailService";
-import { generateOTP, getOTPExpiration, isOTPExpired, validateOTPFormat } from "../utils/otpUtils";
+import {
+  generateOTP,
+  getOTPExpiration,
+  isOTPExpired,
+  validateOTPFormat,
+} from "../utils/otpUtils";
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 
-interface AuthRequest extends Request {
-  user?: any;
-}
-
-const registerStep1 = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+const registerStep1 = async (req: Request, res: Response): Promise<void> => {
   const { email, password, completedSteps = 1 } = req.body;
   const { error } = registerStep1Schema.safeParse(req.body);
   if (error) {
     res.status(400).json({ message: formatZodError(error) });
     return;
   }
-  
+
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     res.status(400).json({ message: "User already exists", existingUser });
@@ -43,13 +42,13 @@ const registerStep1 = async (
   const otp = generateOTP();
   const otpExpires = getOTPExpiration();
 
-  const user = await User.create({ 
-    email, 
-    password, 
+  const user = await User.create({
+    email,
+    password,
     completedSteps,
     emailOtp: otp,
     emailOtpExpires: otpExpires,
-    emailVerified: false
+    emailVerified: false,
   });
 
   // Send OTP email
@@ -57,13 +56,30 @@ const registerStep1 = async (
   if (!emailSent) {
     // If email fails, delete the user and return error
     await User.findByIdAndDelete(user._id);
-    res.status(500).json({ message: "Failed to send verification email. Please try again." });
+    res.status(500).json({
+      message: "Failed to send verification email. Please try again.",
+    });
     return;
   }
 
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_ACCESS_SECRET!, {
-    expiresIn: "12h",
-  });
+  const token = jwt.sign(
+    {
+      userId: user._id,
+      completedSteps: user.completedSteps,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      username: user.username,
+      bio: user.bio,
+      isVerified: user.isVerified,
+      isActive: user.isActive,
+    },
+    process.env.JWT_ACCESS_SECRET!,
+    {
+      expiresIn: "12h",
+    }
+  );
 
   res.cookie("token", token, {
     httpOnly: true,
@@ -71,15 +87,16 @@ const registerStep1 = async (
     maxAge: 12 * 60 * 60 * 1000,
   });
 
-  res.status(201).json({ 
-    message: "User created successfully. Please check your email for verification OTP.", 
-    user: { 
-      _id: user._id, 
-      email: user.email, 
+  res.status(201).json({
+    message:
+      "User created successfully. Please check your email for verification OTP.",
+    user: {
+      _id: user._id,
+      email: user.email,
       completedSteps: user.completedSteps,
-      emailVerified: user.emailVerified 
-    }, 
-    token 
+      emailVerified: user.emailVerified,
+    },
+    token,
   });
 };
 
@@ -103,12 +120,16 @@ const verifyOTP = async (req: Request, res: Response): Promise<void> => {
   }
 
   if (!user.emailOtp || !user.emailOtpExpires) {
-    res.status(400).json({ message: "No OTP found. Please request a new one." });
+    res
+      .status(400)
+      .json({ message: "No OTP found. Please request a new one." });
     return;
   }
 
   if (isOTPExpired(user.emailOtpExpires)) {
-    res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    res
+      .status(400)
+      .json({ message: "OTP has expired. Please request a new one." });
     return;
   }
 
@@ -127,9 +148,13 @@ const verifyOTP = async (req: Request, res: Response): Promise<void> => {
   // Send welcome email
   await emailService.sendWelcomeEmail(email, user.name || "User");
 
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_ACCESS_SECRET!, {
-    expiresIn: "12h",
-  });
+  const token = jwt.sign(
+    { userId: user._id, completedSteps: user.completedSteps },
+    process.env.JWT_ACCESS_SECRET!,
+    {
+      expiresIn: "12h",
+    }
+  );
 
   res.cookie("token", token, {
     httpOnly: true,
@@ -137,15 +162,15 @@ const verifyOTP = async (req: Request, res: Response): Promise<void> => {
     maxAge: 12 * 60 * 60 * 1000,
   });
 
-  res.status(200).json({ 
-    message: "Email verified successfully!", 
-    user: { 
-      _id: user._id, 
-      email: user.email, 
+  res.status(200).json({
+    message: "Email verified successfully!",
+    user: {
+      _id: user._id,
+      email: user.email,
       completedSteps: user.completedSteps,
-      emailVerified: user.emailVerified 
-    }, 
-    token 
+      emailVerified: user.emailVerified,
+    },
+    token,
   });
 };
 
@@ -179,11 +204,15 @@ const resendOTP = async (req: Request, res: Response): Promise<void> => {
   // Send new OTP email
   const emailSent = await emailService.sendOTP(email, otp, user.name);
   if (!emailSent) {
-    res.status(500).json({ message: "Failed to send verification email. Please try again." });
+    res.status(500).json({
+      message: "Failed to send verification email. Please try again.",
+    });
     return;
   }
 
-  res.status(200).json({ message: "New OTP sent successfully. Please check your email." });
+  res
+    .status(200)
+    .json({ message: "New OTP sent successfully. Please check your email." });
 };
 
 const registerStep2 = async (
@@ -196,7 +225,7 @@ const registerStep2 = async (
     res.status(400).json({ message: formatZodError(error) });
     return;
   }
-  
+
   const existingUser = await User.findOne({ username });
   if (existingUser) {
     res.status(400).json({ message: "Username already taken", existingUser });
@@ -208,7 +237,7 @@ const registerStep2 = async (
     return;
   }
 
-  const user = await User.findById(req.user.userId);
+  const user = await User.findById(req.user?.userId);
   if (!user) {
     res.status(404).json({ message: "User not found" });
     return;
@@ -226,15 +255,21 @@ const registerStep2 = async (
     { new: true }
   );
 
-  const token = jwt.sign({ userId: updatedUser!._id }, process.env.JWT_ACCESS_SECRET!, {
-    expiresIn: "12h",
-  });
+  const token = jwt.sign(
+    { userId: updatedUser!._id, completedSteps: updatedUser!.completedSteps },
+    process.env.JWT_ACCESS_SECRET!,
+    {
+      expiresIn: "12h",
+    }
+  );
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     maxAge: 12 * 60 * 60 * 1000,
   });
-  res.status(200).json({ message: "User updated successfully", user: updatedUser, token });
+  res
+    .status(200)
+    .json({ message: "User updated successfully", user: updatedUser, token });
 };
 
 const registerStep3 = async (
@@ -286,15 +321,21 @@ const registerStep3 = async (
     { new: true }
   );
 
-  const token = jwt.sign({ userId: updatedUser!._id }, process.env.JWT_ACCESS_SECRET!, {
-    expiresIn: "12h",
-  });
+  const token = jwt.sign(
+    { userId: updatedUser!._id, completedSteps: updatedUser!.completedSteps },
+    process.env.JWT_ACCESS_SECRET!,
+    {
+      expiresIn: "12h",
+    }
+  );
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     maxAge: 12 * 60 * 60 * 1000,
   });
-  res.status(200).json({ message: "User updated successfully", user: updatedUser, token });
+  res
+    .status(200)
+    .json({ message: "User updated successfully", user: updatedUser, token });
 };
 
 const login = async (req: Request, res: Response): Promise<void> => {
@@ -319,16 +360,21 @@ const login = async (req: Request, res: Response): Promise<void> => {
 
   // Check if email is verified
   if (!user.emailVerified) {
-    res.status(400).json({ 
-      message: "Please verify your email first. Check your inbox for the verification OTP.",
-      requiresVerification: true 
+    res.status(400).json({
+      message:
+        "Please verify your email first. Check your inbox for the verification OTP.",
+      requiresVerification: true,
     });
     return;
   }
 
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_ACCESS_SECRET!, {
-    expiresIn: "12h",
-  });
+  const token = jwt.sign(
+    { userId: user._id, completedSteps: user.completedSteps },
+    process.env.JWT_ACCESS_SECRET!,
+    {
+      expiresIn: "12h",
+    }
+  );
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -353,7 +399,10 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   const user = await User.findOne({ email });
   if (!user) {
     // Don't reveal if user exists or not for security
-    res.status(200).json({ message: "If an account with this email exists, a password reset OTP has been sent." });
+    res.status(200).json({
+      message:
+        "If an account with this email exists, a password reset OTP has been sent.",
+    });
     return;
   }
 
@@ -366,16 +415,28 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   await user.save();
 
   // Send password reset OTP email
-  const emailSent = await emailService.sendPasswordResetOTP(email, otp, user.name);
+  const emailSent = await emailService.sendPasswordResetOTP(
+    email,
+    otp,
+    user.name
+  );
   if (!emailSent) {
-    res.status(500).json({ message: "Failed to send password reset email. Please try again." });
+    res.status(500).json({
+      message: "Failed to send password reset email. Please try again.",
+    });
     return;
   }
 
-  res.status(200).json({ message: "If an account with this email exists, a password reset OTP has been sent." });
+  res.status(200).json({
+    message:
+      "If an account with this email exists, a password reset OTP has been sent.",
+  });
 };
 
-const verifyPasswordResetOTP = async (req: Request, res: Response): Promise<void> => {
+const verifyPasswordResetOTP = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { email, otp } = req.body;
   const { error } = verifyPasswordResetOTPSchema.safeParse(req.body);
   if (error) {
@@ -390,12 +451,16 @@ const verifyPasswordResetOTP = async (req: Request, res: Response): Promise<void
   }
 
   if (!user.passwordResetOtp || !user.passwordResetOtpExpires) {
-    res.status(400).json({ message: "No password reset OTP found. Please request a new one." });
+    res.status(400).json({
+      message: "No password reset OTP found. Please request a new one.",
+    });
     return;
   }
 
   if (isOTPExpired(user.passwordResetOtpExpires)) {
-    res.status(400).json({ message: "Password reset OTP has expired. Please request a new one." });
+    res.status(400).json({
+      message: "Password reset OTP has expired. Please request a new one.",
+    });
     return;
   }
 
@@ -410,7 +475,10 @@ const verifyPasswordResetOTP = async (req: Request, res: Response): Promise<void
   user.passwordResetOtpExpires = undefined;
   await user.save();
 
-  res.status(200).json({ message: "Password reset OTP verified successfully! You can now set your new password." });
+  res.status(200).json({
+    message:
+      "Password reset OTP verified successfully! You can now set your new password.",
+  });
 };
 
 const resetPassword = async (req: Request, res: Response): Promise<void> => {
@@ -429,7 +497,9 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
 
   // Check if user has verified their password reset OTP
   if (!user.passwordResetOtpVerified) {
-    res.status(400).json({ message: "Please verify your OTP first before resetting password" });
+    res.status(400).json({
+      message: "Please verify your OTP first before resetting password",
+    });
     return;
   }
 
@@ -454,8 +524,11 @@ const refreshToken = async (req: Request, res: Response): Promise<void> => {
 
   try {
     // Verify the refresh token
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { userId: string };
-    
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET!
+    ) as { userId: string };
+
     const user = await User.findById(decoded.userId);
     if (!user) {
       res.status(401).json({ message: "Invalid refresh token" });
@@ -468,9 +541,13 @@ const refreshToken = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Generate new access token
-    const newToken = jwt.sign({ userId: user._id }, process.env.JWT_ACCESS_SECRET!, {
-      expiresIn: "12h",
-    });
+    const newToken = jwt.sign(
+      { userId: user._id, completedSteps: user.completedSteps },
+      process.env.JWT_ACCESS_SECRET!,
+      {
+        expiresIn: "12h",
+      }
+    );
 
     res.cookie("token", newToken, {
       httpOnly: true,
@@ -478,8 +555,8 @@ const refreshToken = async (req: Request, res: Response): Promise<void> => {
       maxAge: 12 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ 
-      message: "Token refreshed successfully", 
+    res.status(200).json({
+      message: "Token refreshed successfully",
       token: newToken,
       user: {
         _id: user._id,
@@ -487,15 +564,18 @@ const refreshToken = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         username: user.username,
         completedSteps: user.completedSteps,
-        emailVerified: user.emailVerified
-      }
+        emailVerified: user.emailVerified,
+      },
     });
   } catch (error) {
     res.status(401).json({ message: "Invalid refresh token" });
   }
 };
 
-const checkRegistrationStep = async (req: AuthRequest, res: Response): Promise<void> => {
+const checkRegistrationStep = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
   if (!req.user?.userId) {
     res.status(401).json({ message: "User not authenticated" });
     return;
@@ -519,22 +599,22 @@ const checkRegistrationStep = async (req: AuthRequest, res: Response): Promise<v
       username: user.username,
       avatar: user.avatar,
       bio: user.bio,
-      preferences: user.preferences
-    }
+      preferences: user.preferences,
+    },
   });
 };
 
-export { 
-  registerStep1, 
-  registerStep2, 
-  registerStep3, 
-  login, 
-  logout, 
-  verifyOTP, 
+export {
+  registerStep1,
+  registerStep2,
+  registerStep3,
+  login,
+  logout,
+  verifyOTP,
   resendOTP,
   forgotPassword,
   verifyPasswordResetOTP,
   resetPassword,
   refreshToken,
-  checkRegistrationStep
+  checkRegistrationStep,
 };

@@ -7,11 +7,13 @@ import {
   getUnreadCount,
   updateNotificationPreferences,
 } from "../controllers/notification.controller";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { authMiddleware, registrationCompleteMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
 router.use(authMiddleware);
+router.use(registrationCompleteMiddleware);
+
 router.get("/", getNotifications);
 router.patch("/:notificationId/read", markAsRead);
 router.patch("/read-all", markAllAsRead);

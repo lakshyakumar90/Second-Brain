@@ -12,20 +12,23 @@ import {
   getCategoryItems,
   bulkCategorize
 } from "../controllers/category.controller";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { authMiddleware, registrationCompleteMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-router.post("/create", authMiddleware, createCategory);
-router.get("/all", authMiddleware, getCategories);
-router.get("/:categoryId", authMiddleware, getCategory);
-router.get("/:categoryId/items", authMiddleware, getCategoryItems);
-router.put("/:categoryId", authMiddleware, updateCategory);
-router.delete("/:categoryId", authMiddleware, deleteCategory);
-router.patch("/:categoryId/restore", authMiddleware, restoreCategory);
-router.delete("/bulk-delete", authMiddleware, bulkDeleteCategories);
-router.patch("/bulk-restore", authMiddleware, bulkRestoreCategories);
-router.post("/reorder", authMiddleware, reorderCategories);
-router.post("/bulk-categorize", authMiddleware, bulkCategorize);
+router.use(authMiddleware);
+router.use(registrationCompleteMiddleware);
+
+router.post("/create", createCategory);
+router.get("/all", getCategories);
+router.get("/:categoryId", getCategory);
+router.get("/:categoryId/items", getCategoryItems);
+router.put("/:categoryId", updateCategory);
+router.delete("/:categoryId", deleteCategory);
+router.patch("/:categoryId/restore", restoreCategory);
+router.delete("/bulk-delete", bulkDeleteCategories);
+router.patch("/bulk-restore", bulkRestoreCategories);
+router.post("/reorder", reorderCategories);
+router.post("/bulk-categorize", bulkCategorize);
 
 export default router;

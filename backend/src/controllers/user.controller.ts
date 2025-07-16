@@ -3,10 +3,7 @@ import User from "../models/user.model";
 import bcrypt from "bcrypt";
 import { updateProfileSchema, changePasswordSchema, updateProfilePreferencesSchema } from "../validations/authValidation";
 import cloudinaryService from "../services/cloudinaryService";
-
-interface AuthRequest extends Request {
-    user?: any;
-}
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 
 const getProfile = async (req: AuthRequest, res: Response) => {
     try {
@@ -51,7 +48,7 @@ const updateProfile = async (req: AuthRequest, res: Response) => {
 
         const { name, username, email, avatar, bio } = validationResult.data;
 
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(req.user?.userId);
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
@@ -84,7 +81,7 @@ const updateProfilePreferences = async (req: AuthRequest, res: Response) => {
         }
 
         const { preferences } = validationResult.data;
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(req.user?.userId);
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
@@ -135,7 +132,7 @@ const changePassword = async (req: AuthRequest, res: Response) => {
 
         const { oldPassword, newPassword } = validationResult.data;
 
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(req.user?.userId);
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
@@ -160,7 +157,7 @@ const changePassword = async (req: AuthRequest, res: Response) => {
 
 const deleteAccount = async (req: AuthRequest, res: Response) => {
     try {
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(req.user?.userId);
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
@@ -178,7 +175,7 @@ const deleteAccount = async (req: AuthRequest, res: Response) => {
 
 const getUsageStats = async (req: AuthRequest, res: Response) => {
     try {
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(req.user?.userId);
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
@@ -224,7 +221,7 @@ const uploadAvatar = async (req: AuthRequest, res: Response) => {
         }
 
         // Find user
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(req.user?.userId);
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;

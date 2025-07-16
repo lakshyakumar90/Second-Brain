@@ -1,4 +1,5 @@
 import express from 'express';
+import { authMiddleware, registrationCompleteMiddleware } from '../middlewares/authMiddleware';
 import {
   searchItems,
   searchGlobal,
@@ -9,17 +10,16 @@ import {
   saveSearchQuery,
   getSearchHistory,
 } from '../controllers/search.controller';
-import { authMiddleware } from '../middlewares/authMiddleware';
 
 const router = express.Router();
 
-router.get('/items', authMiddleware, searchItems);
+router.get('/items', authMiddleware, registrationCompleteMiddleware, searchItems);
 router.get('/global', searchGlobal);
-router.get('/category/:categoryId', authMiddleware, searchByCategory);
-router.get('/tags', authMiddleware, searchByTags);
-router.post('/semantic', authMiddleware, semanticSearch);
-router.get('/suggestions', authMiddleware, getSearchSuggestions);
-router.post('/history', authMiddleware, saveSearchQuery);
-router.get('/history', authMiddleware, getSearchHistory);
+router.get('/category/:categoryId', authMiddleware, registrationCompleteMiddleware, searchByCategory);
+router.get('/tags', authMiddleware, registrationCompleteMiddleware, searchByTags);
+router.post('/semantic', authMiddleware, registrationCompleteMiddleware, semanticSearch);
+router.get('/suggestions', authMiddleware, registrationCompleteMiddleware, getSearchSuggestions);
+router.post('/history', authMiddleware, registrationCompleteMiddleware, saveSearchQuery);
+router.get('/history', authMiddleware, registrationCompleteMiddleware, getSearchHistory);
 
 export default router; 

@@ -1,5 +1,6 @@
 import { ObjectId } from "mongoose";
 import { SubscriptionPlan, UserRole } from "../../config/common";
+import { Request } from "express";
 
 export interface IUser {
     _id: ObjectId;
@@ -57,3 +58,19 @@ export interface IUser {
     createdAt: Date;
     updatedAt: Date;
   }
+
+export interface AuthRequest extends Request {
+  user?: {
+    userId: string;
+    completedSteps: number;
+    role: UserRole;
+    name: string;
+    email: string;
+    avatar: string;
+    username: string;
+    bio: string;
+    isVerified: boolean;
+    isActive: boolean;
+    // Add other user properties if needed
+  };
+}

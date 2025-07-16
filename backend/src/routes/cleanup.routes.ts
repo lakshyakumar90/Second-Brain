@@ -6,12 +6,13 @@ import {
   triggerManualCleanup,
   updateCleanupSettings,
 } from "../controllers/cleanup.controller";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { authMiddleware, registrationCompleteMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
 // All cleanup routes require authentication and admin privileges
 router.use(authMiddleware);
+router.use(registrationCompleteMiddleware);
 
 // Start cleanup service
 router.post("/start", startCleanupService);

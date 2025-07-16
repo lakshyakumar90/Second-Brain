@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import cleanupService from "../services/cleanupService";
-
-interface AuthRequest extends Request {
-  user?: { userId: string; role?: string };
-}
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 
 /**
  * Start the cleanup service

@@ -1,15 +1,12 @@
 import { Request, Response } from "express";
 import Notification from "../models/notification.model";
 import User from "../models/user.model";
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 import {
   getNotificationsQuerySchema,
   notificationIdSchema,
   updateNotificationPreferencesSchema,
 } from "../validations/notificationValidation";
-
-interface AuthRequest extends Request {
-  user?: { userId: string };
-}
 
 export const getNotifications = async (req: AuthRequest, res: Response) => {
   try {

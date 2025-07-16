@@ -1,5 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middlewares/authMiddleware';
+import { authMiddleware, registrationCompleteMiddleware } from '../middlewares/authMiddleware';
 import {
   getDashboardData,
   getUsageAnalytics,
@@ -13,6 +13,7 @@ import {
 const router = express.Router();
 
 router.use(authMiddleware);
+router.use(registrationCompleteMiddleware);
 
 router.get('/dashboard', getDashboardData);
 router.get('/usage', getUsageAnalytics);

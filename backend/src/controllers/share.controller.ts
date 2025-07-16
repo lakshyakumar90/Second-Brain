@@ -5,16 +5,13 @@ import { nanoid } from "nanoid";
 import { updateShareSchema, shareIdSchema } from "../validations/shareValidation";
 import bcrypt from "bcrypt";
 import Notification from "../models/notification.model";
-
-interface AuthRequest extends Request {
-  user?: any;
-}
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 
 // Create a public share link for an item
 const createShare = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { itemId } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
     if (!itemId) {
       res.status(400).json({ message: "itemId is required" });
       return;
@@ -71,7 +68,7 @@ const createShare = async (req: AuthRequest, res: Response): Promise<void> => {
 // Get all shares created by the authenticated user
 const getShares = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
     const shares = await Share.find({ userId }).sort({ createdAt: -1 });
     res.status(200).json({ shares });
   } catch (error) {
@@ -133,7 +130,7 @@ const updateShare = async (req: AuthRequest, res: Response): Promise<void> => {
     }
     const { shareId } = idValidationResult.data;
     const updateData = updateValidationResult.data;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
     // Find share and check ownership
     const share = await Share.findOne({ shareId, userId });
     if (!share) {
@@ -160,7 +157,7 @@ const deleteShare = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
     const { shareId } = idValidationResult.data;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
     // Find share and check ownership
     const share = await Share.findOne({ shareId, userId });
     if (!share) {
@@ -228,7 +225,7 @@ const accessShare = async (req: Request, res: Response): Promise<void> => {
 const getShareAnalytics = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { shareId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
     if (!shareId) {
       res.status(400).json({ message: "shareId is required" });
       return;

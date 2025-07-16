@@ -7,10 +7,7 @@ import {
   itemIdSchema,
   updateItemSchema,
 } from "../validations/itemValidation";
-
-interface AuthRequest extends Request {
-  user?: { userId: string };
-}
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 
 const createItem = async (req: AuthRequest, res: Response) => {
   try {

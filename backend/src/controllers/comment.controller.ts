@@ -13,10 +13,7 @@ import {
   resolveCommentSchema,
 } from "../validations/commentValidation";
 import Notification from "../models/notification.model";
-
-interface AuthRequest extends Request {
-  user?: { userId: string };
-}
+import { AuthRequest } from "../models/interfaces/userModel.interface";
 
 const createComment = async (req: AuthRequest, res: Response) => {
   try {
@@ -417,6 +414,11 @@ const replyToComment = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user?.userId) {
       res.status(401).json({ message: "Unauthorized", error: "Authentication required" });
+      return;
+    }
+    const idValidation = commentIdSchema.safeParse(req.params);
+    if (!idValidation.success) {
+      res.status(400).json({ message: "Validation failed", error: idValidation.error });
       return;
     }
     const validationResult = replyToCommentSchema.safeParse(req.body);

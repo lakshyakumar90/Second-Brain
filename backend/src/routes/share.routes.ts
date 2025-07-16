@@ -9,20 +9,23 @@ import {
   checkSharePassword,
   getShareAnalytics,
 } from "../controllers/share.controller";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { authMiddleware, registrationCompleteMiddleware } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
-// Authenticated routes
-router.post("/create", authMiddleware, createShare);
-router.get("/all", authMiddleware, getShares);
-router.put("/:shareId", authMiddleware, updateShare);
-router.delete("/:shareId", authMiddleware, deleteShare);
+router.get("/:shareId", getShare);
 router.post("/:shareId/access", accessShare);
-router.get("/:shareId/analytics", authMiddleware, getShareAnalytics);
+
+router.use(authMiddleware);
+router.use(registrationCompleteMiddleware);
+
+// Authenticated routes
+router.post("/create", createShare);
+router.get("/all", getShares);
+router.patch("/:shareId", updateShare);
+router.delete("/:shareId", deleteShare);
+router.get("/:shareId/analytics", getShareAnalytics);
 router.post("/:shareId/check-password", checkSharePassword);
 
-// Public route
-router.get("/:shareId", getShare);
 
 export default router;

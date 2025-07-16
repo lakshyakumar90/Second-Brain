@@ -1,14 +1,11 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import Workspace from "../models/workspace.model";
-import { formatZodError } from "../utils/validationUtils";
 import { createWorkspaceSchema, updateWorkspaceSchema, workspaceIdSchema } from "../validations/workspaceValidation";
 import User from "../models/user.model";
 import { SharePermission } from "../config/common";
 import Notification from "../models/notification.model";
-
-interface AuthRequest extends Request {
-  user?: any;
-}
+import { AuthRequest } from "../models/interfaces/userModel.interface";
+import { ObjectId } from "mongoose";
 
 const createWorkspace = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -26,7 +23,7 @@ const createWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
 
     // Check if user already has a workspace with the same name
     const existingWorkspace = await Workspace.findOne({
-      ownerId: req.user.userId,
+      ownerId: req.user?.userId,
       name: name.trim()
     });
 
@@ -39,7 +36,7 @@ const createWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
     const workspace = await Workspace.create({
       name: name.trim(),
       description: description?.trim(),
-      ownerId: req.user.userId,
+      ownerId: req.user?.userId,
       isPublic,
       allowInvites,
       settings: {
@@ -48,10 +45,10 @@ const createWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
         aiEnabled: settings?.aiEnabled !== false, // Default to true
       },
       members: [{
-        userId: req.user.userId,
+        userId: req.user?.userId,
         role: "admin",
         joinedAt: new Date(),
-        invitedBy: req.user.userId
+        invitedBy: req.user?.userId
       }],
       totalMembers: 1
     });
@@ -83,7 +80,7 @@ const createWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
 
 const getWorkspaces = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
 
     // Get workspaces where user is owner or member
     const workspaces = await Workspace.find({
@@ -133,7 +130,7 @@ const getWorkspaces = async (req: AuthRequest, res: Response): Promise<void> => 
 const getWorkspace = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { workspaceId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
 
     if (!workspaceId) {
       res.status(400).json({ message: "Workspace ID is required" });
@@ -217,7 +214,7 @@ const updateWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
 
     const { workspaceId } = idValidationResult.data;
     const updateData = bodyValidationResult.data;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
 
     // Find workspace and check if user has admin access
     const workspace = await Workspace.findOne({
@@ -345,7 +342,7 @@ const deleteWorkspace = async (req: AuthRequest, res: Response): Promise<void> =
     }
 
     const { workspaceId } = idValidationResult.data;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
 
     // Find workspace and check if user has admin access
     const workspace = await Workspace.findOne({
@@ -398,7 +395,7 @@ const inviteMember = async (req: AuthRequest, res: Response): Promise<void> => {
     }
     const { workspaceId } = idValidationResult.data;
     const { email, role = "view" } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
 
     if (!email || typeof email !== "string") {
       res.status(400).json({ message: "Email is required to invite a member." });
@@ -451,7 +448,7 @@ const inviteMember = async (req: AuthRequest, res: Response): Promise<void> => {
     // Add to pendingInvites
     workspace.pendingInvites.push({
       userId: invitedUser._id,
-      invitedBy: userId,
+      invitedBy: userId as unknown as ObjectId,
       role,
       invitedAt: new Date()
     });
@@ -494,7 +491,7 @@ const acceptInvite = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
     const { workspaceId } = idValidationResult.data;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
 
     // Find workspace
     const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
@@ -529,7 +526,7 @@ const acceptInvite = async (req: AuthRequest, res: Response): Promise<void> => {
         userId: invite.invitedBy,
         type: "collaboration",
         title: "Invitation Accepted",
-        message: `${req.user.name || "A user"} accepted your invitation to join workspace '${workspace.name}'.`,
+        message: `${req.user?.name || "A user"} accepted your invitation to join workspace '${workspace.name}'.`,
         relatedId: workspace._id,
         relatedType: "workspace",
         senderId: userId,
@@ -552,7 +549,7 @@ const rejectInvite = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
     const { workspaceId } = idValidationResult.data;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
 
     // Find workspace
     const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
@@ -587,7 +584,7 @@ const removeMember = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
     const { workspaceId, userId } = req.params;
-    const actingUserId = req.user.userId;
+    const actingUserId = req.user?.userId;
 
     if (!userId) {
       res.status(400).json({ message: "User ID to remove is required." });
@@ -647,7 +644,7 @@ const updateMemberRole = async (req: AuthRequest, res: Response): Promise<void> 
     }
     const { workspaceId, userId } = req.params;
     const { role } = req.body;
-    const actingUserId = req.user.userId;
+    const actingUserId = req.user?.userId;
 
     if (!userId || !role) {
       res.status(400).json({ message: "User ID and new role are required." });
@@ -735,7 +732,7 @@ const leaveWorkspace = async (req: AuthRequest, res: Response): Promise<void> =>
       return;
     }
     const { workspaceId } = idValidationResult.data;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
 
     const workspace = await Workspace.findOne({ _id: workspaceId, isDeleted: false });
     if (!workspace) {
