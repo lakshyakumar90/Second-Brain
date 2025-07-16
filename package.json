@@ -1,9 +1,11 @@
 {
   "dependencies": {
+    "@types/socket.io": "^3.0.1",
     "@types/textract": "^2.4.5",
     "axios": "^1.10.0",
     "nanoid": "^5.1.5",
     "pdf-parse": "^1.1.1",
+    "socket.io": "^4.8.1",
     "textract": "^2.5.0"
   }
 }
