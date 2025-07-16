@@ -19,6 +19,7 @@ import notificationRoutes from "./routes/notification.routes";
 import aiRoutes from './routes/ai.routes';
 import searchRoutes from "./routes/search.routes";
 import analyticsRoutes from './routes/analytics.routes';
+import whiteboardRoutes from './routes/whiteboard.routes';
 
 connectDB();
 
@@ -46,6 +47,7 @@ app.use("/api/v1/cleanup", cleanupRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/search", searchRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
+app.use('/api/whiteboards', whiteboardRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");
