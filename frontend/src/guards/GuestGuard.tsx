@@ -7,7 +7,7 @@ const GuestGuard = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/dashboard" />;
   }
 
-  return <div className="min-h-screen bg-black text-white">{children}</div>;
+  return <>{children}</>;
 };
 
 export default GuestGuard;
