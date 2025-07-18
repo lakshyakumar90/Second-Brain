@@ -5,8 +5,8 @@ interface AuthGuardProps {
 }
 
 const AuthGuard = ({ children }: AuthGuardProps) => {
-  const isAuthenticated = false;
-  const loading = true;
+  const isAuthenticated = true;
+  const loading = false;
 
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" />;
