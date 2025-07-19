@@ -15,10 +15,15 @@ const router = Router();
 
 router.get('/profile/:userId', getProfile);
 
+// Apply auth middleware to all routes below
 router.use(authMiddleware);
+
+// Routes that don't require completed registration
+router.get('/profile', getProfile); // Users need to access their profile during registration
+
+// Apply registration complete middleware to routes that require completed registration
 router.use(registrationCompleteMiddleware);
 
-router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.put('/profile/preferences', updateProfilePreferences);
 // Avatar upload route

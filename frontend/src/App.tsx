@@ -5,18 +5,21 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
-import AuthGuard from "./guards/AuthGuard";
 import GuestGuard from "./guards/GuestGuard";
+import RegistrationGuard from "./guards/RegistrationGuard";
 import Dashboard from "./pages/Dashboard";
 import LandingPage from "./pages/LandingPage";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
+import Register from "./pages/auth/Register";
+import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 import AuthLayout from "./layouts/AuthLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
+import AuthInitializer from "./components/AuthInitializer";
 
 function App() {
   return (
-    <BrowserRouter>
+    <AuthInitializer>
+      <BrowserRouter>
       <Routes>
         <Route
           path="/"
@@ -38,22 +41,24 @@ function App() {
         >
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
         </Route>
         <Route
           path="/dashboard"
           element={
-            <AuthGuard>
+            <RegistrationGuard>
               <DashboardLayout>
                 <Outlet />
               </DashboardLayout>
-            </AuthGuard>
+            </RegistrationGuard>
           }
         >
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route index element={<Dashboard />} />
         </Route>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
+    </AuthInitializer>
   );
 }
 

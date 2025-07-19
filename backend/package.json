@@ -20,6 +20,7 @@
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^6.4.17",
+    "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.7.0",
     "cookie-parser": "^1.4.7",
@@ -29,11 +30,16 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.1",
     "multer": "^2.0.1",
+    "nanoid": "^5.1.5",
     "nodemailer": "^7.0.5",
+    "pdf-parse": "^1.1.1",
+    "socket.io": "^4.8.1",
+    "textract": "^2.5.0",
     "typescript": "^5.8.3",
     "zod": "^4.0.2"
   },
   "devDependencies": {
-    "@types/pdf-parse": "^1.1.5"
+    "@types/pdf-parse": "^1.1.5",
+    "@types/textract": "^2.4.5"
   }
 }

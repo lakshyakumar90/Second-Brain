@@ -6,7 +6,7 @@ import {
   updateWhiteboard,
   deleteWhiteboard
 } from '../controllers/whiteboard.controller';
-import authMiddleware from '../middlewares/authMiddleware';
+import { authMiddleware } from '../middlewares/authMiddleware';
 
 const router = express.Router();
 

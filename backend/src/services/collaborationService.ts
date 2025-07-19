@@ -22,13 +22,13 @@ export function initCollaborationService() {
     socket.join(workspaceId);
 
     // Handle real-time document/whiteboard updates
-    socket.on('collab-update', (payload) => {
+    socket.on('collab-update', (payload: any) => {
       // Broadcast to others in the workspace
       socket.to(workspaceId).emit('collab-update', { userId, ...payload });
     });
 
     // Handle cursor/mouse movement
-    socket.on('cursor-move', (data) => {
+    socket.on('cursor-move', (data: any) => {
       socket.to(workspaceId).emit('cursor-move', { userId, ...data });
     });
 

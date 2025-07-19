@@ -53,7 +53,7 @@ app.use("/api/v1/cleanup", cleanupRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/search", searchRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
-app.use('/api/whiteboards', whiteboardRoutes);
+app.use('/api/v1/whiteboards', whiteboardRoutes);
 app.use("/api/v1/collaborations", collaborationRoutes);
 
 app.get("/", (req, res) => {

@@ -11,7 +11,10 @@ const registerStep1Schema = z.object({
 
 const registerStep2Schema = z.object({
     name: z.string().min(3, "Name must be at least 3 characters long").max(20, "Name cannot exceed 20 characters"),
-    username: z.string().min(3, "Username must be at least 3 characters long").max(20, "Username cannot exceed 20 characters"),
+    username: z.string()
+        .min(3, "Username must be at least 3 characters long")
+        .max(20, "Username cannot exceed 20 characters")
+        .regex(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores and dots"),
 });
 
 const registerStep3Schema = z.object({
@@ -76,6 +79,7 @@ const updateProfileSchema = z.object({
     username: z.string()
         .min(3, "Username must be at least 3 characters long")
         .max(20, "Username cannot exceed 20 characters")
+        .regex(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores and dots")
         .optional(),
     email: z.email("Please enter a valid email address").optional(),
     avatar: z.url("Please enter a valid URL for your avatar").optional(),

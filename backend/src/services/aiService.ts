@@ -12,7 +12,7 @@ const geminiApi = axios.create({
   },
 });
 
-export async function summarizeContent(content: string) {
+export async function summarizeContent(content: string): Promise<any> {
   const prompt = `You are an expert content summarizer. Read the following content and provide a concise, clear summary that captures the main points and key details.\n\nContent:\n${content}\n\nSummary:`;
   const response = await geminiApi.post(`/gemini-2.0-flash:generateContent`, {
     contents: [{ parts: [{ text: prompt }] }],
@@ -20,64 +20,64 @@ export async function summarizeContent(content: string) {
   return response.data;
 }
 
-export async function suggestTags(content: string) {
-  const prompt = `You are an intelligent assistant for content organization. Read the following content and suggest 5-10 relevant, concise tags (comma-separated) that best describe its topics, themes, and key concepts.\n\nContent:\n${content}\n\nTags:`;
+export async function suggestTags(content: string): Promise<any> {
+  const prompt = `Based on the following content, suggest 5-10 relevant tags that would help categorize and find this content later. Return them as a comma-separated list.\n\nContent:\n${content}\n\nTags:`;
   const response = await geminiApi.post(`/gemini-2.0-flash:generateContent`, {
     contents: [{ parts: [{ text: prompt }] }],
   });
   return response.data;
 }
 
-export async function categorizeContent(content: string) {
-  const prompt = `You are an expert in content classification. Read the following content and suggest the most appropriate categories or topics it belongs to. Provide a short list of categories.\n\nContent:\n${content}\n\nCategories:`;
+export async function categorizeContent(content: string): Promise<any> {
+  const prompt = `Analyze the following content and categorize it into one of these categories: Work, Personal, Learning, Projects, Ideas, or Other. Provide a brief explanation for your choice.\n\nContent:\n${content}\n\nCategory and explanation:`;
   const response = await geminiApi.post(`/gemini-2.0-flash:generateContent`, {
     contents: [{ parts: [{ text: prompt }] }],
   });
   return response.data;
 }
 
-export async function chatWithAI(
-  messages: { role: string; content: string }[]
-) {
-  const systemPrompt = {
-    role: "system",
-    parts: [
-      {
-        text: "You are a helpful, knowledgeable AI assistant. Respond clearly, concisely, and contextually to the user’s questions or requests.",
-      },
-    ],
-  };
-  const formatted = [
-    systemPrompt,
-    ...messages.map((m) => ({ role: m.role, parts: [{ text: m.content }] })),
-  ];
+export async function chatWithAI(messages: any[]): Promise<any> {
   const response = await geminiApi.post(`/gemini-2.0-flash:generateContent`, {
-    contents: formatted,
+    contents: messages.map(msg => ({ parts: [{ text: msg.content }] })),
   });
   return response.data;
 }
 
-export async function getAIInsights(content: string) {
-  const prompt = `You are an AI insights engine. Analyze the following content and provide actionable insights, key takeaways, and any interesting patterns or observations.\n\nContent:\n${content}\n\nInsights:`;
+export async function getAIInsights(itemId: string): Promise<any> {
+  // This would typically fetch the item content and provide insights
+  const prompt = `Provide insights and analysis for the content with ID: ${itemId}. Include key themes, important points, and actionable insights.`;
   const response = await geminiApi.post(`/gemini-2.0-flash:generateContent`, {
     contents: [{ parts: [{ text: prompt }] }],
   });
   return response.data;
 }
 
-export async function extractText(filePath: string) {
+export async function generateContent(prompt: string, type: string): Promise<any> {
+  const fullPrompt = `Generate ${type} content based on the following prompt:\n\n${prompt}`;
+  const response = await geminiApi.post(`/gemini-2.0-flash:generateContent`, {
+    contents: [{ parts: [{ text: fullPrompt }] }],
+  });
+  return response.data;
+}
+
+export async function extractText(fileId: string): Promise<{ text: string }> {
+  // This would typically fetch the file path from database using fileId
+  const filePath = `/path/to/file/${fileId}`; // Replace with actual file path logic
+  
   if (!fs.existsSync(filePath)) {
     throw new Error("File not found");
   }
+  
   const ext = filePath.split(".").pop()?.toLowerCase();
+  
   if (ext === "pdf") {
     const data = await pdfParse(fs.readFileSync(filePath));
     return { text: data.text };
   } else if (["docx", "txt"].includes(ext || "")) {
     return new Promise((resolve, reject) => {
-      textract.fromFileWithPath(filePath, (err, text) => {
+      textract.fromFileWithPath(filePath, (err: Error | null, text?: string) => {
         if (err) return reject(err);
-        resolve({ text });
+        resolve({ text: text || '' });
       });
     });
   } else {
@@ -85,20 +85,10 @@ export async function extractText(filePath: string) {
   }
 }
 
-export async function generateContent(promptInput: string, type: string) {
-  const prompt = `You are a creative AI assistant. Based on the following prompt, generate high-quality ${type} content. Be original, relevant, and engaging.\n\nPrompt:\n${promptInput}\n\n${
-    type.charAt(0).toUpperCase() + type.slice(1)
-  }:`;
+export async function analyzeContent(content: string): Promise<any> {
+  const prompt = `Analyze the following content and provide:\n1. Key themes and topics\n2. Sentiment analysis\n3. Complexity level\n4. Potential improvements or insights\n\nContent:\n${content}\n\nAnalysis:`;
   const response = await geminiApi.post(`/gemini-2.0-flash:generateContent`, {
     contents: [{ parts: [{ text: prompt }] }],
   });
   return response.data;
-}
-
-export async function analyzeContent(content: string) {
-  const prompt = `You are an advanced content analysis AI. Analyze the following content for sentiment, tone, complexity, and key topics. Provide a structured analysis.\n\nContent:\n${content}\n\nAnalysis:`;
-  const response = await geminiApi.post(`/gemini-2.0-flash:generateContent`, {
-    contents: [{ parts: [{ text: prompt }] }],
-  });
-  return response.data;
-}
+} 

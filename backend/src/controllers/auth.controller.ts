@@ -34,7 +34,65 @@ const registerStep1 = async (req: Request, res: Response): Promise<void> => {
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    res.status(400).json({ message: "User already exists", existingUser });
+    // If user has completed all registration steps, they can't register again
+    if (existingUser.completedSteps === 3) {
+      res.status(400).json({ message: "User already exists with completed registration" });
+      return;
+    }
+    
+    // If user hasn't completed registration, let them continue from current step
+    // Generate new OTP for email verification if needed
+    const otp = generateOTP();
+    const otpExpires = getOTPExpiration();
+    
+    existingUser.emailOtp = otp;
+    existingUser.emailOtpExpires = otpExpires;
+    await existingUser.save();
+    
+    // Send OTP email
+    const emailSent = await emailService.sendOTP(email, otp);
+    if (!emailSent) {
+      res.status(500).json({
+        message: "Failed to send verification email. Please try again.",
+      });
+      return;
+    }
+    
+    const token = jwt.sign(
+      {
+        userId: existingUser._id,
+        completedSteps: existingUser.completedSteps,
+        role: existingUser.role,
+        name: existingUser.name,
+        email: existingUser.email,
+        avatar: existingUser.avatar,
+        username: existingUser.username,
+        bio: existingUser.bio,
+        isVerified: existingUser.isVerified,
+        isActive: existingUser.isActive,
+      },
+      process.env.JWT_ACCESS_SECRET!,
+      {
+        expiresIn: "12h",
+      }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 12 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: "Continue your registration. Please check your email for verification OTP.",
+      user: {
+        _id: existingUser._id,
+        email: existingUser.email,
+        completedSteps: existingUser.completedSteps,
+        emailVerified: existingUser.emailVerified,
+      },
+      token,
+    });
     return;
   }
 

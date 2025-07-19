@@ -1,29 +1,29 @@
-import { Navigate } from "react-router-dom";
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAppSelector } from '../store/hooks';
 
 interface AuthGuardProps {
   children: React.ReactNode;
 }
 
-const AuthGuard = ({ children }: AuthGuardProps) => {
-  const isAuthenticated = true;
-  const loading = false;
+const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAppSelector((state) => state.auth);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/auth/login" />;
-  }
+  // No need to call checkAuth here anymore - AuthInitializer handles it
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  return <div>{children}</div>;
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default AuthGuard;
