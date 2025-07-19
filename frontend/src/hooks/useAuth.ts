@@ -54,9 +54,9 @@ export const useAuth = () => {
       
       // If user hasn't completed all registration steps, update registration state
       const userData = response as any;
-      if (userData.completedSteps && userData.completedSteps < 3) {
+      if (userData.completedSteps !== undefined && userData.completedSteps < 3) {
         dispatch(setRegistrationState({
-          currentStep: getRegistrationStepFromCompleted(userData.completedSteps),
+          currentStep: getRegistrationStepFromUserData(userData),
           email: userData.email || '',
           isLoading: false,
           error: null,
@@ -72,12 +72,24 @@ export const useAuth = () => {
     }
   }, [dispatch]);
 
-  // Helper function to determine frontend registration step from completedSteps
-  const getRegistrationStepFromCompleted = (completedSteps: number): number => {
-    if (completedSteps === 0) return 1; // Email/password
-    if (completedSteps === 1) return 2; // OTP verification
-    if (completedSteps === 2) return 3; // Name/username
-    return 4; // Profile completion
+  // Helper function to determine frontend registration step from user data
+  const getRegistrationStepFromUserData = (userData: any): number => {
+    const { completedSteps, emailVerified, name, username } = userData;
+    
+    // Step 1: Email/password (if completedSteps = 0)
+    if (completedSteps === 0) return 1;
+    
+    // Step 2: OTP verification (if email not verified)
+    if (completedSteps === 1 || !emailVerified) return 2;
+    
+    // Step 4: Profile completion (if name and username are set)
+    if (name && username) return 4;
+    
+    // Step 3: Name/username (if email verified but no name/username)
+    if (completedSteps === 2) return 3;
+    
+    // Fallback to step 1
+    return 1;
   };
 
   return {

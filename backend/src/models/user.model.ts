@@ -76,6 +76,10 @@ const UserSchema = new mongoose.Schema<IUser>(
     passwordResetOtp: { type: String },
     passwordResetOtpExpires: { type: Date },
     passwordResetOtpVerified: { type: Boolean, default: false },
+    
+    // Soft delete fields
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
   },
   {
     timestamps: true,

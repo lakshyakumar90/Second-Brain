@@ -68,20 +68,20 @@ export const useRegistration = () => {
 
   const resendOTP = useCallback(
     async () => {
-      try {
+    try {
         dispatch(setRegistrationState({ isLoading: true, error: null }));
 
-        await authApi.resendOTP(registrationState.email);
+      await authApi.resendOTP(registrationState.email);
 
         dispatch(setRegistrationState({ isLoading: false }));
-        return { success: true };
-      } catch (error: any) {
+      return { success: true };
+    } catch (error: any) {
         dispatch(setRegistrationState({
-          isLoading: false,
-          error: error.message,
-        }));
-        return { success: false, error: error.message };
-      }
+        isLoading: false,
+        error: error.message,
+      }));
+      return { success: false, error: error.message };
+    }
     },
     [registrationState.email, dispatch]
   );

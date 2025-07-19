@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <Provider store={store}>
-        <App />
+          <App />
       </Provider>
     </ErrorBoundary>
   </StrictMode>,

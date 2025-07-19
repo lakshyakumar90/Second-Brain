@@ -25,6 +25,7 @@ export interface IUser {
       defaultView: "grid" | "list";
       aiEnabled: boolean;
       emailNotifications: boolean;
+      publicProfile?: boolean;
       autoSave: boolean;
       language?: string;
       timezone?: string;
@@ -32,13 +33,13 @@ export interface IUser {
   
     usage: {
       totalItems: number;
-      totalStorage: number;
-      lastLogin: Date;
+      storageUsed: number;
+      lastLoginAt?: Date;
       itemsCreatedToday: number;
       aiRequestsToday: number;
       aiRequestsThisMonth: number;
       lastAiRequestAt?: Date;
-      aiTrialResetAt: Date;
+      aiTrialResetsAt: Date;
     };
   
     isVerified: boolean;
@@ -57,6 +58,10 @@ export interface IUser {
   
     createdAt: Date;
     updatedAt: Date;
+    
+    // Soft delete fields
+    isDeleted?: boolean;
+    deletedAt?: Date;
   }
 
 export interface AuthRequest extends Request {

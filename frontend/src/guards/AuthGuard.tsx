@@ -7,7 +7,7 @@ interface AuthGuardProps {
 }
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, isLoading, user } = useAppSelector((state) => state.auth);
 
   // No need to call checkAuth here anymore - AuthInitializer handles it
 
@@ -21,6 +21,11 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" replace />;
+  }
+
+  // If user exists but hasn't completed registration, redirect to registration
+  if (user && (user as any).completedSteps !== undefined && (user as any).completedSteps < 3) {
+    return <Navigate to="/auth/register" replace />;
   }
 
   return <>{children}</>;

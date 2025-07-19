@@ -12,7 +12,7 @@ const GuestGuard: React.FC<GuestGuardProps> = ({ children }) => {
   if (isAuthenticated) {
     // If user has completed registration, redirect to dashboard
     if (user && (user as any).completedSteps === 3) {
-      return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
     }
     // If user hasn't completed registration, allow access to auth routes to complete registration
     // but redirect from landing page to registration

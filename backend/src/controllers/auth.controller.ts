@@ -285,8 +285,8 @@ const registerStep2 = async (
   }
 
   const existingUser = await User.findOne({ username });
-  if (existingUser) {
-    res.status(400).json({ message: "Username already taken", existingUser });
+  if (existingUser && existingUser._id.toString() !== req.user?.userId) {
+    res.status(400).json({ message: "Username already taken" });
     return;
   }
 

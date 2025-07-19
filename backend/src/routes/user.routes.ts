@@ -20,19 +20,16 @@ router.use(authMiddleware);
 
 // Routes that don't require completed registration
 router.get('/profile', getProfile); // Users need to access their profile during registration
+router.post('/avatar', uploadAvatarMiddleware, handleUploadError, uploadAvatar); // Avatar upload during registration
 
-// Apply registration complete middleware to routes that require completed registration
-router.use(registrationCompleteMiddleware);
-
-router.put('/profile', updateProfile);
-router.put('/profile/preferences', updateProfilePreferences);
-// Avatar upload route
-router.post('/avatar', uploadAvatarMiddleware, handleUploadError, uploadAvatar);
+// Routes that require completed registration - apply middleware individually
+router.put('/profile', registrationCompleteMiddleware, updateProfile);
+router.put('/profile/preferences', registrationCompleteMiddleware, updateProfilePreferences);
 // Password management
-router.put('/password', changePassword);
+router.put('/password', registrationCompleteMiddleware, changePassword);
 // Account management
-router.delete('/account', deleteAccount);
+router.delete('/account', registrationCompleteMiddleware, deleteAccount);
 // Usage statistics
-router.get('/usage', getUsageStats);
+router.get('/usage', registrationCompleteMiddleware, getUsageStats);
 
 export default router; 

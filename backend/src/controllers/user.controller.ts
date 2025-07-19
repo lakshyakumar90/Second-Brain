@@ -81,40 +81,42 @@ const updateProfilePreferences = async (req: AuthRequest, res: Response) => {
         }
 
         const { preferences } = validationResult.data;
+
         const user = await User.findById(req.user?.userId);
         if (!user) {
             res.status(404).json({ message: "User not found" });
             return;
         }
-
+        
+        // Update preferences
+        if (!user.preferences) {
+            user.preferences = {
+                theme: "system",
+                defaultView: "grid",
+                aiEnabled: true,
+                emailNotifications: true,
+                autoSave: true
+            };
+        }
+        
         // Update individual preference fields if provided
-        if (preferences.theme) {
-            user.preferences.theme = preferences.theme;
-        }
-        if (preferences.defaultView) {
-            user.preferences.defaultView = preferences.defaultView;
-        }
-        if (typeof preferences.aiEnabled !== 'undefined') {
-            user.preferences.aiEnabled = preferences.aiEnabled;
-        }
-        if (typeof preferences.emailNotifications !== 'undefined') {
-            user.preferences.emailNotifications = preferences.emailNotifications;
-        }
-        if (typeof preferences.autoSave !== 'undefined') {
-            user.preferences.autoSave = preferences.autoSave;
-        }
-        if (typeof preferences.language !== 'undefined') {
-            user.preferences.language = preferences.language;
-        }
-        if (typeof preferences.timezone !== 'undefined') {
-            user.preferences.timezone = preferences.timezone;
-        }
-
+        if (preferences.theme !== undefined) user.preferences.theme = preferences.theme;
+        if (preferences.emailNotifications !== undefined) user.preferences.emailNotifications = preferences.emailNotifications;
+        if (preferences.language !== undefined) user.preferences.language = preferences.language;
+        if (preferences.timezone !== undefined) user.preferences.timezone = preferences.timezone;
+        if (preferences.defaultView !== undefined) user.preferences.defaultView = preferences.defaultView;
+        if (preferences.aiEnabled !== undefined) user.preferences.aiEnabled = preferences.aiEnabled;
+        if (preferences.publicProfile !== undefined) user.preferences.publicProfile = preferences.publicProfile;
+        if (preferences.autoSave !== undefined) user.preferences.autoSave = preferences.autoSave;
+        
         await user.save();
-
-        res.status(200).json({ message: "Profile preferences updated successfully" });
+        
+        res.status(200).json({ 
+            message: "Preferences updated successfully",
+            preferences: user.preferences
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error updating profile preferences" });
+        res.status(500).json({ message: "Error updating preferences" });
     }
 }
 
@@ -137,21 +139,25 @@ const changePassword = async (req: AuthRequest, res: Response) => {
             res.status(404).json({ message: "User not found" });
             return;
         }
-        
-        // Verify old password
-        const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-        if (!isPasswordValid) {
-            res.status(401).json({ message: "Invalid old password" });
+
+        // Verify current password
+        const isCurrentPasswordValid = await bcrypt.compare(oldPassword, user.password);
+        if (!isCurrentPasswordValid) {
+            res.status(400).json({ message: "Current password is incorrect" });
             return;
         }
+
+        // Hash new password
+        const saltRounds = 10;
+        const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
         
         // Update password
-        user.password = newPassword;
+        user.password = hashedNewPassword;
         await user.save();
         
-        res.status(200).json({ message: "Password updated successfully" });
+        res.status(200).json({ message: "Password changed successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error updating password" });
+        res.status(500).json({ message: "Error changing password" });
     }
 }
 
@@ -163,10 +169,14 @@ const deleteAccount = async (req: AuthRequest, res: Response) => {
             return;
         }
 
-        await user.deleteOne();
-
-        res.clearCookie("token");
-
+        // Soft delete - mark as deleted but keep data for recovery
+        user.isDeleted = true;
+        user.deletedAt = new Date();
+        await user.save();
+        
+        // Clear authentication cookie
+        res.clearCookie('token');
+        
         res.status(200).json({ message: "Account deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Error deleting account" });
@@ -181,9 +191,17 @@ const getUsageStats = async (req: AuthRequest, res: Response) => {
             return;
         }
 
-        res.status(200).json({
-            usage: user.usage
-        });
+        // This would typically aggregate data from various collections
+        // For now, returning basic user stats
+        const stats = {
+            accountCreated: user.createdAt,
+            lastLogin: user.usage?.lastLoginAt || user.createdAt,
+            totalItems: user.usage?.totalItems || 0,
+            totalCategories: 0, // Would count from Categories collection
+            storageUsed: user.usage?.storageUsed || 0,
+        };
+        
+        res.status(200).json(stats);
     } catch (error) {
         res.status(500).json({ message: "Error fetching usage stats" });
     }

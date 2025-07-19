@@ -3,13 +3,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRegistration } from '../../hooks/useRegistration';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Link as LinkIcon, Palette, Mail, AlertCircle } from 'lucide-react';
+import AvatarUpload from '@/components/ui/avatar-upload';
+import { Palette, Mail, AlertCircle } from 'lucide-react';
 import { registerStep3Schema, type RegisterStep3FormData } from '../../lib/validationSchemas';
 
 const RegisterStep3: React.FC = () => {
@@ -33,9 +33,10 @@ const RegisterStep3: React.FC = () => {
     },
   });
 
-  // Watch theme value for controlled component
+  // Watch values for controlled components
   const themeValue = watch('theme');
   const emailNotificationsValue = watch('emailNotifications');
+  const avatarValue = watch('avatar');
 
   const onSubmit = async (data: RegisterStep3FormData) => {
     const result = await registerStep3(data);
@@ -51,7 +52,7 @@ const RegisterStep3: React.FC = () => {
   const handleSkip = async () => {
     // Submit with minimal required data
     const minimalData: RegisterStep3FormData = {
-      avatar: '',
+      avatar: avatarValue || '',
       bio: '',
       theme: themeValue || 'system',
       emailNotifications: emailNotificationsValue ?? true,
@@ -94,28 +95,23 @@ const RegisterStep3: React.FC = () => {
               </div>
             )}
 
-            {/* Avatar URL Field */}
+            {/* Avatar Upload Field */}
             <div className="space-y-2">
-              <Label htmlFor="avatar">Avatar URL (optional)</Label>
-              <div className="relative">
-                <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="avatar"
-                  type="url"
-                  placeholder="https://example.com/avatar.jpg"
-                  className={`pl-10 ${errors.avatar ? 'border-red-500 focus:border-red-500' : ''}`}
-                  {...register('avatar')}
+              <Label>Profile Picture (optional)</Label>
+              <div className="flex justify-center">
+                <AvatarUpload
+                  currentAvatar={avatarValue}
+                  size="lg"
+                  onAvatarChange={(avatarUrl) => setValue('avatar', avatarUrl)}
+                  className="mx-auto"
                 />
               </div>
               {errors.avatar && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
+                <p className="text-sm text-red-600 flex items-center gap-1 justify-center">
                   <AlertCircle className="h-3 w-3" />
                   {errors.avatar.message}
                 </p>
               )}
-              <p className="text-xs text-gray-500">
-                Add a profile picture URL or leave blank for default avatar
-              </p>
             </div>
 
             {/* Bio Field */}
@@ -135,55 +131,60 @@ const RegisterStep3: React.FC = () => {
                 </p>
               )}
               <p className="text-xs text-gray-500">
-                Maximum 500 characters
+                Share a brief description about yourself (optional)
               </p>
             </div>
 
-            {/* Theme Selection */}
+            {/* Theme Preference */}
             <div className="space-y-3">
-              <Label className="text-base font-medium flex items-center gap-2">
+              <Label className="flex items-center gap-2">
                 <Palette className="h-4 w-4" />
                 Theme Preference
               </Label>
-              <RadioGroup
-                value={themeValue}
+              <RadioGroup 
+                value={themeValue} 
                 onValueChange={(value) => setValue('theme', value as 'light' | 'dark' | 'system')}
+                className="grid grid-cols-3 gap-4"
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="light" id="light" />
-                  <Label htmlFor="light" className="text-sm">Light</Label>
+                  <Label htmlFor="light" className="text-sm font-normal cursor-pointer">
+                    Light
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="dark" id="dark" />
-                  <Label htmlFor="dark" className="text-sm">Dark</Label>
+                  <Label htmlFor="dark" className="text-sm font-normal cursor-pointer">
+                    Dark
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="system" id="system" />
-                  <Label htmlFor="system" className="text-sm">System (Auto)</Label>
+                  <Label htmlFor="system" className="text-sm font-normal cursor-pointer">
+                    System
+                  </Label>
                 </div>
               </RadioGroup>
             </div>
 
             {/* Email Notifications */}
-            <div className="space-y-3">
-              <Label className="text-base font-medium flex items-center gap-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="emailNotifications"
+                checked={emailNotificationsValue}
+                onCheckedChange={(checked) => setValue('emailNotifications', checked === true)}
+              />
+              <Label 
+                htmlFor="emailNotifications" 
+                className="text-sm font-normal cursor-pointer flex items-center gap-2"
+              >
                 <Mail className="h-4 w-4" />
-                Notifications
+                Enable email notifications
               </Label>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="emailNotifications"
-                  checked={emailNotificationsValue}
-                  onCheckedChange={(checked) => setValue('emailNotifications', !!checked)}
-                />
-                <Label htmlFor="emailNotifications" className="text-sm">
-                  Send me email notifications about updates and features
-                </Label>
-              </div>
             </div>
 
-            {/* Buttons */}
-            <div className="space-y-3">
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3 pt-4">
               <Button
                 type="submit"
                 className="w-full"
@@ -202,17 +203,12 @@ const RegisterStep3: React.FC = () => {
               <Button
                 type="button"
                 variant="ghost"
-                className="w-full"
                 onClick={handleSkip}
                 disabled={isSubmitting || registrationState.isLoading}
+                className="w-full"
               >
                 Skip for now
               </Button>
-            </div>
-
-            {/* Progress Indicator */}
-            <div className="text-center text-sm text-gray-500">
-              Step 4 of 4 - Almost done!
             </div>
           </form>
         </CardContent>

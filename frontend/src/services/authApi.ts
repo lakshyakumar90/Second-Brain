@@ -119,6 +119,48 @@ class AuthApiService {
       body: JSON.stringify(data),
     });
   }
+
+  // Upload avatar
+  async uploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    // For file uploads, we need to make a custom request without JSON headers
+    const config: RequestInit = {
+      method: 'POST',
+      body: formData,
+      credentials: 'include', // Include cookies for auth
+    };
+
+    const response = await fetch(`${API_BASE_URL}/users/avatar`, config);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Upload Error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  // Update user profile
+  async updateProfile(data: {
+    name?: string;
+    username?: string;
+    email?: string;
+    bio?: string;
+    avatar?: string;
+  }) {
+    return this.request('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Get user profile
+  async getProfile(userId?: string) {
+    const endpoint = userId ? `/users/profile/${userId}` : '/users/profile';
+    return this.request(endpoint);
+  }
 }
 
 export const authApi = new AuthApiService();
