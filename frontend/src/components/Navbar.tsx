@@ -13,7 +13,7 @@ import { Bell, Search, Settings, LogOut, User } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   return (
-    <nav className="shadow-sm border-b border-gray-200">
+    <nav className="absolute top-0 left-0 right-0 shadow-sm border-b border-gray-200 dark:border-gray-800">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">

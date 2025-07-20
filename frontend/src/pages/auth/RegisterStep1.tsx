@@ -22,14 +22,13 @@ const RegisterStep1: React.FC = () => {
     setError,
   } = useForm<RegisterStep1FormData>({
     resolver: zodResolver(registerStep1Schema),
-    mode: 'onBlur', // Validate on blur for better UX
+    mode: 'onBlur', 
   });
 
   const onSubmit = async (data: RegisterStep1FormData) => {
     const result = await registerStep1(data.email, data.password);
     
     if (!result.success) {
-      // Set API error on the form
       setError('root', {
         type: 'manual',
         message: result.error || 'Registration failed',
@@ -38,8 +37,8 @@ const RegisterStep1: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
           <CardDescription className="text-center">

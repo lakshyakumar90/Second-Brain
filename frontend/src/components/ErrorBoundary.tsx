@@ -65,13 +65,13 @@ class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="min-h-screen flex items-center justify-center p-4">
           <Card className="w-full max-w-lg">
             <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
-              <CardTitle className="text-xl text-gray-900">
+              <CardTitle className="text-xl">
                 Something went wrong
               </CardTitle>
               <CardDescription>
@@ -82,7 +82,7 @@ class ErrorBoundary extends Component<Props, State> {
             <CardContent className="space-y-4">
               {/* Error details for development */}
               {process.env.NODE_ENV === 'development' && this.state.error && (
-                <div className="rounded-md bg-red-50 border border-red-200 p-4">
+                <div className="rounded-md bg-red-50 border border-red-200 dark:border-red-800 dark:bg-red-900/20 p-4">
                   <h4 className="text-sm font-medium text-red-800 mb-2">
                     Error Details (Development Only):
                   </h4>

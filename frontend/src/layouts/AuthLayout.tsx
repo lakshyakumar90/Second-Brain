@@ -6,8 +6,8 @@ interface AuthLayoutProps {
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b shadow-sm">
+    <div className="flex flex-col">
+      <header className="absolute top-0 left-0 right-0 border-b shadow-sm">
         <div className="mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex h-8 items-center">
             <h1 className="text-xl font-bold">Second Brain</h1>
@@ -16,7 +16,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
       </header>
 
       <main className="">
-        <div className="min-h-screen mx-auto w-full px-4 py-12 sm:px-6 lg:px-8">
+        <div className="h-screen mx-auto w-full flex items-center justify-center">
           {children}
         </div>
       </main>
