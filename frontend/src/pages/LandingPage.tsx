@@ -1,3 +1,5 @@
+import GallerySection from "@/components/landing/GallerySection";
+import HeroSection from "@/components/landing/HeroSection";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 
 const LandingPage = () => {
@@ -22,6 +24,8 @@ const LandingPage = () => {
       </header>
       
       <LandingNavbar />
+      <HeroSection/>
+      <GallerySection/>
     </div>
   );
 };
