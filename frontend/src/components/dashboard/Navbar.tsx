@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Bell, Search, Settings, LogOut, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
   return (
@@ -18,9 +19,9 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-xl font-semibold">
-                Second Brain
-              </h1>
+              <Link to="/" className="flex items-center gap-2">
+                <img src="/mneumonicore.svg" alt="Nuemonicore" className="h-8 w-8" />
+              </Link>
             </div>
             <div className="hidden md:ml-6 md:flex md:space-x-8">
               <a

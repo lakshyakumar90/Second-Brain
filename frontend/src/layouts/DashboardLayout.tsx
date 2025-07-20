@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/dashboard/Navbar';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

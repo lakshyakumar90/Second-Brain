@@ -6,7 +6,7 @@ import './index.css'
 import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary'
 
-document.documentElement.classList.add('dark');
+document.documentElement.classList.add('root');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
