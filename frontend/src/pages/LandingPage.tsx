@@ -1,3 +1,5 @@
+import FeatureSection from "@/components/landing/FeatureSection";
+import FooterSection from "@/components/landing/FooterSection";
 import GallerySection from "@/components/landing/GallerySection";
 import HeroSection from "@/components/landing/HeroSection";
 import LandingNavbar from "@/components/landing/LandingNavbar";
@@ -26,6 +28,8 @@ const LandingPage = () => {
       <LandingNavbar />
       <HeroSection/>
       <GallerySection/>
+      <FeatureSection/>
+      <FooterSection/>
     </div>
   );
 };
