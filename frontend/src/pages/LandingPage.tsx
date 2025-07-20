@@ -1,3 +1,4 @@
+import EndSection from "@/components/landing/EndSection";
 import FeatureSection from "@/components/landing/FeatureSection";
 import FooterSection from "@/components/landing/FooterSection";
 import GallerySection from "@/components/landing/GallerySection";
@@ -30,6 +31,7 @@ const LandingPage = () => {
       <GallerySection/>
       <FeatureSection/>
       <FooterSection/>
+      <EndSection/> 
     </div>
   );
 };
