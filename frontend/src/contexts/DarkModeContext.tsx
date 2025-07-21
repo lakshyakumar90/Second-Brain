@@ -8,12 +8,17 @@ interface DarkModeContextType {
 export const DarkModeContext = createContext<DarkModeContextType | undefined>(undefined);
 
 export const DarkModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(false);
+  // Default to dark mode for internal pages (when no stored preference exists)
+  const [darkMode, setDarkMode] = useState(true);
 
   useEffect(() => {
     const stored = localStorage.getItem('darkMode');
     if (stored !== null) {
+      // Use stored preference if it exists
       setDarkMode(stored === 'true');
+    } else {
+      // Default to dark mode if no preference is stored
+      setDarkMode(true);
     }
   }, []);
 
