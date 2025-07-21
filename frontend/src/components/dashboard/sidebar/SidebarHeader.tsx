@@ -3,10 +3,11 @@ import { ChevronsLeft, SquarePen, Edit3 } from "lucide-react";
 import { useState } from "react";
 
 interface SidebarHeaderProps {
-  onToggleSidebar?: () => void;
+  onToggleSidebar?: (event: React.MouseEvent) => void;
+  sidebarState?: 'collapsed' | 'shrunk' | 'expanded';
 }
 
-const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggleSidebar }) => {
+const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggleSidebar, sidebarState }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -35,12 +36,15 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggleSidebar }) => {
         </div>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0 p-1">
+        {/* Hide chevron left icon when sidebar is in shrunk state */}
+        {sidebarState !== 'shrunk' && (
         <div className="p-1 hover:bg-sidebar-accent rounded-sm">
           <ChevronsLeft
             onClick={onToggleSidebar}
             className="h-5 text-[#AAAAAA] hover:bg-sidebar-accent rounded-sm transition-colors cursor-pointer"
           />
         </div>
+        )}
         <div className="p-1 hover:bg-sidebar-accent rounded-sm">
           <SquarePen className="h-5 text-[#AAAAAA] hover:bg-sidebar-accent rounded-sm transition-colors cursor-pointer" />
         </div>

@@ -2,10 +2,11 @@ import { Home, FileText, Settings, User, LogOut } from "lucide-react";
 import SidebarHeader from "./SidebarHeader";
 
 interface SidebarProps {
-  onToggleSidebar?: () => void;
+  onToggleSidebar?: (event: React.MouseEvent) => void;
+  sidebarState?: 'collapsed' | 'shrunk' | 'expanded';
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState }) => {
   const menuItems = [
     { icon: Home, label: "Dashboard", href: "/dashboard" },
     { icon: FileText, label: "Notes", href: "/notes" },
@@ -16,7 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar }) => {
   return (
     <div className="h-screen flex flex-col bg-sidebar-primary p-2">
       {/* Header */}
-      <SidebarHeader onToggleSidebar={onToggleSidebar} />
+      <SidebarHeader onToggleSidebar={onToggleSidebar} sidebarState={sidebarState} />
 
       {/* Navigation */}
       <nav className="flex-1 p-4">
