@@ -4,6 +4,7 @@ import FooterSection from "@/components/landing/FooterSection";
 import GallerySection from "@/components/landing/GallerySection";
 import HeroSection from "@/components/landing/HeroSection";
 import LandingNavbar from "@/components/landing/LandingNavbar";
+import PublicLayout from "@/layouts/PublicLayout";
 
 const LandingPage = () => {
   return (

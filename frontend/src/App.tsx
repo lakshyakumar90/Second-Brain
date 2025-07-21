@@ -15,6 +15,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import AuthLayout from "./layouts/AuthLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import AuthInitializer from "./components/AuthInitializer";
+import { DarkModeProvider } from './contexts/DarkModeContext';
 
 function App() {
   return (
@@ -29,33 +30,43 @@ function App() {
             </GuestGuard>
           }
         />
+        {/* Wrap all other routes in DarkModeProvider */}
         <Route
-          path="/auth"
+          path="/*"
           element={
-            <GuestGuard>
-              <AuthLayout>
-                <Outlet />
-              </AuthLayout>
-            </GuestGuard>
+            <DarkModeProvider>
+              <Routes>
+                <Route
+                  path="auth/*"
+                  element={
+                    <GuestGuard>
+                      <AuthLayout>
+                        <Outlet />
+                      </AuthLayout>
+                    </GuestGuard>
+                  }
+                >
+                  <Route path="login" element={<Login />} />
+                  <Route path="register" element={<Register />} />
+                  <Route path="forgot-password" element={<ForgotPassword />} />
+                </Route>
+                <Route
+                  path="dashboard/*"
+                  element={
+                    <RegistrationGuard>
+                      <DashboardLayout>
+                        <Outlet />
+                      </DashboardLayout>
+                    </RegistrationGuard>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </DarkModeProvider>
           }
-        >
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-          <Route path="forgot-password" element={<ForgotPassword />} />
-        </Route>
-        <Route
-          path="/dashboard"
-          element={
-            <RegistrationGuard>
-              <DashboardLayout>
-                <Outlet />
-              </DashboardLayout>
-            </RegistrationGuard>
-          }
-        >
-          <Route index element={<Dashboard />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" />} />
+        />
       </Routes>
     </BrowserRouter>
     </AuthInitializer>
