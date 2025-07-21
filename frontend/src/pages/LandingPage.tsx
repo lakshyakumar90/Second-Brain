@@ -1,3 +1,8 @@
+import EndSection from "@/components/landing/EndSection";
+import FeatureSection from "@/components/landing/FeatureSection";
+import FooterSection from "@/components/landing/FooterSection";
+import GallerySection from "@/components/landing/GallerySection";
+import HeroSection from "@/components/landing/HeroSection";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 
 const LandingPage = () => {
@@ -22,6 +27,11 @@ const LandingPage = () => {
       </header>
       
       <LandingNavbar />
+      <HeroSection/>
+      <GallerySection/>
+      <FeatureSection/>
+      <FooterSection/>
+      <EndSection/> 
     </div>
   );
 };
