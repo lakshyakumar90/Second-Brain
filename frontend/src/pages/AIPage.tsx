@@ -1,3 +1,5 @@
+import CardsAi from "@/components/landing/ai/CardsAi";
+import HeroAI from "@/components/landing/ai/HeroAi";
 import PublicLayout from "@/layouts/PublicLayout";
 
 const AIPage = () => {
@@ -22,6 +24,9 @@ const AIPage = () => {
             />
           </div>
         </header>
+
+        <HeroAI/>
+        <CardsAi/>
         
       </div>
     </PublicLayout>
