@@ -17,6 +17,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import AuthInitializer from "./components/AuthInitializer";
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import AIPage from "./pages/AIPage";
+import AboutPage from "./pages/AboutPage";
 
 function App() {
   return (
@@ -36,6 +37,15 @@ function App() {
           element={
             <GuestGuard>
               <AIPage />
+            </GuestGuard>
+          }
+        />
+
+        <Route
+          path="/about"
+          element={
+            <GuestGuard>
+              <AboutPage/>
             </GuestGuard>
           }
         />

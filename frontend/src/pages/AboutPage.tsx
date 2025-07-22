@@ -1,13 +1,6 @@
-import EndSection from "@/components/landing/EndSection";
-import FeatureSection from "@/components/landing/FeatureSection";
-import FooterSection from "@/components/landing/FooterSection";
-import GallerySection from "@/components/landing/GallerySection";
-import HeroSection from "@/components/landing/HeroSection";
-import LandingNavbar from "@/components/landing/LandingNavbar";
 import PublicLayout from "@/layouts/PublicLayout";
-import {motion} from "motion/react";
-
-const LandingPage = () => {
+import AboutHero from "@/components/landing/about/AboutHero";
+const AboutPage = () => {
   return (
     <PublicLayout>
       {/* Landing page always uses light mode - no theme toggle available */}
@@ -22,23 +15,20 @@ const LandingPage = () => {
             />
           </div>
           <div className="h-10">
-            <img  
+            <img
               src="/mneumonicorelogo.svg"
               alt="Nuemonicore"
               className="h-full w-full object-contain"
             />
           </div>
         </header>
+
+        <AboutHero/>
         
-        <LandingNavbar />
-        <HeroSection/>
-        <GallerySection/>
-        <FeatureSection/>
-        <FooterSection/>
-        <EndSection/> 
+       
       </div>
     </PublicLayout>
   );
 };
 
-export default LandingPage;
+export default AboutPage;
