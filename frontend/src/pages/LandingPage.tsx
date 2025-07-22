@@ -5,7 +5,7 @@ import GallerySection from "@/components/landing/GallerySection";
 import HeroSection from "@/components/landing/HeroSection";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import PublicLayout from "@/layouts/PublicLayout";
-import {motion} from "motion/react";
+
 
 const LandingPage = () => {
   return (

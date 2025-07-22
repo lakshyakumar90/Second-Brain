@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/dashboard/Navbar';
 import Sidebar from '@/components/dashboard/sidebar/Sidebar';
+import { motion } from 'motion/react'; // Corrected import (assuming Framer Motion)
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [isHovering, setIsHovering] = useState(false);
   const [sidebarState, setSidebarState] = useState<'collapsed' | 'shrunk' | 'expanded'>('collapsed');
+  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024); // lg breakpoint (1024px)
 
   // Load sidebar state from localStorage on component mount
   useEffect(() => {
@@ -23,6 +25,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     localStorage.setItem('sidebarState', sidebarState);
   }, [sidebarState]);
 
+  // Detect screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const toggleSidebar = (event: React.MouseEvent) => { 
     if (sidebarState === 'expanded') {
       const isInHoverSpace = event.clientX <= (20 + 256);
@@ -36,18 +48,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const triggerWidth = 20;
-      const sidebarWidth = 256;
+      const sidebarWidth = 248;
 
-      if(e.clientX <= triggerWidth && !isHovering && sidebarState !== 'expanded'){
+      if (e.clientX <= triggerWidth && !isHovering && sidebarState !== 'expanded') {
         setSidebarState('shrunk');
         setIsHovering(true);
       }
 
       const isOverSidebar = e.clientX >= 0 && e.clientX <= sidebarWidth;
-      if(!isOverSidebar && sidebarState !== 'expanded'){
+      if (!isOverSidebar && sidebarState !== 'expanded') {
         setSidebarState('collapsed');
         setIsHovering(false);
       }
@@ -57,44 +69,43 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
     return () => {
       document.body.removeEventListener('mousemove', handleMouseMove);
-    }
+    };
   }, [isHovering, sidebarState]);
 
-  // Determine if sidebar is visible (for mobile overlay and content shift)
-  const isVisible = sidebarState !== 'collapsed';
+  // Framer Motion variants for main content (dynamic based on state and screen size)
+  const mainVariants = {
+    collapsed: { paddingLeft: 0 },
+    shrunk: { paddingLeft: 0 }, // No shift on hover (overlays)
+    expanded: { paddingLeft: isLargeScreen ? 256 : 0 }, // Shift only on large screens; overlays on small
+  };
 
   return (
     <div className="min-h-screen">
       <Navbar onToggleSidebar={toggleSidebar} sidebarState={sidebarState} />
 
-      <div className="flex">
-        {/* Sidebar Wrapper */}
+      <div className="grid grid-cols-1 min-h-screen"> {/* Always 1 column; no dynamic changes */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r transform transition-all duration-300 ease-in-out overflow-hidden
+          className={`absolute inset-y-0 left-0 z-[9999] w-64 bg-background border-r transform transition-all duration-300 ease-in-out overflow-hidden shadow-lg
             ${sidebarState === 'collapsed' ? '-translate-x-full' : 'translate-x-0'}
-            ${sidebarState === 'shrunk' ? 'h-[70vh] top-[15vh]' : 'h-full top-0'} // Shrunk: 70vh, centered
+            ${sidebarState === 'shrunk' ? 'h-[80vh] top-[10vh] rounded-r-lg border-2' : 'h-full top-0'}
             ${sidebarState === 'expanded' ? 'h-full top-0' : ''}
           `}
         >
           <Sidebar onToggleSidebar={toggleSidebar} sidebarState={sidebarState} />
         </div>
-
-        {/* Overlay for mobile */}
-        {isVisible && (
-          <div 
-            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-            onClick={() => setSidebarState('collapsed')} // Close on overlay click
-          />
-        )}
-
-        {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ease-in-out ${
-          isVisible ? 'lg:ml-64' : 'ml-0'
-        }`}>
-          <div className="mx-auto py-6 sm:px-6 lg:px-8">
+        
+        {/* Main Content - Animated with Framer Motion */}
+        <motion.main
+          variants={mainVariants}
+          initial="collapsed"
+          animate={sidebarState} // Directly uses state as variant key (collapsed, shrunk, or expanded)
+          transition={{ type: 'spring', stiffness: 120, damping: 15 }} // Spring for smooth, non-stiff animation
+          layout // Optimizes layout changes
+        >
+          <div className="mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60vw] bg-red-100 py-3 px-4 sm:py-6 sm:px-6 lg:px-8">
             {children}
           </div>
-        </main>
+        </motion.main>
       </div>
     </div>
   );
