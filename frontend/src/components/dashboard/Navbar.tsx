@@ -14,7 +14,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, sidebarState }) => {
   const MenuIcon = sidebarState === 'shrunk' ? ChevronsRight : Menu;
   
   return (
-    <div className="px-2 py-2">
+    <div className="px-2 py-2 sticky top-0 left-0 right-0 z-50">
       <div className="flex items-center justify-between">
         <button 
           onClick={onToggleSidebar}

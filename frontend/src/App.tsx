@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import GuestGuard from "./guards/GuestGuard";
 import RegistrationGuard from "./guards/RegistrationGuard";
-import Dashboard from "./pages/Dashboard";
+import DashboardHome from "./pages/DashboardHome";
 import LandingPage from "./pages/LandingPage";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
@@ -17,6 +17,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import AuthInitializer from "./components/AuthInitializer";
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import AIPage from "./pages/AIPage";
+import AboutPage from "./pages/AboutPage";
 
 function App() {
   return (
@@ -36,6 +37,15 @@ function App() {
           element={
             <GuestGuard>
               <AIPage />
+            </GuestGuard>
+          }
+        />
+
+        <Route
+          path="/about"
+          element={
+            <GuestGuard>
+              <AboutPage/>
             </GuestGuard>
           }
         />
@@ -69,7 +79,7 @@ function App() {
                     </RegistrationGuard>
                   }
                 >
-                  <Route index element={<Dashboard />} />
+                  <Route index element={<DashboardHome />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>

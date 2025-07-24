@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import Navbar from '@/components/dashboard/Navbar';
-import Sidebar from '@/components/dashboard/sidebar/Sidebar';
-import { motion } from 'motion/react'; // Corrected import (assuming Framer Motion)
+import React, { useState, useEffect } from "react";
+import Navbar from "@/components/dashboard/Navbar";
+import Sidebar from "@/components/dashboard/sidebar/Sidebar";
+import { motion } from "motion/react"; // Corrected import (assuming Framer Motion)
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -9,20 +9,29 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [isHovering, setIsHovering] = useState(false);
-  const [sidebarState, setSidebarState] = useState<'collapsed' | 'shrunk' | 'expanded'>('collapsed');
+  const [sidebarState, setSidebarState] = useState<
+    "collapsed" | "shrunk" | "expanded"
+  >("collapsed");
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024); // lg breakpoint (1024px)
 
   // Load sidebar state from localStorage on component mount
   useEffect(() => {
-    const savedSidebarState = localStorage.getItem('sidebarState') as 'collapsed' | 'shrunk' | 'expanded' | null;
-    if (savedSidebarState && ['collapsed', 'shrunk', 'expanded'].includes(savedSidebarState)) {
+    const savedSidebarState = localStorage.getItem("sidebarState") as
+      | "collapsed"
+      | "shrunk"
+      | "expanded"
+      | null;
+    if (
+      savedSidebarState &&
+      ["collapsed", "shrunk", "expanded"].includes(savedSidebarState)
+    ) {
       setSidebarState(savedSidebarState);
     }
   }, []);
 
   // Save sidebar state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('sidebarState', sidebarState);
+    localStorage.setItem("sidebarState", sidebarState);
   }, [sidebarState]);
 
   // Detect screen size changes
@@ -31,20 +40,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       setIsLargeScreen(window.innerWidth >= 1024);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const toggleSidebar = (event: React.MouseEvent) => { 
-    if (sidebarState === 'expanded') {
-      const isInHoverSpace = event.clientX <= (20 + 256);
+  const toggleSidebar = (event: React.MouseEvent) => {
+    if (sidebarState === "expanded") {
+      const isInHoverSpace = event.clientX <= 20 + 256;
       if (isInHoverSpace) {
-        setSidebarState('shrunk');
+        setSidebarState("shrunk");
       } else {
-        setSidebarState('collapsed');
+        setSidebarState("collapsed");
       }
     } else {
-      setSidebarState('expanded');
+      setSidebarState("expanded");
     }
   };
 
@@ -53,22 +62,26 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       const triggerWidth = 20;
       const sidebarWidth = 248;
 
-      if (e.clientX <= triggerWidth && !isHovering && sidebarState !== 'expanded') {
-        setSidebarState('shrunk');
+      if (
+        e.clientX <= triggerWidth &&
+        !isHovering &&
+        sidebarState !== "expanded"
+      ) {
+        setSidebarState("shrunk");
         setIsHovering(true);
       }
 
       const isOverSidebar = e.clientX >= 0 && e.clientX <= sidebarWidth;
-      if (!isOverSidebar && sidebarState !== 'expanded') {
-        setSidebarState('collapsed');
+      if (!isOverSidebar && sidebarState !== "expanded") {
+        setSidebarState("collapsed");
         setIsHovering(false);
       }
     };
 
-    document.body.addEventListener('mousemove', handleMouseMove);
+    document.body.addEventListener("mousemove", handleMouseMove);
 
     return () => {
-      document.body.removeEventListener('mousemove', handleMouseMove);
+      document.body.removeEventListener("mousemove", handleMouseMove);
     };
   }, [isHovering, sidebarState]);
 
@@ -80,29 +93,47 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Navbar onToggleSidebar={toggleSidebar} sidebarState={sidebarState} />
 
-      <div className="grid grid-cols-1 min-h-screen"> {/* Always 1 column; no dynamic changes */}
+      <div className="flex flex-1 relative overflow-hidden">
+        {/* Fixed Sidebar */}
         <div
-          className={`absolute inset-y-0 left-0 z-[9999] w-64 bg-background border-r transform transition-all duration-300 ease-in-out overflow-hidden shadow-lg
-            ${sidebarState === 'collapsed' ? '-translate-x-full' : 'translate-x-0'}
-            ${sidebarState === 'shrunk' ? 'h-[80vh] top-[10vh] rounded-r-lg border-2' : 'h-full top-0'}
-            ${sidebarState === 'expanded' ? 'h-full top-0' : ''}
+          className={`fixed inset-y-0 left-0 z-[9999] w-64 bg-background border-r transform transition-all duration-300 ease-in-out overflow-hidden shadow-lg
+            ${
+              sidebarState === "collapsed"
+                ? "-translate-x-full"
+                : "translate-x-0"
+            }
+            ${
+              sidebarState === "shrunk"
+                ? "rounded-r-lg border-2"
+                : "h-full top-0"
+            }
+            ${sidebarState === "expanded" ? "h-full top-0" : ""}
           `}
+          style={{
+            top: sidebarState === "shrunk" ? "10vh" : "",
+            height:
+              sidebarState === "shrunk" ? "calc(80vh)" : "100vh",
+          }}
         >
-          <Sidebar onToggleSidebar={toggleSidebar} sidebarState={sidebarState} />
+          <Sidebar
+            onToggleSidebar={toggleSidebar}
+            sidebarState={sidebarState}
+          />
         </div>
-        
-        {/* Main Content - Animated with Framer Motion */}
+
+        {/* Main Content - Scrollable */}
         <motion.main
           variants={mainVariants}
           initial="collapsed"
-          animate={sidebarState} // Directly uses state as variant key (collapsed, shrunk, or expanded)
-          transition={{ type: 'spring', stiffness: 120, damping: 15 }} // Spring for smooth, non-stiff animation
-          layout // Optimizes layout changes
+          animate={sidebarState}
+          transition={{ type: "spring", stiffness: 120, damping: 15 }}
+          layout
+          className="flex-1 overflow-y-auto h-full"
         >
-          <div className="mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60vw] bg-red-100 py-3 px-4 sm:py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60vw] py-3 px-4 sm:py-6 sm:px-6 lg:px-8">
             {children}
           </div>
         </motion.main>

@@ -15,12 +15,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState }) => {
   ];
 
   return (
-    <div className="h-screen flex flex-col bg-sidebar-primary p-2">
+    <div className="h-full flex flex-col bg-sidebar-primary p-2">
       {/* Header */}
       <SidebarHeader onToggleSidebar={onToggleSidebar} sidebarState={sidebarState} />
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
           {menuItems.map((item, index) => (
             <li key={index}>
