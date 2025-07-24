@@ -160,3 +160,75 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Scrollbar Styles */
+:root {
+  --scrollbar-track: var(--background);
+  --scrollbar-thumb: var(--muted);
+  --scrollbar-thumb-hover: var(--accent);
+  --scrollbar-thumb-active: var(--secondary);
+}
+
+.dark {
+  --scrollbar-track: var(--background);
+  --scrollbar-thumb: var(--secondary);
+  --scrollbar-thumb-hover: var(--accent);
+  --scrollbar-thumb-active: var(--secondary);
+}
+
+/* WebKit Scrollbar Styles (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--scrollbar-track);
+  transition: all 0.2s ease-in-out;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  border: 1px solid var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-active);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+
+/* Firefox Scrollbar Styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Thin scrollbar variant for specific components */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  border: 1px solid var(--scrollbar-track);
+}
+
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

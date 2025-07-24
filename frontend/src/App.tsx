@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import GuestGuard from "./guards/GuestGuard";
 import RegistrationGuard from "./guards/RegistrationGuard";
-import Dashboard from "./pages/Dashboard";
+import DashboardHome from "./pages/DashboardHome";
 import LandingPage from "./pages/LandingPage";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
@@ -79,7 +79,7 @@ function App() {
                     </RegistrationGuard>
                   }
                 >
-                  <Route index element={<Dashboard />} />
+                  <Route index element={<DashboardHome />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
