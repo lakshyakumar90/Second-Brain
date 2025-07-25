@@ -1,14 +1,14 @@
-import CardsAi from "@/components/landing/ai/CardsAi";
-import HeroAI from "@/components/landing/ai/HeroAi";
 import PublicLayout from "@/layouts/PublicLayout";
+import ContactHero from "@/components/landing/contact/ContactHero";
 
-const AIPage = () => {
+
+const ContactPage = () => {
   return (
     <PublicLayout>
-      {/* AI page always uses light mode - no theme toggle available */}
+      {/* Landing page always uses light mode - no theme toggle available */}
       <div>
         {/* <LandingNavbar />        */}
-        <header className="flex items-center justify-between px-10 py-6 bg-red-200">
+        <header className="flex items-center justify-between px-10 py-6 bg-purple-200">
           <div className="w-40">
             <img
               src="/mneumonicoreblack.svg"
@@ -25,12 +25,14 @@ const AIPage = () => {
           </div>
         </header>
 
-        <HeroAI/>
-        <CardsAi/>
+        <ContactHero/>
+       
         
+        
+       
       </div>
     </PublicLayout>
   );
 };
 
-export default AIPage;
+export default ContactPage;

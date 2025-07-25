@@ -18,6 +18,7 @@ import AuthInitializer from "./components/AuthInitializer";
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import AIPage from "./pages/AIPage";
 import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
 
 function App() {
   return (
@@ -41,6 +42,16 @@ function App() {
           }
         />
 
+        <Route
+          path="/contact"
+          element={
+            <GuestGuard>
+              <ContactPage/>
+            </GuestGuard>
+          }
+        />
+
+        
         <Route
           path="/about"
           element={

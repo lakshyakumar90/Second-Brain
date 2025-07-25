@@ -1,6 +1,6 @@
 const HeroAI=()=>{
     return(
-        <div className="  w-full ">
+        <div className="  w-full bg-gradient-to-b from-red-200 to-red-100 ">
             <h1 className="text-[8vw] font-semibold-s px-10 pt-20  mb-10 leading-28">Meet Your <br /> Creative AI Companion</h1>
             <p className=" px-10 text-2xl mb-6"><span className="font-semibold">Mneumonicare AI</span> isn’t just another add-on—<br />it’s an embedded
              assistant that helps you  think, create, and stay organized.</p>
