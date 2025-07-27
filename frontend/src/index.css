@@ -3,6 +3,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "neue-light";
+  src: url("/fonts/NeueMontreal-Light.otf");
+}
+
+@font-face {
+  font-family: "neue-regular";
+  src: url("/fonts/NeueMontreal-Regular.otf");
+}
+
+@font-face {
+  font-family: "neue-medium";
+  src: url("/fonts/NeueMontreal-Medium.otf");
+}
+
+@font-face {
+  font-family: "neue-bold";
+  src: url("/fonts/NeueMontreal-Bold.otf");
+}
+
 :root {
   --background: #F3F3E9;
   --foreground: oklch(0 0 0);
