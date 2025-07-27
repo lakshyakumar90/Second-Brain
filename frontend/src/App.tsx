@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import GuestGuard from "./guards/GuestGuard";
 import RegistrationGuard from "./guards/RegistrationGuard";
-import DashboardHome from "./pages/DashboardHome";
+import DashboardHome from "./pages/dashboard/DashboardHome";
 import LandingPage from "./pages/LandingPage";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
@@ -19,6 +19,7 @@ import { DarkModeProvider } from './contexts/DarkModeContext';
 import AIPage from "./pages/AIPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import TextEditor from "./pages/dashboard/TextEditor";
 
 function App() {
   return (
@@ -81,7 +82,7 @@ function App() {
                   <Route path="forgot-password" element={<ForgotPassword />} />
                 </Route>
                 <Route
-                  path="dashboard/*"
+                  path=""
                   element={
                     <RegistrationGuard>
                       <DashboardLayout>
@@ -90,7 +91,8 @@ function App() {
                     </RegistrationGuard>
                   }
                 >
-                  <Route index element={<DashboardHome />} />
+                  <Route path="home" element={<DashboardHome />} />
+                  <Route path="text-editor" element={<TextEditor />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>

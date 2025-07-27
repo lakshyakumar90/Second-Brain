@@ -34,7 +34,7 @@ const Login: React.FC = () => {
     const result = await login(data.email, data.password);
     
     if (result.success) {
-      navigate('/dashboard');
+      navigate('/home');
     } else {
       setApiError(result.error || 'Login failed');
     }

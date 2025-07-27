@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import AvatarUpload from '@/components/ui/avatar-upload';
-import { AlertCircle, Save, User, Mail } from 'lucide-react';
+import { AlertCircle, Save, User, Mail, RefreshCw, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 // Profile settings schema
 const profileSettingsSchema = z.object({
@@ -35,6 +36,7 @@ const profileSettingsSchema = z.object({
 type ProfileSettingsFormData = z.infer<typeof profileSettingsSchema>;
 
 interface ProfileSettingsProps {
+  // Made optional since we'll get user data from useAuth hook
   currentUser?: {
     name: string;
     username: string;
@@ -49,10 +51,16 @@ interface ProfileSettingsProps {
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   currentUser,
   onSave,
-  isLoading = false,
+  isLoading: externalLoading = false,
 }) => {
+  const { user, updateProfile, refreshUserData, willExpireSoon, getExpirationTime, heartbeatCheck } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isValidatingSession, setIsValidatingSession] = useState(false);
+
+  // Use user from auth hook if currentUser prop is not provided
+  const userData = currentUser || user;
 
   const {
     register,
@@ -61,32 +69,61 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     setError,
     setValue,
     watch,
+    reset,
   } = useForm<ProfileSettingsFormData>({
     resolver: zodResolver(profileSettingsSchema),
     mode: 'onBlur',
     defaultValues: {
-      name: currentUser?.name || '',
-      username: currentUser?.username || '',
-      email: currentUser?.email || '',
-      bio: currentUser?.bio || '',
-      avatar: currentUser?.avatar || '',
+      name: '',
+      username: '',
+      email: '',
+      bio: '',
+      avatar: '',
     },
   });
+
+  // Update form when user data changes
+  useEffect(() => {
+    if (userData) {
+      reset({
+        name: userData.name || '',
+        username: userData.username || '',
+        email: userData.email || '',
+        bio: userData.bio || '',
+        avatar: userData.avatar || '',
+      });
+    }
+  }, [userData, reset]);
 
   const watchedAvatar = watch('avatar');
 
   const onSubmit = async (data: ProfileSettingsFormData) => {
-    if (!onSave) return;
-
     try {
       setIsSaving(true);
       setSuccessMessage(null);
 
-      const result = await onSave(data);
+      let result;
+      
+      if (onSave) {
+        // Use external save handler if provided
+        result = await onSave(data);
+      } else {
+        // Use built-in updateProfile from useAuth hook
+        result = await updateProfile({
+          name: data.name,
+          username: data.username,
+          email: data.email,
+          bio: data.bio,
+          avatar: data.avatar,
+        });
+      }
 
       if (result.success) {
         setSuccessMessage('Profile updated successfully!');
         setTimeout(() => setSuccessMessage(null), 3000);
+        
+        // Reset form dirty state
+        reset(data);
       } else {
         setError('root', {
           type: 'manual',
@@ -107,51 +144,151 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     setValue('avatar', avatarUrl, { shouldDirty: true });
   };
 
+  const handleRefreshUserData = async () => {
+    try {
+      setIsRefreshing(true);
+      const result = await refreshUserData();
+      
+      if (result.success) {
+        setSuccessMessage('Profile data refreshed successfully!');
+        setTimeout(() => setSuccessMessage(null), 2000);
+      } else {
+        setError('root', {
+          type: 'manual',
+          message: 'Failed to refresh profile data',
+        });
+      }
+    } catch (error: any) {
+      setError('root', {
+        type: 'manual',
+        message: error.message || 'Failed to refresh profile data',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleValidateSession = async () => {
+    try {
+      setIsValidatingSession(true);
+      const result = await heartbeatCheck();
+      
+      if (result.success) {
+        setSuccessMessage('Session is valid! Cookies and authentication are working.');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        if (result.reason === 'authentication_failed') {
+          setError('root', {
+            type: 'manual',
+            message: 'Session validation failed - cookies may be cleared or expired. You will be logged out.',
+          });
+        } else {
+          setError('root', {
+            type: 'manual',
+            message: 'Session validation failed - not authenticated.',
+          });
+        }
+      }
+    } catch (error: any) {
+      setError('root', {
+        type: 'manual',
+        message: error.message || 'Failed to validate session',
+      });
+    } finally {
+      setIsValidatingSession(false);
+    }
+  };
+
+  // Check if auth data will expire soon
+  const authWillExpireSoon = willExpireSoon();
+  const expirationTime = getExpirationTime();
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Profile Settings
-        </CardTitle>
-        <CardDescription>
-          Update your profile information and avatar
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Settings
+            </CardTitle>
+            <CardDescription>
+              Update your profile information and avatar
+            </CardDescription>
+          </div>
+          
+          {/* Action buttons for manual data refresh and session validation */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleValidateSession}
+              disabled={isValidatingSession}
+              className="flex items-center gap-1"
+            >
+              <Shield className={`h-4 w-4 ${isValidatingSession ? 'animate-pulse' : ''}`} />
+              Validate
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshUserData}
+              disabled={isRefreshing}
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+        </div>
+
+        {/* Auth expiration warning */}
+        {authWillExpireSoon && expirationTime && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-3">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <AlertCircle className="h-4 w-4 inline mr-1" />
+              Your session will expire soon at {expirationTime.toLocaleTimeString()}. 
+              Your changes will be saved to localStorage.
+            </p>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
+            <p className="text-sm text-green-800 dark:text-green-200">
+              {successMessage}
+            </p>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {errors.root && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+            <p className="text-sm text-red-800 dark:text-red-200 flex items-center gap-1">
+              <AlertCircle className="h-4 w-4" />
+              {errors.root.message}
+            </p>
+          </div>
+        )}
       </CardHeader>
+
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* API Error Display */}
-          {errors.root && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              <span>{errors.root.message}</span>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {successMessage && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
-              <Save className="h-4 w-4 flex-shrink-0" />
-              <span>{successMessage}</span>
-            </div>
-          )}
-
           {/* Avatar Upload */}
           <div className="space-y-2">
-            <Label>Profile Picture</Label>
-            <div className="flex justify-center">
-              <AvatarUpload
-                currentAvatar={watchedAvatar || currentUser?.avatar}
-                onAvatarChange={handleAvatarChange}
-                size="lg"
-                disabled={isLoading || isSaving}
-              />
-            </div>
+            <Label htmlFor="avatar">Profile Picture</Label>
+            <AvatarUpload
+              currentAvatar={watchedAvatar}
+              onAvatarChange={handleAvatarChange}
+              disabled={externalLoading || isSaving}
+            />
           </div>
 
           {/* Name Field */}
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Name</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -159,7 +296,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 type="text"
                 placeholder="Enter your full name"
                 className={`pl-10 ${errors.name ? 'border-red-500 focus:border-red-500' : ''}`}
-                disabled={isLoading || isSaving}
+                disabled={externalLoading || isSaving}
                 {...register('name')}
               />
             </div>
@@ -175,13 +312,13 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <div className="relative">
-              <span className="absolute left-3 top-3 text-sm text-gray-400">@</span>
+              <span className="absolute left-3 top-3 text-gray-400">@</span>
               <Input
                 id="username"
                 type="text"
                 placeholder="Enter your username"
                 className={`pl-8 ${errors.username ? 'border-red-500 focus:border-red-500' : ''}`}
-                disabled={isLoading || isSaving}
+                disabled={externalLoading || isSaving}
                 {...register('username')}
               />
             </div>
@@ -203,7 +340,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 type="email"
                 placeholder="Enter your email address"
                 className={`pl-10 ${errors.email ? 'border-red-500 focus:border-red-500' : ''}`}
-                disabled={isLoading || isSaving}
+                disabled={externalLoading || isSaving}
                 {...register('email')}
               />
             </div>
@@ -223,7 +360,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
               placeholder="Tell us a bit about yourself..."
               className={`resize-none ${errors.bio ? 'border-red-500 focus:border-red-500' : ''}`}
               rows={4}
-              disabled={isLoading || isSaving}
+              disabled={externalLoading || isSaving}
               {...register('bio')}
             />
             {errors.bio && (
@@ -241,7 +378,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           <div className="flex justify-end pt-4">
             <Button
               type="submit"
-              disabled={!isDirty || isLoading || isSaving}
+              disabled={!isDirty || externalLoading || isSaving}
               className="min-w-[120px]"
             >
               {isSaving ? (
@@ -263,4 +400,4 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   );
 };
 
-export default ProfileSettings; 
+export default ProfileSettings;

@@ -1,15 +1,37 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
+import { AuthStorage } from '../utils/authStorage';
 
 interface RegistrationGuardProps {
   children: React.ReactNode;
 }
 
 const RegistrationGuard: React.FC<RegistrationGuardProps> = ({ children }) => {
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated, hasCheckedLocalStorage } = useAppSelector((state) => state.auth);
 
-  // If not authenticated, redirect to login
+  // Check if localStorage has valid auth data
+  const hasValidLocalStorage = AuthStorage.isUserDataValid();
+
+  // If localStorage is invalid but Redux still shows authenticated, 
+  // it means localStorage was manually cleared - redirect to login
+  if (isAuthenticated && !hasValidLocalStorage) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  // If we haven't checked localStorage yet, don't redirect (let AuthInitializer handle it)
+  if (!hasCheckedLocalStorage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated after localStorage check, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" replace />;
   }
