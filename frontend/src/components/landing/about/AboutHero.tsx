@@ -1,8 +1,33 @@
+import Carousel from "@/components/ui/carousel";
+import { motion } from 'framer-motion';
 
 
 const AboutHero = () => {
+  
+  const slideData = [
+    {
+      title: "Mystic Mountains",
+      button: "Explore Component",
+      src: "https://images.unsplash.com/photo-1494806812796-244fe51b774d?q=80&w=3534&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    {
+      title: "Urban Dreams",
+      button: "Explore Component",
+      src: "https://images.unsplash.com/photo-1518710843675-2540dd79065c?q=80&w=3387&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    {
+      title: "Neon Nights",
+      button: "Explore Component",
+      src: "https://images.unsplash.com/photo-1590041794748-2d8eb73a571c?q=80&w=3456&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    {
+      title: "Desert Whispers",
+      button: "Explore Component",
+      src: "https://images.unsplash.com/photo-1679420437432-80cfbf88986c?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+  ];
   return (
-    <div className="  w-full bg-gradient-to-b from-blue-200 to-white ">
+    <div className="  w-full">
             <h1 className="text-[8vw] font-semibold-s px-10 pt-20  mb-15 leading-30">Shaping<br /> the  Future of <br />Work  & Learning</h1>
             <p className=" px-10 text-3xl mb-20">We founded <span className="font-semibold">Mneumonicare</span> because today’s thinkers need more than old-fashioned
                  note apps or clunky collaboration tools. We believe in a more fluid workflow, where notes,
@@ -13,12 +38,65 @@ const AboutHero = () => {
             </div>
             <div className="border border-black mx-10 w-[95%] mb-30"></div>
 
-            <div className="px-10 mb-30">
+            <div 
+            className="px-10 mb-30">
                            
-                            <p className="text-5xl font-medium text-center">Individuals seeking a smarter, always-ready place to organize life or learning..</p> 
-                            <p className="text-5xl font-medium  text-center">Teams & Orgs that want real-time collaboration—brainstorming, project planning, documentation, and more.</p>
-                            <p className="text-5xl font-medium  text-center">Students & Educators who need to blend notes, visuals, research, and class work.</p>
-                            <p className="text-5xl font-medium  text-center">Creative professionals who think visually, need flexibility, and want a living, collaborative knowledge base.</p>
+                            <motion.p 
+                            initial={{
+                              y:-20,
+                              opacity:0
+                            }}
+                            whileInView={{
+                              y:0,
+                              opacity:1
+                            }}
+                            transition={{
+                              duration:0.5,
+                              delay:0.1
+                            }}
+                            className="text-5xl font-medium text-center">Individuals seeking a smarter, always-ready place to organize life or learning..</motion.p> 
+                            <motion.p 
+                             initial={{
+                              y:-20,
+                              opacity:0
+                            }}
+                            whileInView={{
+                              y:0,
+                              opacity:1
+                            }}
+                            transition={{
+                              duration:0.7,
+                              delay:0.1
+                            }}
+                            className="text-5xl font-medium  text-center">Teams & Orgs that want real-time collaboration—brainstorming, project planning, documentation, and more.</motion.p>
+                            <motion.p
+                             initial={{
+                              y:-20,
+                              opacity:0
+                            }}
+                            whileInView={{
+                              y:0,
+                              opacity:1
+                            }}
+                            transition={{
+                              duration:0.9,
+                              delay:0.1
+                            }}
+                            className="text-5xl font-medium  text-center">Students & Educators who need to blend notes, visuals, research, and class work.</motion.p>
+                            <motion.p 
+                             initial={{
+                              y:-20,
+                              opacity:0
+                            }}
+                            whileInView={{
+                              y:0,
+                              opacity:1
+                            }}
+                            transition={{
+                              duration:1,
+                              delay:0.1
+                            }}
+                            className="text-5xl font-medium  text-center">Creative professionals who think visually, need flexibility, and want a living, collaborative knowledge base.</motion.p>
              </div>
              <div className="border border-black mx-10 w-[95%] mb-10"></div>
 
@@ -45,6 +123,18 @@ const AboutHero = () => {
                                     <p className="text-lm text-gray-600">© 2025 <a className="border-b border-gray-300 hover:border-gray-600" href="#">Privacy</a></p>
                         </div>
              </div>
+
+             "use client";
+
+
+
+ 
+    <div className="relative overflow-hidden w-full h-full py-20">
+      <Carousel slides={slideData} />
+    </div>
+  
+
+
 
 
              
