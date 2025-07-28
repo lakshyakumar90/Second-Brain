@@ -6,7 +6,14 @@ interface AuthStorageData {
   expiresAt: number;
 }
 
+interface GuestSessionData {
+  isGuest: true;
+  timestamp: number;
+  sessionId: string;
+}
+
 const AUTH_STORAGE_KEY = 'neuemonicore_auth';
+const GUEST_STORAGE_KEY = 'neuemonicore_guest';
 const DEFAULT_EXPIRY_HOURS = 24; // 24 hours
 
 export class AuthStorage {
@@ -23,8 +30,49 @@ export class AuthStorage {
       };
       
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+      // Remove guest session when user logs in
+      this.removeGuestSession();
     } catch (error) {
       console.error('Failed to store auth data:', error);
+    }
+  }
+
+  // Store guest session data
+  static setGuestSession(): void {
+    try {
+      const now = Date.now();
+      const sessionId = `guest_${now}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const guestData: GuestSessionData = {
+        isGuest: true,
+        timestamp: now,
+        sessionId
+      };
+      
+      localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(guestData));
+      // Remove auth data when setting guest session
+      this.removeUser();
+    } catch (error) {
+      console.error('Failed to store guest session:', error);
+    }
+  }
+
+  // Check if guest session exists
+  static hasGuestSession(): boolean {
+    try {
+      const storedData = localStorage.getItem(GUEST_STORAGE_KEY);
+      return storedData !== null;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Remove guest session
+  static removeGuestSession(): void {
+    try {
+      localStorage.removeItem(GUEST_STORAGE_KEY);
+    } catch (error) {
+      console.error('Failed to remove guest session:', error);
     }
   }
 

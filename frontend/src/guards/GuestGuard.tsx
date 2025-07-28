@@ -12,6 +12,7 @@ const GuestGuard: React.FC<GuestGuardProps> = ({ children }) => {
 
   // Check if localStorage has valid auth data
   const hasValidLocalStorage = AuthStorage.isUserDataValid();
+  const hasGuestSession = AuthStorage.hasGuestSession();
 
   // If localStorage is invalid but Redux still shows authenticated,
   // it means localStorage was manually cleared - don't redirect, let it fall through to children
@@ -47,6 +48,9 @@ const GuestGuard: React.FC<GuestGuardProps> = ({ children }) => {
     }
   }
 
+  // If user is not authenticated (either has guest session or no session at all)
+  // Always allow access to guest pages (landing page, about, contact, etc.)
+  // This handles both initial visits and page refreshes for non-logged-in users
   return <>{children}</>;
 };
 

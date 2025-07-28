@@ -8,11 +8,21 @@ interface AuthInitializerProps {
   children: React.ReactNode;
 }
 
+// Track if this is the first visit or a refresh
+const isInitialVisit = !sessionStorage.getItem('app_visited');
+
 const AuthInitializer: React.FC<AuthInitializerProps> = ({ children }) => {
   const { checkAuth, checkAuthFromStorage, willExpireSoon, logout, heartbeatCheck } = useAuth();
   const { isLoading, hasCheckedLocalStorage, isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Mark that the app has been visited in this session
+  useEffect(() => {
+    if (isInitialVisit) {
+      sessionStorage.setItem('app_visited', 'true');
+    }
+  }, []);
 
   // Check for localStorage/Redux mismatch (manual localStorage clearing)
   useEffect(() => {
@@ -64,24 +74,52 @@ const AuthInitializer: React.FC<AuthInitializerProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // First, check if we have valid localStorage data
+        // Check if we have valid localStorage data
         const hasValidStorage = AuthStorage.isUserDataValid();
+        const hasGuestData = AuthStorage.hasGuestSession();
         
-        if (hasValidStorage) {
-          // Load from localStorage first (fast, no API call)
-          checkAuthFromStorage();
-          
-          // Check if data will expire soon
-          if (willExpireSoon()) {
-            // If expiring soon, refresh in background without showing loading
-            checkAuth(true).catch(console.error);
+        if (isInitialVisit) {
+          // Initial visit - always make API call to check for cookies
+          console.log('Initial visit - checking authentication via API');
+          try {
+            await checkAuth(false);
+            
+            // If API call succeeds (user is logged in), user data is stored
+            // If API call fails (user not logged in), store guest session
+            const stillNotAuthenticated = !AuthStorage.isUserDataValid();
+            if (stillNotAuthenticated) {
+              AuthStorage.setGuestSession();
+            }
+          } catch (error) {
+            // API call failed - user is not logged in, store guest session
+            AuthStorage.setGuestSession();
           }
         } else {
-          // No valid localStorage data, need to check with API
-          await checkAuth(false);
+          // Page refresh - only check localStorage, DO NOT make API call
+          console.log('Page refresh - checking localStorage only');
+          
+          if (hasValidStorage) {
+            // User is logged in - load from localStorage
+            checkAuthFromStorage();
+            
+            // Check if data will expire soon and refresh in background
+            if (willExpireSoon()) {
+              checkAuth(true).catch(console.error);
+            }
+          } else if (hasGuestData) {
+            // User is not logged in but has guest session - stay in guest mode
+            console.log('Guest session found - staying in guest mode');
+            checkAuthFromStorage(); // This will set isAuthenticated to false
+          } else {
+            // No localStorage data at all - treat as guest
+            AuthStorage.setGuestSession();
+            checkAuthFromStorage();
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
+        // Fallback to guest session
+        AuthStorage.setGuestSession();
       } finally {
         setIsInitialized(true);
       }
@@ -100,6 +138,9 @@ const AuthInitializer: React.FC<AuthInitializerProps> = ({ children }) => {
     const handleUnauthorized = () => {
       console.log('Unauthorized access detected, logging out user');
       logout();
+      
+      // Store guest session after logout
+      AuthStorage.setGuestSession();
       
       // Optional: Show a toast notification
       // You can integrate with your notification system here
@@ -141,6 +182,7 @@ const AuthInitializer: React.FC<AuthInitializerProps> = ({ children }) => {
       if (e.key === 'neuemonicore_auth' && e.newValue === null) {
         console.log('localStorage cleared in another tab, logging out');
         dispatch(logoutSuccess());
+        AuthStorage.setGuestSession();
       }
     };
 
@@ -151,15 +193,15 @@ const AuthInitializer: React.FC<AuthInitializerProps> = ({ children }) => {
     };
   }, [dispatch]);
 
-  // Show loading spinner only during initial load when we have no localStorage data
-  if (!isInitialized || (isLoading && !hasCheckedLocalStorage)) {
+  // Show loading spinner only during initial visit when we have no localStorage data
+  if (!isInitialized || (isLoading && !hasCheckedLocalStorage && isInitialVisit)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Initializing application...</p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            {AuthStorage.isUserDataValid() ? 'Loading from cache...' : 'Checking authentication...'}
+            {isInitialVisit ? 'Checking authentication...' : 'Loading from cache...'}
           </p>
         </div>
       </div>

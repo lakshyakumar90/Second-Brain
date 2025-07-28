@@ -19,7 +19,8 @@ const RegistrationGuard: React.FC<RegistrationGuardProps> = ({ children }) => {
     return <Navigate to="/auth/login" replace />;
   }
 
-  // If we haven't checked localStorage yet, don't redirect (let AuthInitializer handle it)
+  // If we haven't checked localStorage yet, show loading
+  // This prevents redirects during initialization
   if (!hasCheckedLocalStorage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -41,7 +42,8 @@ const RegistrationGuard: React.FC<RegistrationGuardProps> = ({ children }) => {
     return <Navigate to="/auth/register" replace />;
   }
 
-  // If registration is complete, allow access
+  // If registration is complete and user is authenticated, allow access to protected routes
+  // This ensures that protected routes stay on the same page during refresh
   return <>{children}</>;
 };
 

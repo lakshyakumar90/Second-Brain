@@ -24,12 +24,18 @@ export const authSlice = createSlice({
     loadFromLocalStorage: (state) => {
       const storedUser = AuthStorage.getUser();
       if (storedUser) {
+        // User is logged in
         state.user = storedUser;
         state.isAuthenticated = true;
       } else {
-        // If no valid localStorage data, clear auth state
+        // User is not logged in
         state.user = null;
         state.isAuthenticated = false;
+        
+        // If no user data but also no guest session, create one
+        if (!AuthStorage.hasGuestSession()) {
+          AuthStorage.setGuestSession();
+        }
       }
       state.hasCheckedLocalStorage = true;
       state.isLoading = false;
@@ -69,8 +75,9 @@ export const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.hasCheckedLocalStorage = true;
-      // Clear localStorage on logout
+      // Clear localStorage and set guest session on logout
       AuthStorage.removeUser();
+      AuthStorage.setGuestSession();
     },
 
     setAuthLoading: (state, action: PayloadAction<boolean>) => {
