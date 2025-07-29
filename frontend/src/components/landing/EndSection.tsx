@@ -1,5 +1,6 @@
 import {  motion } from 'framer-motion';
 import { Check } from 'lucide-react';
+
 const EndSection=()=>{
     return(
         <div className="h-[138vh] px-10">

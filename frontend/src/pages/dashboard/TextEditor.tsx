@@ -1,7 +1,11 @@
+import RichTextEditor from "@/components/dashboard/editor/RichTextEditor";
+
 const TextEditor = () => {
   return (
-    <div>TextEditor</div>
+    <div>
+      <RichTextEditor />
+    </div>
   )
 }
 
-export default TextEditor
+export default TextEditor;
