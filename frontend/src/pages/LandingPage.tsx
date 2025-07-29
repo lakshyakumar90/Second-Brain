@@ -13,11 +13,10 @@ const LandingPage = () => {
 return (
     <PublicLayout>
       {/* Landing page always uses light mode - no theme toggle available */}
-<<<<<<< Updated upstream
       <div className="font-[neue-regular]">
-=======
+
       <div className="bg-gradient-to-b from-stone-300 to-stone-50">
->>>>>>> Stashed changes
+
         {/* <LandingNavbar />        */}
         <header className="flex items-center justify-between px-10 py-6">
           <div className="w-40">
@@ -53,6 +52,7 @@ return (
         <FooterSection/>
         <EndSection/> 
         <AllFooter/>
+      </div>
       </div>
     </PublicLayout>
   );

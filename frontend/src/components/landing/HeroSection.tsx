@@ -23,17 +23,22 @@ const HeroSection =() =>{
             transition={{duration:1,delay:0.6}}
             viewport={{once:true}}
             className="text-[8vw] font-semibold-s px-10 pt-20 pb-30 leading-29">Empower Your <br /> Mind  with Mneumonicare</motion.h1>
-            <div className="h-[150vh] py- 10 px-10 mb-50 ">
-                <div className='sticky top-20'>
-                    <motion.img
-                initial={{scale:0.7,opacity:0}} 
-                whileInView={{scale:1.05,opacity:1}}
-                transition={{delay:1,duration:1}}
-                viewport={{once:true}}
-                 className="h-full w-full rounded-xl object-cover object-center cursor-pointer" src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="" />
-                </div>
-                
-            </div>
+                        <div className="h-[150vh] px-10 py-10 mb-30">
+                        <div className="sticky top-20">
+                            <motion.video
+                            initial={{ scale: 0.7, opacity: 0 }}
+                            whileInView={{ scale: 1.05, opacity: 1 }}
+                            transition={{ delay: 1, duration: 0.8 }}
+                            viewport={{ once: true }}
+                            src="assets1/A_fastpaced_visually_202507181103.mp4"
+                            loop
+                            muted
+                            autoPlay
+                            className="rounded-xl w-full"
+                            ></motion.video>
+                        </div>
+                        </div>
+
 
             
 
@@ -43,7 +48,7 @@ const HeroSection =() =>{
             viewport={{ once: true }}
             transition={{  staggerChildren: 0.2,delay:2 }}
             
-            className="bg-red-400 h-[63vh] flex flex-col items-center gap-2 mb-50  ">
+            className=" h-[63vh] flex flex-col items-center gap-2 mb-30  ">
                 <motion.h1
                  variants={headingVariants}
                 
