@@ -40,6 +40,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@reduxjs/toolkit": "^2.8.2",
     "@splinetool/react-spline": "^4.1.0",
+    "@studio-freight/lenis": "^1.0.42",
     "@tabler/icons-react": "^3.34.1",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.10.0",
