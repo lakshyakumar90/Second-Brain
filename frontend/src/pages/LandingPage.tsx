@@ -1,7 +1,7 @@
-import AllFooter from "@/components/landing/AllFooter";
-import EndSection from "@/components/landing/EndSection";
+import Footer from "@/components/landing/Footer";
+import PricingSection from "@/components/landing/PricingSection";
 import FeatureSection from "@/components/landing/FeatureSection";
-import FooterSection from "@/components/landing/FooterSection";
+import CarouselSection from "@/components/landing/CarouselSection";
 import GallerySection from "@/components/landing/GallerySection";
 import HeroSection from "@/components/landing/HeroSection";
 import LandingNavbar from "@/components/landing/LandingNavbar";
@@ -11,16 +11,14 @@ const LandingPage = () => {
   return (
     <PublicLayout>
       {/* Landing page always uses light mode - no theme toggle available */}
-      <div className="font-[neue-regular]">
-        <div className="bg-gradient-to-b from-stone-300 to-stone-50">
-          <LandingNavbar />
-          <HeroSection />
-          <GallerySection />
-          <FeatureSection />
-          <FooterSection />
-          <EndSection />
-          <AllFooter />
-        </div>
+      <div className="font-[neue-regular] bg-white">
+        <LandingNavbar />
+        <HeroSection />
+        <GallerySection />
+        <FeatureSection />
+        {/* <CarouselSection /> */}
+        <PricingSection />
+        <Footer />
       </div>
     </PublicLayout>
   );

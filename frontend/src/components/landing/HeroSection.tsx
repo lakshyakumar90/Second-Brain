@@ -108,7 +108,7 @@ const HeroSection = () => {
     // Phase 1: Expand video to full width on scroll down
     gsap.fromTo(
       video,
-      { width: "95%", borderRadius: "12px", immediateRender: true },
+      { width: "95%", borderRadius: "32px", immediateRender: true },
       {
         width: "100%",
         borderRadius: "0px",
@@ -141,7 +141,7 @@ const HeroSection = () => {
       { width: "100%", borderRadius: "0px" },
       {
         width: "95%",
-        borderRadius: "12px",
+        borderRadius: "32px",
         ease: "none",
         scrollTrigger: {
           trigger: videoContainer,
@@ -186,7 +186,7 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-[#F3F3E9]">
       {/* Initial Hero Title */}
       <div className="px-10 py-32 text-[8vw] font-semibold leading-[1.1] overflow-hidden">
         {lines.map((line, i) => (
@@ -226,7 +226,7 @@ const HeroSection = () => {
             className="relative h-screen overflow-hidden shadow-xl rounded-lg w-[95%] mx-auto"
             style={{
               width: "95%",
-              borderRadius: "12px",
+              borderRadius: "32px",
             }}
           >
             <video

@@ -70,7 +70,7 @@ const LandingNavbar = () => {
       <AbsoluteNavigation />
       
       {/* Header with logos - scrolls with content */}
-      <header className="flex items-center justify-between px-10 py-6">
+      <header className="bg-[#F3F3E9] flex items-center justify-between px-10 py-6">
         <div className="w-48">
           <motion.img
             initial={{ y: -20, opacity: 0 }}
