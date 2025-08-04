@@ -1,9 +1,9 @@
-import RichTextEditor from "@/components/dashboard/editor/RichTextEditor";
+// import RichTextEditor from "@/components/dashboard/editor/RichTextEditor";
 
 const TextEditor = () => {
   return (
     <div>
-      <RichTextEditor />
+      {/* <RichTextEditor /> */}
     </div>
   )
 }
