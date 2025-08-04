@@ -1,29 +1,42 @@
-import ThreeDElement from "./3dElement";
+
+import { ArrowRight} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {  motion } from 'framer-motion';
 
 const ContactHero = () => {
   return (
     <div className="h-[90vh] ">
       <div className=" h-full w-full flex">
-        <div className="w-1/2">
-          <h1 className="text-[7vw] font-semibold-s  px-20 pt-30  pb-10 leading-25 ">
+        <div className="w-[100%]">
+          <motion.h1 
+           initial={{ y:10,opacity:0 }}
+            whileInView={{y:0,opacity:1 }}
+            transition={{duration:0.6,delay:0.3}}
+            viewport={{once:true}}
+          className="text-[8vw] font-semibold  tracking-tighter pl-20 pt-30  pb-10 leading-28 ">
             We're <br /> Here to Help
-          </h1>
-          <p className="px-20 text-xl font-medium mb-8">
+          </motion.h1>
+          <motion.p
+          initial={{ y:10,opacity:0 }}
+            whileInView={{y:0,opacity:1 }}
+            transition={{duration:0.6,delay:0.3}}
+            viewport={{once:true}}
+          className="px-20 text-xl font-medium mb-8">
             Questions, feedback, partnership inquiries, or need technical
             support? <br />
             Reach out—we love hearing from you.
-          </p>
-          <button className="mb-20 p-2 mx-20 flex gap-1 items-center border border-black rounded-2xl ">
-            <h3 className="text-xl"> Get Started</h3>
-            <svg
-              className="w-8"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-            </svg>
-          </button>
+          </motion.p>
+          <Link to="/auth/register">
+             <motion.button
+             initial={{ y:10,opacity:0 }}
+            whileInView={{y:0,opacity:1 }}
+            transition={{duration:0.6,delay:0.3}}
+            viewport={{once:true}}
+             className="mb-30 py-2 px-4 mx-20 flex gap-1 w-43 items-center bg-black border border-black rounded-4xl group ">
+                <h3 className="text-xl text-white group-hover:font-bold"> Get Started</h3>
+                <motion.span  className=' group-hover:translate-x-1 transition-transform ease-in-out'><ArrowRight color="#ffffff" /></motion.span>
+             </motion.button>
+             </Link>
         </div>
 
         <div className="w-1/2 h-full">

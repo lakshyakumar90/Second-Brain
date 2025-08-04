@@ -9,7 +9,7 @@ const AboutPage = () => {
   return (
     <PublicLayout>
       {/* Landing page always uses light mode - no theme toggle available */}
-      <div className="bg-gradient-to-b from-blue-200 to-blue-50">
+      <div className="bg-gradient-to-b from-blue-100 to-blue-50">
         <LandingNavbar />
 
         <AboutHero/>

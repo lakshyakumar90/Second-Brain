@@ -28,10 +28,28 @@ const AboutHero = () => {
   ];
   return (
     <div className="  w-full">
-            <h1 className="text-[8vw] font-semibold-s px-10 pt-20  mb-15 leading-30">Shaping<br /> the  Future of <br />Work  & Learning</h1>
-            <p className=" px-10 text-3xl mb-20">We founded <span className="font-semibold">Mneumonicare</span> because today’s thinkers need more than old-fashioned
-                 note apps or clunky collaboration tools. We believe in a more fluid workflow, where notes,
-                  visuals, ideas, and teamwork blend seamlessly in one digital space—a true <span className="font-semibold">“second brain.”</span></p>
+            <h1 className="px-10  text-[7vw] font-semibold tracking-tighter pt-20  mb-15 leading-25">Your Space <br /> for Creative Thinking</h1>
+            <div className="  h-100p-10 flex items-center justify-between px-20 mb-20">
+                   <div className="h-70 w-110 bg- bg-blue-100 hover:bg-blue-50  shadow-2xl p-5 flex flex-col items-center rounded-2xl">
+                          <p className="text-xl text-center py-5">We founded Mneumonicare because today’s thinkers need more than old-fashioned note apps or clunky collaboration tools.
+                             We believe in a more fluid workflow, where notes, visuals, ideas, and teamwork blend seamlessly in one digital space—a true “second brain.”</p>
+                    </div>
+                    <div className="h-70 w-110 bg- bg-[#ebedf0] hover:bg-gray-300 border-2   shadow p-5 flex flex-col items-center rounded-2xl">
+                            <p className="text-xl text-center py-5">Our goal is to empower you to capture, connect, and grow your ideas effortlessly.
+                                    With Mneumonicare, your creativity and collaboration flow freely—all in one secure, intuitive platform.</p>
+                    </div>
+                    <div className="h-70 w-110 bg- bg-[#ebedf0] hover:bg-gray-300 border-2   shadow p-5 flex flex-col items-center rounded-2xl">
+                          <p className="text-xl text-center py-5">We are dedicated to a human-first design that adapts to how you think and work.
+                                  Your knowledge stays private and protected, letting you focus on what matters most.
+                                  Join us in building a smarter, more connected way to think, create, and achieve—together.</p>
+                    </div>
+ 
+                    
+
+                
+              </div>
+
+              
             <div className="border border-black mx-10 w-[92%] mb-20"></div>
             <div className="bg-red-200 px-10 h-[50vh] mb-40">
                 <div className="bg-white">Bento grip</div>

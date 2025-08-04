@@ -8,7 +8,7 @@ const AIPage = () => {
   return (
     <PublicLayout>
       {/* AI page always uses light mode - no theme toggle available */}
-      <div className="bg-gradient-to-b from-red-200 to-red-50">
+      <div className="bg-gradient-to-b from-red-100 to-red-0">
         <LandingNavbar />
 
         <HeroAI/>
