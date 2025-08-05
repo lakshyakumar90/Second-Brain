@@ -1,17 +1,10 @@
-import {
-  ArrowRight,
-  Globe,
-  Instagram,
-  Linkedin,
-  Mail,
-  Twitter,
-} from "lucide-react";
+import { ArrowRight, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const RotatingText = () => {
-  const texts = ["Effortlessly.", "Powerful.", "Creative", "With Ai"];
+  const texts = ["Effortlessly", "Powerful", "Creative", "With Ai"];
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -71,14 +64,20 @@ const Footer = () => {
                   />
                 </div>
               </Link>
-              <a className="text-lg hover:border-b-2 border-black transition-colors" href="mailto:contact@mneumonicore.com">
+              <a
+                className="text-lg hover:border-b-2 border-black transition-colors"
+                href="mailto:contact@mneumonicore.com"
+              >
                 contact@mneumonicore.com
               </a>
             </div>
             <div className="leading-relaxed">
               <p className="text-xl font-bold mb-2">India</p>
               <p className="text-lg mb-1">Uttarakhand, Dehradun</p>
-              <a className="text-lg hover:border-b-2 border-black transition-colors" href="mailto:lakshya@mneumonicore.com">
+              <a
+                className="text-lg hover:border-b-2 border-black transition-colors"
+                href="mailto:lakshya@mneumonicore.com"
+              >
                 lakshya@mneumonicore.com
               </a>
             </div>
@@ -98,23 +97,33 @@ const Footer = () => {
             </div>
             <p className="text-sm text-gray-600">
               © 2025{" "}
-              <a className="border-b border-gray-300 hover:border-gray-600" href="#">
+              <a
+                className="border-b border-gray-300 hover:border-gray-600"
+                href="#"
+              >
                 Privacy
               </a>
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <a className="text-gray-700 hover:text-gray-500" href="#">
-              Twitter X
-            </a>
-            <span className="text-green-500">*</span>
-            <a className="text-gray-700 hover:text-gray-500" href="#">
-              Instagram
-            </a>
-            <span className="text-green-500">*</span>
-            <a className="text-gray-700 hover:text-gray-500" href="#">
-              Linkedin
-            </a>
+            <div className="flex items-center gap-2">
+              <span className="h-1 w-1 bg-green-500 rounded-full"></span>
+              <a className="text-gray-700 hover:text-gray-500" href="#">
+                Twitter X
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-1 w-1 bg-green-500 rounded-full"></span>
+              <a className="text-gray-700 hover:text-gray-500" href="#">
+                Instagram
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-1 w-1 bg-green-500 rounded-full"></span>
+              <a className="text-gray-700 hover:text-gray-500" href="#">
+                Linkedin
+              </a>
+            </div>
           </div>
         </div>
       </div>

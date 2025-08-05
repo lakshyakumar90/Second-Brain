@@ -135,7 +135,6 @@ const HeroSection = () => {
     });
 
     // Phase 3: Shrink back to original on further scroll (and reverse smoothly)
-    console.log("video", video);
     gsap.fromTo(
       video,
       { width: "100%", borderRadius: "0px" },

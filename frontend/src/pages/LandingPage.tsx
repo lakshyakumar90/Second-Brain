@@ -11,8 +11,8 @@ const LandingPage = () => {
   return (
     <PublicLayout>
       {/* Landing page always uses light mode - no theme toggle available */}
+      <LandingNavbar />
       <div className="font-[neue-regular] bg-white">
-        <LandingNavbar />
         <HeroSection />
         <GallerySection />
         <FeatureSection />

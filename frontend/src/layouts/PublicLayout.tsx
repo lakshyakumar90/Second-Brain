@@ -34,7 +34,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
     };
   }, []);
 
-  return <>{children}</>;
+  return <div className="overflow-x-hidden font-[neue-regular]">{children}</div>;
 };
 
 export default PublicLayout;
