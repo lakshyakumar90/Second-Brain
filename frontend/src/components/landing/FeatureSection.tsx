@@ -3,7 +3,7 @@ import LandingButton from "../ui/landing-button";
 
 const FeatureSection = () => {
   return (
-    <div className="pb-20 bg-[#F3F3E9]">
+    <div className="pb-20">
       <motion.h1
         initial={{ y: 20, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}

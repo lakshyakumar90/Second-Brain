@@ -1,6 +1,6 @@
 const GallerySection = () => {
   return (
-    <div className="w-full pb-40 bg-[#F3F3E9]">
+    <div className="w-full pb-40">
       <div className="h-[105vh] py-10 px-10">
         <img
           className="h-full w-full rounded-3xl object-cover object-center"

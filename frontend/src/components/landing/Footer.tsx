@@ -31,9 +31,9 @@ const RotatingText = () => {
 const Footer = () => {
   return (
     <div className="bg-white relative">
-      <div className="h-[80vh] px-20 pt-20">
+      <div className="h-[80vh] px-20 -mt-20">
         <div className="h-full">
-          <div className="group h-[10vw] w-[45vw] hover:text-[#6ee166] cursor-default ">
+          <div className="group h-[10vw] w-[50%] hover:text-[#6ee166] cursor-default ">
             <div className="flex gap-3 items-center ">
               <h1 className="text-7xl font-bold ">Let's make</h1>
               <ArrowRight
@@ -73,9 +73,11 @@ const Footer = () => {
             </div>
             <div className="leading-relaxed">
               <p className="text-xl font-bold mb-2">India</p>
-              <p className="text-lg mb-1">Uttarakhand, Dehradun</p>
+              <p className="text-lg mb-1 text-gray-500 cursor-default">
+                Uttarakhand, Dehradun
+              </p>
               <a
-                className="text-lg hover:border-b-2 border-black transition-colors"
+                className="text-lg text-gray-500 hover:border-b-2 border-gray-500 transition-colors"
                 href="mailto:lakshya@mneumonicore.com"
               >
                 lakshya@mneumonicore.com

@@ -185,7 +185,7 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <div className="w-full bg-[#F3F3E9]">
+    <div className="w-full">
       {/* Initial Hero Title */}
       <div className="px-10 py-32 text-[8vw] font-semibold leading-[1.1] overflow-hidden">
         {lines.map((line, i) => (

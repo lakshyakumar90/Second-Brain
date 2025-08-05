@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import organize from "../../../../public/assets/organize.png";
+import summarize from "../../../../public/assets/summarize.png";
+import connect from "../../../../public/assets/connect.png";
+import search from "../../../../public/assets/search.png";
+import whiteboard from "../../../../public/assets/whiteboard.png";
+import boost from "../../../../public/assets/boost.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -21,38 +27,38 @@ function CardsAi() {
       title: "Automatic Organization",
       description: "When you jot down quick ideas, upload documents, or sketch mind maps, Mneumonicare intelligently groups and tags related content, so you stay organized without manual effort.",
       icon: "🗂️",
-      gradient: "from-purple-600 via-purple-700 to-indigo-800"
+      imageUrl: organize,
     },
     {
       title: "Summaries & Highlights",
       description: "Need a recap? Get instant summaries of lengthy meeting notes, shared docs, or visual whiteboards. Key points are automatically highlighted for your review.",
       icon: "📝",
-      gradient: "from-blue-600 via-blue-700 to-cyan-800"
+      imageUrl: summarize,
     },
     {
       title: "Smart Connections",
       description: "The more you use Mneumonicare, the more helpful it becomes—offering connections to similar topics, suggesting project links, or providing relevant templates to jumpstart your workflow.",
       icon: "🔗",
-      gradient: "from-emerald-600 via-emerald-700 to-teal-800"
+      imageUrl: connect,
     },
     {
       title: "Conversational Search",
       description: "No more hunting through piles of files. Just ask a question in plain language, and the AI finds the answer—whether it's in a note, diagram, or meeting minute.",
       icon: "🔍",
-      gradient: "from-orange-600 via-orange-700 to-red-800"
+      imageUrl: search,
     },
     {
       title: "Whiteboard Magic",
       description: "Messy sketches? The AI tidy-ups diagrams, transcribes handwriting into digital text, and even suggests ways to expand your ideas visually.",
       icon: "🎨",
-      gradient: "from-pink-600 via-pink-700 to-rose-800"
+      imageUrl: whiteboard,
     },
     {
       title: "Idea Boosting",
       description: "Feeling stuck? With a single click, get creative prompts, outlines, or brainstorming help, tailored to your unique context.",
       icon: "💡",
-      gradient: "from-yellow-600 via-yellow-700 to-amber-800"
-    }
+      imageUrl: boost,
+    },
   ];
 
   useEffect(() => {
@@ -61,19 +67,19 @@ function CardsAi() {
     const cards = cardsRef.current;
     const vh = window.innerHeight;
     const cardHeight = vh * 0.88; // 88vh
-    const gap = vh * 0.0; // 4vh gap between cards
+    const gap = 0;
     const startOffset = vh * 0.06; // 6vh from top for first card pin
 
-    // Set initial positions: first at startOffset, others off-screen below
+    // Set initial positions
     cards.forEach((card, i) => {
       gsap.set(card, {
-        y: i === 0 ? startOffset : vh + (i - 1) * gap, // Off-screen start
+        y: i === 0 ? startOffset : vh + (i - 1) * gap,
         position: i === 0 ? "relative" : "absolute",
         top: 0,
         left: 0,
         width: "100%",
         height: `${cardHeight}px`,
-        zIndex: i, // Fixed: first card lowest z-index, later cards higher (stack on top)
+        zIndex: i,
       });
     });
 
@@ -81,30 +87,29 @@ function CardsAi() {
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: containerRef.current,
-        start: `top top`, // Pins starting 6vh down
-        end: `+=${vh * (cards.length - 1) * 1.3}px`, // Space for all animations
+        start: `top top`,
+        end: `+=${vh * (cards.length - 1) * 1.3}px`,
         scrub: true,
         pin: true,
         pinSpacing: true,
-        // markers: true, // Disabled for production
       },
     });
 
-    // Animate each subsequent card sliding up to stacked position
+    // Animate each subsequent card
     cards.forEach((card, i) => {
-      if (i === 0) return; // First card is pinned at offset
+      if (i === 0) return;
 
-      const targetY = startOffset + i * gap; // Below previous with gap
+      const targetY = startOffset + i * gap;
 
       tl.fromTo(
         card,
-        { y: vh }, // From below viewport
+        { y: vh },
         {
-          y: targetY, // To stacked position
+          y: targetY,
           ease: "none",
-          duration: 1, // Relative scroll duration per card
+          duration: 1,
         },
-        (i - 1) * 1 // Stagger for sequencing
+        (i - 1) * 0.9
       );
     });
 
@@ -117,56 +122,33 @@ function CardsAi() {
     <div
       ref={containerRef}
       className="relative"
-      // style={{ height: "600vh" }} // Large height for scroll space
+      // style={{ height: "600vh" }}
     >
       {aiFeatures.map((feature, i) => (
         <div
           key={i}
           ref={addToRefs}
-          className={`rounded-3xl shadow-2xl backdrop-blur-sm border border-white/10 overflow-hidden`}
-          style={{
-            background: `linear-gradient(135deg, var(--tw-gradient-stops))`,
-            backgroundImage: `linear-gradient(135deg, ${feature.gradient.split(' ').map(color => {
-              const colorMap: { [key: string]: string } = {
-                'from-purple-600': '#9333ea',
-                'via-purple-700': '#7c3aed',
-                'to-indigo-800': '#3730a3',
-                'from-blue-600': '#2563eb',
-                'via-blue-700': '#1d4ed8',
-                'to-cyan-800': '#155e75',
-                'from-emerald-600': '#059669',
-                'via-emerald-700': '#047857',
-                'to-teal-800': '#115e59',
-                'from-orange-600': '#ea580c',
-                'via-orange-700': '#c2410c',
-                'to-red-800': '#991b1b',
-                'from-pink-600': '#db2777',
-                'via-pink-700': '#be185d',
-                'to-rose-800': '#9f1239',
-                'from-yellow-600': '#ca8a04',
-                'via-yellow-700': '#a16207',
-                'to-amber-800': '#92400e'
-              };
-              return colorMap[color] || color;
-            }).join(', ')})`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white",
-            fontSize: "2rem",
-            fontWeight: "bold",
-          }}
+          className="bg-[#1a1a1f] border border-white/10 rounded-3xl shadow-2xl p-8 lg:p-12 overflow-hidden"
         >
-          <div className="p-12 max-w-4xl mx-auto text-center">
-            <div className="text-6xl mb-6 animate-bounce">
-              {feature.icon}
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center h-full max-w-6xl mx-auto">
+            <div className="text-content">
+              <div className="flex items-center mb-4">
+                <span className="text-3xl mr-3">{feature.icon}</span>
+                <h3 className="text-2xl lg:text-3xl font-bold text-white">
+                  {feature.title}
+                </h3>
+              </div>
+              <p className="text-md lg:text-lg text-gray-300 leading-relaxed">
+                {feature.description}
+              </p>
             </div>
-            <h3 className="text-4xl font-bold mb-6 bg-white/10 backdrop-blur-sm rounded-2xl p-4 inline-block">
-              {feature.title}
-            </h3>
-            <p className="text-xl leading-relaxed bg-black/20 backdrop-blur-sm rounded-2xl p-6 inline-block max-w-3xl">
-              {feature.description}
-            </p>
+            <div className="image-content h-full flex items-center justify-center">
+              <img
+                src={feature.imageUrl}
+                alt={feature.title}
+                className="rounded-2xl w-full h-auto max-h-[500px] object-cover object-left-top shadow-lg"
+              />
+            </div>
           </div>
         </div>
       ))}

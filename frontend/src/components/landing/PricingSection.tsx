@@ -15,36 +15,10 @@ import {
 } from "lucide-react";
 import LandingButton from "../ui/landing-button";
 import { Link } from "react-router-dom";
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-gsap.registerPlugin(ScrollTrigger);
 
 const PricingSection = () => {
-  const mainDivRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (mainDivRef.current) {
-      gsap.to(mainDivRef.current, {
-        scale: 0.95,
-        scrollTrigger: {
-          trigger: mainDivRef.current,
-          start: "bottom 100%",
-          end: "+=60%",
-          scrub: true,
-          // markers: true,
-        },
-      });
-    }
-
-    // Cleanup function
-    return () => {
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-    };
-  }, []);
-
   return (
-    <div ref={mainDivRef} className="min-h-screen px-10 py-20 rounded-b-[50px] relative z-10 bg-[#F3F3E9]">
+    <div className="min-h-screen px-10 py-20 relative z-10">
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
