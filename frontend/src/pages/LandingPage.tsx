@@ -1,7 +1,6 @@
 import Footer from "@/components/landing/Footer";
 import PricingSection from "@/components/landing/PricingSection";
 import FeatureSection from "@/components/landing/FeatureSection";
-import CarouselSection from "@/components/landing/CarouselSection";
 import GallerySection from "@/components/landing/GallerySection";
 import HeroSection from "@/components/landing/HeroSection";
 import LandingNavbar from "@/components/landing/LandingNavbar";
