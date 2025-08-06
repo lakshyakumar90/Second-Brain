@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import organize from "../../../../public/assets/organize.png";
-import summarize from "../../../../public/assets/summarize.png";
-import connect from "../../../../public/assets/connect.png";
-import search from "../../../../public/assets/search.png";
-import whiteboard from "../../../../public/assets/whiteboard.png";
-import boost from "../../../../public/assets/boost.png";
+import organize from "/public/assets/organize.png";
+import summarize from "/public/assets/summarize.png";
+import connect from "/public/assets/connect.png";
+import search from "/public/assets/search.png";
+import whiteboard from "/public/assets/whiteboard.png";
+import boost from "/public/assets/boost.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -128,7 +128,7 @@ function CardsAi() {
         <div
           key={i}
           ref={addToRefs}
-          className="bg-[#1a1a1f] border border-white/10 rounded-3xl shadow-2xl p-8 lg:p-12 overflow-hidden"
+          className="bg-[#424b54] border border-white/10 rounded-3xl shadow-2xl p-8 lg:p-12 overflow-hidden"
         >
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center h-full max-w-6xl mx-auto">
             <div className="text-content">
@@ -138,7 +138,7 @@ function CardsAi() {
                   {feature.title}
                 </h3>
               </div>
-              <p className="text-md lg:text-lg text-gray-300 leading-relaxed">
+              <p className="text-md lg:text-lg text-gray-200 leading-relaxed">
                 {feature.description}
               </p>
             </div>
@@ -146,7 +146,7 @@ function CardsAi() {
               <img
                 src={feature.imageUrl}
                 alt={feature.title}
-                className="rounded-2xl w-full h-auto max-h-[500px] object-cover object-left-top shadow-lg"
+                className="rounded-2xl w-full h-auto max-h-[450px] object-cover object-left-top shadow-lg"
               />
             </div>
           </div>

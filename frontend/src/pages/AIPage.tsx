@@ -1,4 +1,4 @@
-import AIInfo from "@/components/landing/ai/AIInfo";
+import AIInfo from "@/components/landing/ai/AiInfo";
 import HeroAI from "@/components/landing/ai/HeroAi";
 import SeamlessIntegration from "@/components/landing/ai/SeamlessIntegration";
 import Footer from "@/components/landing/Footer";

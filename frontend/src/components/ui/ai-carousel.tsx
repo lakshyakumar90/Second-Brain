@@ -23,16 +23,18 @@ const Card = ({ data, bgColor }: { data: CardData; bgColor: string }) => (
         className="w-full h-full object-cover"
         draggable={false}
       />
-      <span className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm text-black text-xs font-semibold px-3 py-1 rounded-full">
-        {data.tag}
-      </span>
+      {data.tag && (
+        <span className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm text-black text-xs font-semibold px-3 py-1 rounded-full">
+          {data.tag}
+        </span>
+      )}
     </div>
-    <div className="px-6 py-10 flex-grow flex flex-col">
-      <h3 className="text-xl font-bold mb-2">{data.title}</h3>
-      <p className="text-gray-600 text-sm leading-relaxed flex-grow">
-        {data.description}
-      </p>
-    </div>
+    {(data.title || data.description) && (
+      <div className="px-6 py-10 flex-grow flex flex-col">
+        {data.title && <h3 className="text-xl font-bold mb-2">{data.title}</h3>}
+        {data.description && <p className="text-gray-600 text-sm leading-relaxed flex-grow">{data.description}</p>}
+      </div>
+    )}
   </div>
 );
 

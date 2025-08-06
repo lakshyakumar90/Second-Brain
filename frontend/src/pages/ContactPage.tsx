@@ -1,16 +1,21 @@
+import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import PublicLayout from "@/layouts/PublicLayout";
 import ContactHero from "@/components/landing/contact/ContactHero";
-import Footer from "@/components/landing/Footer";
 import LandingNavbar from "@/components/landing/LandingNavbar";
+import BriefForm from "@/components/landing/contact/BriefForm";
 
 const ContactPage = () => {
+  const [showBriefForm, setShowBriefForm] = useState(false);
+
   return (
     <PublicLayout>
-      {/* Landing page always uses light mode - no theme toggle available */}
-      <div className="bg-gradient-to-b from-purple-200 to-purple-50">
+      <div className="bg-gradient-to-b from-[#B8B3C9] to-purple-100">
         <LandingNavbar />
-        <ContactHero />
-        <Footer />
+        <ContactHero onOpenForm={() => setShowBriefForm(true)} />
+        <AnimatePresence>
+          {showBriefForm && <BriefForm onClose={() => setShowBriefForm(false)} />}
+        </AnimatePresence>
       </div>
     </PublicLayout>
   );

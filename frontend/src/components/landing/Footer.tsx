@@ -89,15 +89,15 @@ const Footer = () => {
 
       <div className="mx-20 border-t border-t-gray-300 py-10">
         <div className="flex justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8">
+          <div className="flex gap-2">
+            <div className="w-40">
               <img
-                src="/mneumonicorelogo.svg"
+                src="/black-logo.png"
                 alt="Mneumonicore"
                 className="h-full w-full object-contain"
               />
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mt-2">
               © 2025{" "}
               <a
                 className="border-b border-gray-300 hover:border-gray-600"

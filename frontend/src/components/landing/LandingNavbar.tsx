@@ -3,35 +3,36 @@ import clsx from "clsx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const tabs = [
-    {
-        name: "Home",
-        path: "/",
-    },
-    {
-        name: "AI",
-        path: "/ai",
-    },
-    {
-        name: "About",
-        path: "/about",
-    },
-    {
-        name: "Contact",
-        path: "/contact",
-    },
-    {
-        name: "Get Started",
-        path: "/auth/register", 
-    },
+  {
+    name: "Home",
+    path: "/",
+  },
+  {
+    name: "AI",
+    path: "/ai",
+  },
+  {
+    name: "About",
+    path: "/about",
+  },
+  {
+    name: "Contact",
+    path: "/contact",
+  },
+  {
+    name: "Get Started",
+    path: "/auth/register",
+  },
 ];
 
 // Separate component for absolute navigation
 export const AbsoluteNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Find active tab based on current location
-  const activeTab = tabs.find(tab => tab.path === location.pathname) || tabs[0];
+  const activeTab =
+    tabs.find((tab) => tab.path === location.pathname) || tabs[0];
 
   return (
     <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50">
@@ -42,11 +43,18 @@ export const AbsoluteNavigation = () => {
               <button
                 onClick={() => navigate(tab.path)}
                 className={clsx(
-                  "relative z-10 px-3 py-2 rounded-full font-[neue-medium] font-semibold text-md transition-colors whitespace-nowrap cursor-pointer hover:bg-black/10",
-                  activeTab.name === tab.name ? "text-green-400" : "text-black/80"
+                  "relative z-10 px-3 py-2 rounded-full font-[neue-medium] font-semibold text-md transition-colors whitespace-nowrap cursor-pointer",
+                  tab.name === "Get Started"
+                    ? "hover:bg-[#84f58b] hover:text-black transition-colors duration-200"
+                    : clsx(
+                        "hover:bg-black/10",
+                        activeTab.name === tab.name
+                          ? "text-green-400"
+                          : "text-black/80"
+                      )
                 )}
               >
-                {activeTab.name === tab.name && (
+                {activeTab.name === tab.name && tab.name !== "Get Started" && (
                   <motion.div
                     layoutId="highlight"
                     className="absolute inset-0 bg-black rounded-full z-[-1]"
@@ -68,14 +76,13 @@ const LandingNavbar = () => {
     <>
       {/* Absolute navigation - always at top */}
       <AbsoluteNavigation />
-      
+
       {/* Header with logos - scrolls with content */}
       <header className="flex items-center justify-between px-10 py-6">
         <div className="w-48">
           <motion.img
             initial={{ y: -20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
+            animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             src="/black-logo.png"
             alt="Nuemonicore"
@@ -85,8 +92,7 @@ const LandingNavbar = () => {
         <div className="h-10">
           <motion.img
             initial={{ y: -20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
+            animate={{ y: 0, opacity: 1 }}
             whileHover={{ rotate: 360 }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
             src="/mneumonicorelogo.svg"

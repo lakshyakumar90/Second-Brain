@@ -57,7 +57,7 @@ const SeamlessIntegration = () => {
     <div className="py-24">
       <div className="px-10">
         <div className="pb-12">
-            <h2 className="text-[8vw] font-semibold leading-[1.1] overflow-hidden">What You Can <br /> Do With AI</h2>
+            <h2 className="text-[8vw] font-semibold-s leading-[1.1] overflow-hidden">What You Can <br /> Do With AI</h2>
             <p className="text-2xl text-gray-500 mt-2">A quick look at the powerful features at your fingertips.</p>
         </div>
         <div className="">
