@@ -28,7 +28,6 @@ const AnimatedParagraph = ({ textLines, className }: AnimatedParagraphProps) => 
         end: "bottom 20%",
         scrub: 1,
         invalidateOnRefresh: true,
-        normalizeScroll: true,
       },
     });
 
