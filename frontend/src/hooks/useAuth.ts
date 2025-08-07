@@ -10,7 +10,6 @@ import {
   updateUserData,
   setAuthFromStorage
 } from '../store/slices/authSlice';
-import { setRegistrationState } from '../store/slices/registrationSlice';
 import { authApi } from '../services/authApi';
 import { AuthStorage } from '../utils/authStorage';
 
@@ -47,67 +46,56 @@ export const useAuth = () => {
     }
   }, [dispatch]);
 
-  // Enhanced checkAuth that uses localStorage first
+  // Simple checkAuth that makes only one API call
   const checkAuth = useCallback(async (forceApiCall: boolean = false) => {
+    console.log('checkAuth called, forceApiCall:', forceApiCall);
+    
     try {
       dispatch(setAuthLoading(true));
 
-      // First, try to load from localStorage if we haven't checked yet
-      if (!hasCheckedLocalStorage && !forceApiCall) {
-        const storedUser = AuthStorage.getUser();
-        if (storedUser) {
-          // User data found in localStorage and not expired
-          dispatch(setAuthFromStorage({ user: storedUser }));
-          
-          // Update registration state if needed
-          if (storedUser.completedSteps !== undefined && storedUser.completedSteps < 3) {
-            dispatch(setRegistrationState({
-              currentStep: getRegistrationStepFromUserData(storedUser),
-              email: storedUser.email || '',
-              isLoading: false,
-              error: null,
-              isEmailVerified: storedUser.emailVerified || false,
-            }));
-          }
-          
-          return; // Exit early, no API call needed
-        } else {
-          // No valid localStorage data, mark as checked
-          dispatch(loadFromLocalStorage());
-        }
+      // First, try localStorage
+      const storedUser = AuthStorage.getUser();
+      console.log('Stored user found:', !!storedUser);
+      
+      if (storedUser && !forceApiCall) {
+        console.log('Using stored user data, no API call needed');
+        dispatch(setAuthFromStorage({ user: storedUser }));
+        return;
       }
 
-      // If localStorage check failed or force API call is requested
-      if (forceApiCall || !AuthStorage.isUserDataValid()) {
-        // Try to get current user from API
-        // (cookie is sent automatically with credentials: 'include')
-        const response = await authApi.getCurrentUser();
+      // Make single API call only if no localStorage data or forced
+      console.log('Making API call to check authentication...');
+      try {
+        // Use quick method for initial auth check (no retries, fast timeout)
+        const response = forceApiCall ? 
+          await authApi.getCurrentUser() : // Use retry version for forced calls
+          await authApi.getCurrentUserQuick(); // Use quick version for initial check
         const userData = response as any;
+        console.log('API call successful, user authenticated');
         
         dispatch(setUser(userData));
         dispatch(setIsAuthenticated(true));
-        
-        // If user hasn't completed all registration steps, update registration state
-        if (userData.completedSteps !== undefined && userData.completedSteps < 3) {
-          dispatch(setRegistrationState({
-            currentStep: getRegistrationStepFromUserData(userData),
-            email: userData.email || '',
-            isLoading: false,
-            error: null,
-            isEmailVerified: userData.emailVerified || false,
-          }));
-        }
+      } catch (apiError: any) {
+        console.log('API call failed, setting guest mode');
+        dispatch(setUser(null));
+        dispatch(setIsAuthenticated(false));
+        AuthStorage.removeUser();
+        AuthStorage.setGuestSession();
       }
-    } catch (error) {
-      // If API call fails, user is not authenticated
+      
+      // Mark as checked regardless of outcome
+      dispatch(loadFromLocalStorage());
+      
+    } catch (error: any) {
+      console.log('Auth check error:', error.message);
       dispatch(setUser(null));
       dispatch(setIsAuthenticated(false));
-      // Also clear any stale localStorage data
-      AuthStorage.removeUser();
+      AuthStorage.setGuestSession();
+      dispatch(loadFromLocalStorage());
     } finally {
       dispatch(setAuthLoading(false));
     }
-  }, [dispatch, hasCheckedLocalStorage]);
+  }, [dispatch]);
 
   // Quick authentication check using only localStorage
   const checkAuthFromStorage = useCallback(() => {
@@ -189,25 +177,7 @@ export const useAuth = () => {
     }
   }, [isAuthenticated, dispatch]);
 
-  // Helper function to determine frontend registration step from user data
-  const getRegistrationStepFromUserData = (userData: any): number => {
-    const { completedSteps, emailVerified, name, username } = userData;
-    
-    // Step 1: Email/password (if completedSteps = 0)
-    if (completedSteps === 0) return 1;
-    
-    // Step 2: OTP verification (if email not verified)
-    if (completedSteps === 1 || !emailVerified) return 2;
-    
-    // Step 4: Profile completion (if name and username are set)
-    if (name && username) return 4;
-    
-    // Step 3: Name/username (if email verified but no name/username)
-    if (completedSteps === 2) return 3;
-    
-    // Fallback to step 1
-    return 1;
-  };
+
 
   return {
     user,

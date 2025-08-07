@@ -15,6 +15,10 @@ const AnimatedParagraph = ({ textLines, className }: AnimatedParagraphProps) => 
   useLayoutEffect(() => {
     if (!containerRef.current) return;
 
+    // Integration with Lenis smooth scrolling
+    ScrollTrigger.normalizeScroll(true);
+    ScrollTrigger.config({ ignoreMobileResize: true });
+
     const spans = gsap.utils.toArray(containerRef.current.querySelectorAll("span")) as HTMLElement[];
 
     const tl = gsap.timeline({
@@ -22,7 +26,9 @@ const AnimatedParagraph = ({ textLines, className }: AnimatedParagraphProps) => 
         trigger: containerRef.current,
         start: "top 80%",
         end: "bottom 20%",
-        scrub: true,
+        scrub: 1,
+        invalidateOnRefresh: true,
+        normalizeScroll: true,
       },
     });
 
@@ -34,6 +40,9 @@ const AnimatedParagraph = ({ textLines, className }: AnimatedParagraphProps) => 
         index * 0.1 // Stagger the animation of each line
       );
     });
+
+    // Refresh ScrollTrigger to ensure proper positioning
+    ScrollTrigger.refresh();
 
     return () => {
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());

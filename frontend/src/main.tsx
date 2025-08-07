@@ -5,12 +5,15 @@ import { store } from './store/store'
 import './index.css'
 import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary'
+import { DarkModeProvider } from './contexts/DarkModeContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <Provider store={store}>
+        <DarkModeProvider>
           <App />
+        </DarkModeProvider>
       </Provider>
     </ErrorBoundary>
   </StrictMode>,

@@ -19,6 +19,7 @@ class AuthApiService {
         ...requestOptions.headers,
       },
       credentials: 'include', // Include cookies in requests
+      signal: AbortSignal.timeout(5000), // 5 second timeout
       ...requestOptions,
     };
 
@@ -80,8 +81,8 @@ class AuthApiService {
           throw lastError;
         }
         
-        // Only retry on network errors or 5xx errors
-        if (attempt < maxRetries) {
+        // Only retry on network errors or 5xx errors, but NOT for timeout errors
+        if (attempt < maxRetries && !lastError.message.includes('timeout') && !lastError.message.includes('aborted')) {
           await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
         }
       }
@@ -157,6 +158,42 @@ class AuthApiService {
   // Get current user - with retry for critical operation
   async getCurrentUser() {
     return this.requestWithRetry('/users/profile', {}, 2);
+  }
+
+  // Get current user for initial auth check - NO RETRIES, fast fail
+  async getCurrentUserQuick() {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    
+    try {
+      console.log('Making single API call to:', `${apiUrl}/users/profile`);
+      
+      const response = await fetch(`${apiUrl}/users/profile`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        // Remove timeout to see if that's causing cancellation
+      });
+      
+      console.log('Response received:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      console.log('API call successful');
+      return response.json();
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('API call was aborted/cancelled');
+      } else if (error.name === 'TypeError') {
+        console.log('Network error - server not reachable:', error.message);
+      } else {
+        console.log('API call failed:', error.message);
+      }
+      throw error;
+    }
   }
 
   // Check registration step
