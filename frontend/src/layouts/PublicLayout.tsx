@@ -13,11 +13,10 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
 
   useEffect(() => {
     document.body.classList.remove('dark');
-    // Disable default scroll behavior when Lenis is active
-    document.body.style.overflow = 'hidden';
-    
+    // Keep body scroll enabled; Lenis will handle smoothing.
+    document.body.style.overflow = 'auto';
+
     return () => {
-      // Restore default scroll behavior when leaving public pages
       document.body.style.overflow = 'auto';
     };
   }, []);

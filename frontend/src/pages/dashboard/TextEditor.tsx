@@ -1,11 +1,11 @@
-// import RichTextEditor from "@/components/dashboard/editor/RichTextEditor";
+import EditorShell from "@/components/dashboard/editor/EditorShell";
 
 const TextEditor = () => {
   return (
-    <div>
-      {/* <RichTextEditor /> */}
+    <div className="py-6">
+      <EditorShell />
     </div>
-  )
-}
+  );
+};
 
 export default TextEditor;

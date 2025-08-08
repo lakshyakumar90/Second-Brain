@@ -93,13 +93,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col">
       <Navbar onToggleSidebar={toggleSidebar} sidebarState={sidebarState} />
 
-      <div className="flex flex-1 relative overflow-hidden">
+      <div className="flex flex-1 relative min-h-0">
         {/* Fixed Sidebar */}
         <div
-          className={`fixed inset-y-0 left-0 z-[9999] w-64 bg-background border-r transform transition-all duration-300 ease-in-out overflow-hidden shadow-lg
+          className={`fixed inset-y-0 left-0 z-[9999] w-64 bg-background border-r transform transition-all duration-300 ease-in-out shadow-lg
             ${
               sidebarState === "collapsed"
                 ? "-translate-x-full"
@@ -131,7 +131,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           animate={sidebarState}
           transition={{ type: "spring", stiffness: 120, damping: 15 }}
           layout
-          className="flex-1 overflow-y-auto h-full"
+          className="flex-1 min-h-0 overflow-y-auto"
         >
           <div className="mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60vw] py-3 px-4 sm:py-6 sm:px-6 lg:px-8">
             {children}

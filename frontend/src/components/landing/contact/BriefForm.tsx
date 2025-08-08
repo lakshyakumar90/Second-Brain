@@ -108,7 +108,10 @@ const BriefForm: React.FC<BriefFormProps> = ({ onClose }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100vh" }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
-      className="fixed inset-0 bg-[#f3f3e9] z-50 overflow-y-auto"
+      className="fixed inset-0 bg-[#f3f3e9] z-50 overflow-y-auto overscroll-contain"
+      data-lenis-prevent
+      data-lenis-prevent-wheel
+      data-lenis-prevent-touch
       style={{ WebkitOverflowScrolling: "touch" }}
     >
       <div className="min-h-screen flex flex-col">

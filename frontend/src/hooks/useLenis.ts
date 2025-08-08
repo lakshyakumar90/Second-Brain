@@ -1,11 +1,16 @@
 import { useEffect, useRef } from 'react';
 import Lenis from 'lenis';
+import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+// Ensure GSAP plugin is registered once
+gsap.registerPlugin(ScrollTrigger);
 
 export const useLenis = () => {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
     // Initialize Lenis
     const lenis = new Lenis({
       duration: 1.2,

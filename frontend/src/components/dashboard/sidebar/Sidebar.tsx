@@ -155,7 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 min-h-0 overflow-y-auto py-2">
         {/* Section 1: Search, Home, Inbox */}
         <div className="px-2 space-y-1 mb-4">
           <MenuItem icon={Search} label="Search" />
