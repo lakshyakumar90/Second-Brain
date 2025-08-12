@@ -12,6 +12,7 @@ import AuthInitializer from "./components/AuthInitializer";
 import { DarkModeContext, DarkModeProvider } from "./contexts/DarkModeContext";
 import { useAppSelector } from "./store/hooks";
 import Shimmer from "./components/ui/Shimmer";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AIPage = lazy(() => import("./pages/AIPage"));
@@ -22,7 +23,8 @@ const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const DashboardHome = lazy(() => import("./pages/dashboard/DashboardHome"));
 const TextEditor = lazy(() => import("./pages/dashboard/TextEditor"));
-  const ItemsPage = lazy(() => import("./pages/dashboard/ItemsPage"));
+const ItemsPage = lazy(() => import("./pages/dashboard/ItemsPage"));
+const CategoriesPage = lazy(() => import("./pages/dashboard/CategoriesPage"));
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAppSelector(
@@ -90,6 +92,7 @@ function AppContent() {
           >
             <Route path="home" element={<DashboardHome />} />
             <Route path="items" element={<ItemsPage />} />
+            <Route path="categories" element={<CategoriesPage />} />
             <Route path="text-editor" element={<TextEditor />} />
           </Route>
           <Route path="*" element={<Navigate to="/" />} />
@@ -101,9 +104,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthInitializer>
-      <AppContent />
-    </AuthInitializer>
+    <ErrorBoundary>
+      <AuthInitializer>
+        <AppContent />
+      </AuthInitializer>
+    </ErrorBoundary>
   );
 }
 

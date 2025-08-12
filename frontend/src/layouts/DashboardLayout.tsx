@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/dashboard/Navbar";
 import Sidebar from "@/components/dashboard/sidebar/Sidebar";
 import { motion } from "motion/react"; // Corrected import (assuming Framer Motion)
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import SearchModal from "@/components/search/SearchModal";
+import type { UIItem } from "@/types/items";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,6 +16,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     "collapsed" | "shrunk" | "expanded"
   >("collapsed");
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024); // lg breakpoint (1024px)
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   // Load sidebar state from localStorage on component mount
   useEffect(() => {
@@ -57,6 +61,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
   };
 
+  const closeSidebar = () => {
+    setSidebarState("collapsed");
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const triggerWidth = 20;
@@ -84,6 +92,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       document.body.removeEventListener("mousemove", handleMouseMove);
     };
   }, [isHovering, sidebarState]);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSearch: () => {
+      setIsSearchModalOpen(true);
+      closeSidebar();
+    },
+  });
 
   // Framer Motion variants for main content (dynamic based on state and screen size)
   const mainVariants = {
@@ -118,10 +134,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               sidebarState === "shrunk" ? "calc(80vh)" : "100vh",
           }}
         >
-          <Sidebar
-            onToggleSidebar={toggleSidebar}
-            sidebarState={sidebarState}
-          />
+                                <Sidebar
+                        onToggleSidebar={toggleSidebar}
+                        sidebarState={sidebarState}
+                        onSearchOpen={() => setIsSearchModalOpen(true)}
+                        onCloseSidebar={closeSidebar}
+                      />
         </div>
 
         {/* Main Content - Scrollable */}
@@ -138,6 +156,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </div>  
         </motion.main>
       </div>
+
+      {/* Search Modal */}
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        onItemClick={(item: UIItem) => {
+          console.log('Item clicked:', item);
+          // TODO: Navigate to item or open in editor
+          setIsSearchModalOpen(false);
+        }}
+      />
     </div>
   );
 };

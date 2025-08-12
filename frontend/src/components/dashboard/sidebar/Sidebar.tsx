@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
   Home,
@@ -22,10 +23,14 @@ import {
 } from "lucide-react";
 import SidebarHeader from "./SidebarHeader";
 import { cn } from "@/lib/utils";
+import SearchModal from "@/components/search/SearchModal";
+import { type UIItem } from "@/types/items";
 
 interface SidebarProps {
   onToggleSidebar?: (event: React.MouseEvent) => void;
   sidebarState?: "collapsed" | "shrunk" | "expanded";
+  onSearchOpen?: () => void;
+  onCloseSidebar?: () => void;
 }
 
 // Sample data structure - replace with actual API calls
@@ -54,10 +59,13 @@ const sampleCategories = [
   { id: 4, name: "Resources", icon: "📂", color: "#8B5CF6", count: 6 },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState, onSearchOpen, onCloseSidebar }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isWorkspacesExpanded, setIsWorkspacesExpanded] = useState(true);
   const [isPrivateExpanded, setIsPrivateExpanded] = useState(true);
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const isCollapsed = sidebarState === "collapsed";
   const isShrunk = sidebarState === "shrunk";
@@ -158,8 +166,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState }) => {
       <div className="flex-1 min-h-0 overflow-y-auto py-2">
         {/* Section 1: Search, Home, Inbox */}
         <div className="px-2 space-y-1 mb-4">
-          <MenuItem icon={Search} label="Search" />
-          <MenuItem icon={Home} label="Home" isActive />
+          <MenuItem 
+            icon={Search} 
+            label="Search" 
+            onClick={() => {
+              onSearchOpen?.();
+              onCloseSidebar?.();
+            }} 
+          />
+          <MenuItem 
+            icon={Home} 
+            label="Home" 
+            isActive={location.pathname === '/home'}
+            onClick={() => navigate('/home')}
+          />
           <MenuItem icon={Inbox} label="Inbox" count={3} />
         </div>
 
@@ -203,7 +223,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState }) => {
           />
           {isPrivateExpanded && showLabels && (
             <div className="ml-2 space-y-1 mt-2">
-              <MenuItem icon={FileText} label="Quick Note" />
+              <MenuItem 
+                icon={FileText} 
+                label="Items" 
+                isActive={location.pathname === '/items'}
+                onClick={() => navigate('/items')}
+              />
               <MenuItem icon={Star} label="Favorites" count={7} />
               <MenuItem icon={Clock} label="Recent" />
               <MenuItem icon={FileText} label="Documents" count={23} />
@@ -244,9 +269,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState }) => {
                         </span>
                       </div>
                     ))}
-                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-secondary/50 text-sm text-muted-foreground">
+                    <div 
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-secondary/50 text-sm text-muted-foreground"
+                      onClick={() => navigate('/categories')}
+                    >
                       <Hash className="h-4 w-4" />
-                      <span>New category</span>
+                      <span>Manage Categories</span>
                     </div>
                   </div>
                 )}
@@ -274,6 +302,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState }) => {
           </div>
         </div>
       )}
+
+    {/* Search Modal */}
+    <SearchModal
+      isOpen={isSearchModalOpen}
+      onClose={() => setIsSearchModalOpen(false)}
+      onItemClick={(item) => {
+        console.log('Item clicked:', item);
+        // TODO: Navigate to item or open in editor
+        setIsSearchModalOpen(false);
+      }}
+    />
     </div>
   );
 };
