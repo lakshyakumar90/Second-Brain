@@ -107,6 +107,11 @@ export class AuthStorage {
     return user !== null;
   }
 
+  static getToken(): string | null {
+    const user = this.getUser();
+    return user?.token || null;
+  }
+
   // Remove user data from storage
   static removeUser(): void {
     try {

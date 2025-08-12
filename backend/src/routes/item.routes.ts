@@ -11,16 +11,18 @@ import {
   duplicateItem,
   favoriteItem,
   archiveItem,
-  uploadFiles,
+  uploadFile,
   getItemAnalytics,
 } from "../controllers/item.controller";
 import { authMiddleware, registrationCompleteMiddleware } from "../middlewares/authMiddleware";
+import { uploadItemFile, handleUploadError } from "../middlewares/uploadMiddleware";
 
 const router = Router();
 
 router.use(authMiddleware);
 router.use(registrationCompleteMiddleware);
 
+router.post("/upload", uploadItemFile, handleUploadError, uploadFile);
 router.post("/create", createItem);
 router.delete("/bulk-delete", bulkDelete);
 router.patch("/bulk-restore", bulkRestore);
@@ -32,7 +34,6 @@ router.patch("/:itemId/restore", restoreItem);
 router.post("/duplicate/:itemId", duplicateItem);
 router.post("/favorite/:itemId", favoriteItem);
 router.post("/archive/:itemId", archiveItem);
-router.post("/upload/:itemId", uploadFiles);
 router.get("/analytics/:itemId", getItemAnalytics);
 
 export default router;

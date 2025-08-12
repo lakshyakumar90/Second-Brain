@@ -48,6 +48,7 @@ const upload = multer({
 
 // Specific middleware for avatar upload
 export const uploadAvatar = upload.single("avatar");
+export const uploadItemFile = upload.single("file");
 
 // Error handling middleware for multer
 export const handleUploadError = (

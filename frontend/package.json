@@ -43,6 +43,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "editorjs-drag-drop": "^1.1.16",
+    "editorjs-toggle-block": "^0.3.16",
     "editorjs-undo": "^2.0.28",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.9",

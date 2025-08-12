@@ -3,6 +3,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
 @font-face {
   font-family: "neue-light";
   src: url("/fonts/NeueMontreal-Light.otf");
@@ -75,6 +95,170 @@
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+}
+
+/* EditorJS Toggle Block Styles */
+.toggle-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 1rem 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+/* Fix for the actual toggle block selector structure */
+.toggle-block__selector {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.75rem 1rem !important;
+  background: var(--secondary) !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.toggle-block__selector:hover {
+  background: var(--accent) !important;
+}
+
+.toggle-block__icon {
+  transition: transform 0.2s ease !important;
+  color: var(--muted-foreground) !important;
+  flex-shrink: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.toggle-block__input {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-weight: 500 !important;
+  color: var(--foreground) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+.toggle-block__input:focus {
+  outline: none !important;
+  border: none !important;
+}
+
+.toggle-block__content-default {
+  padding: 1rem !important;
+  background: var(--card) !important;
+  border-top: 1px solid var(--border) !important;
+  overflow-x: auto !important;
+  word-wrap: break-word !important;
+  color: var(--muted-foreground) !important;
+  font-style: italic !important;
+}
+
+/* Legacy classes for backward compatibility */
+.toggle-block__header {
+  background: var(--secondary);
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.toggle-block__header:hover {
+  background: var(--accent);
+}
+
+.toggle-block__title {
+  font-weight: 500;
+  color: var(--foreground);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toggle-block__icon--expanded {
+  transform: rotate(180deg);
+}
+
+.toggle-block__content {
+  padding: 1rem;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  overflow-x: auto;
+  word-wrap: break-word;
+}
+
+.toggle-block__content--collapsed {
+  display: none;
+}
+
+/* Fix for EditorJS content overflow */
+.codex-editor__redactor {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.codex-editor__redactor .codex-editor__redactor-zone {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Ensure toggle content doesn't overflow */
+.toggle-block .codex-editor__redactor {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.toggle-block .codex-editor__redactor .codex-editor__redactor-zone {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Additional fixes for toggle block layout */
+.toggle-block .codex-editor__redactor .codex-editor__redactor-zone .codex-editor__redactor-zone {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Fix for any nested content that might cause overflow */
+.toggle-block * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure tables and other wide content don't break layout */
+.toggle-block table {
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+.toggle-block pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.toggle-block code {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .dark {
@@ -436,59 +620,115 @@
   --scrollbar-thumb-active: var(--secondary);
 }
 
-/* WebKit Scrollbar Styles (Chrome, Safari, Edge) */
+/* Custom Scrollbar Styles for Dark/Light Theme */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: 8px;
+  background: var(--card);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 8px;
-  border: 2px solid var(--scrollbar-track);
-  transition: all 0.2s ease-in-out;
+  background: var(--muted-foreground);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
-  border: 1px solid var(--scrollbar-track);
-}
-
-::-webkit-scrollbar-thumb:active {
-  background: var(--scrollbar-thumb-active);
+  background: var(--foreground);
 }
 
 ::-webkit-scrollbar-corner {
-  background: var(--scrollbar-track);
+  background: var(--card);
 }
 
-/* Firefox Scrollbar Styles */
+/* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-color: var(--muted-foreground) var(--card);
 }
 
-/* Thin scrollbar variant for specific components */
-.scrollbar-thin::-webkit-scrollbar {
+/* Specific scrollbar styles for toggle blocks */
+.toggle-block::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  border: 1px solid var(--scrollbar-track);
+.toggle-block::-webkit-scrollbar-track {
+  background: var(--card);
+  border-radius: 3px;
 }
 
-/* Hide scrollbar while maintaining scroll functionality */
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.toggle-block::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
 }
 
-.scrollbar-none::-webkit-scrollbar {
-  /* display: none; */
+.toggle-block::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+/* EditorJS specific scrollbar styles */
+.codex-editor__redactor::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.codex-editor__redactor::-webkit-scrollbar-track {
+  background: var(--background);
+  border-radius: 4px;
+}
+
+.codex-editor__redactor::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+}
+
+.codex-editor__redactor::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+/* Toggle block content scrollbar */
+.toggle-block__content::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.toggle-block__content::-webkit-scrollbar-track {
+  background: var(--card);
+  border-radius: 3px;
+}
+
+.toggle-block__content::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
+}
+
+.toggle-block__content::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+/* Content default scrollbar */
+.toggle-block__content-default::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.toggle-block__content-default::-webkit-scrollbar-track {
+  background: var(--card);
+  border-radius: 3px;
+}
+
+.toggle-block__content-default::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
+}
+
+.toggle-block__content-default::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
 }

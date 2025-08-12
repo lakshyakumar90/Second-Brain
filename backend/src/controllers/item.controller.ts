@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
+import { UploadApiResponse, UploadApiErrorResponse } from "cloudinary";
 import { Item } from "../models/index";
+import cloudinary from "../config/cloudinary";
 import { FILE_LIMITS } from "../config/constants";
 import {
   createItemSchema,
@@ -8,6 +10,41 @@ import {
   updateItemSchema,
 } from "../validations/itemValidation";
 import { AuthRequest } from "../models/interfaces/userModel.interface";
+
+const uploadFile = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const file = req.file;
+    if (file) {
+      const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "auto",
+            folder: `items/${req.user?.userId}`,
+          },
+          (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
+            if (error) {
+              console.error("Cloudinary Error:", error);
+              return reject(error);
+            };
+            if (result) {
+              resolve(result);
+            } else {
+              reject(new Error("Upload failed, but no error was provided by Cloudinary."));
+            }
+          }
+        );
+        uploadStream.end(file.buffer);
+      });
+
+      res.status(201).json({ url: result.secure_url });
+    } else {
+      res.status(400).json({ message: "No file uploaded." });
+    }
+  } catch (error) {
+    console.error("Error uploading to Cloudinary:", error);
+    res.status(500).json({ message: "Error uploading file.", error });
+  }
+};
 
 const createItem = async (req: AuthRequest, res: Response) => {
   try {
@@ -1073,139 +1110,6 @@ const archiveItem = async (req: AuthRequest, res: Response) => {
   }
 };
 
-const uploadFiles = async (req: AuthRequest, res: Response) => {
-  try {
-    // Validate user authentication
-    if (!req.user?.userId) {
-      res.status(401).json({
-        message: "Unauthorized",
-        error: "Authentication required",
-      });
-      return;
-    }
-
-    // Validate item ID parameter
-    const validationResult = itemIdSchema.safeParse(req.params);
-    if (!validationResult.success) {
-      res.status(400).json({
-        message: "Validation failed",
-        error: validationResult.error.issues.map((err: any) => ({
-          field: err.path.join("."),
-          message: err.message,
-        })),
-      });
-      return;
-    }
-
-    const { itemId } = validationResult.data;
-
-    // Check if files were uploaded
-    if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
-      res.status(400).json({
-        message: "No files uploaded",
-        error: "Please select at least one file to upload",
-      });
-      return;
-    }
-
-    // Find the item and ensure it belongs to the authenticated user
-    const existingItem = await Item.findOne({
-      _id: itemId,
-      userId: req.user.userId,
-      isDeleted: false,
-    });
-
-    if (!existingItem) {
-      res.status(404).json({
-        message: "Item not found",
-        error: "The requested item does not exist or you don't have access to it",
-      });
-      return;
-    }
-
-    // Check if adding these files would exceed the limit
-    const currentFileCount = existingItem.files.length;
-    const filesArray = Array.isArray(req.files) ? req.files : [];
-    const newFileCount = filesArray.length;
-    
-    if (currentFileCount + newFileCount > FILE_LIMITS.MAX_FILES_PER_ITEM) {
-      res.status(400).json({
-        message: "Too many files",
-        error: `Maximum ${FILE_LIMITS.MAX_FILES_PER_ITEM} files allowed per item. Current: ${currentFileCount}, Adding: ${newFileCount}`,
-      });
-      return;
-    }
-
-    // Process uploaded files
-    const uploadedFiles = [];
-    
-    for (const file of filesArray) {
-      // Generate unique filename
-      const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2, 15);
-      const filename = `${timestamp}_${randomString}_${file.originalname}`;
-      
-      // Create file object
-      const fileData = {
-        originalName: file.originalname,
-        filename: filename,
-        path: `/uploads/${filename}`, // You might want to adjust this path
-        size: file.size,
-        mimetype: file.mimetype,
-        isMain: existingItem.files.length === 0, // First file becomes main
-      };
-      
-      uploadedFiles.push(fileData);
-    }
-
-    // Update item with new files
-    const updatedItem = await Item.findByIdAndUpdate(
-      itemId,
-      {
-        $push: { files: { $each: uploadedFiles } },
-        lastEditedAt: new Date(),
-        lastEditedBy: req.user.userId,
-        version: existingItem.version + 1,
-      },
-      { new: true, runValidators: true }
-    )
-      .populate("categories", "name")
-      .populate("workspace", "name")
-      .populate("lastEditedBy", "name");
-
-    if (!updatedItem) {
-      res.status(500).json({
-        message: "Error uploading files",
-        error: "Failed to update the item",
-      });
-      return;
-    }
-
-    res.status(200).json({
-      message: "Files uploaded successfully",
-      uploadedFiles: uploadedFiles,
-      item: updatedItem,
-      totalFiles: updatedItem.files.length,
-    });
-  } catch (error) {
-    // Error is handled by response only, not logged
-    if (error instanceof Error) {
-      if (error.message.includes("Cast to ObjectId failed")) {
-        res.status(400).json({
-          message: "Invalid item ID",
-          error: "The provided item ID is not valid",
-        });
-        return;
-      }
-    }
-
-    res.status(500).json({
-      message: "Error uploading files",
-      error: "Internal server error",
-    });
-  }
-};
-
 const getItemAnalytics = async (req: AuthRequest, res: Response) => {
   try {
     // Validate user authentication
@@ -1323,4 +1227,4 @@ const getItemAnalytics = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore, duplicateItem, favoriteItem, archiveItem, uploadFiles, getItemAnalytics };
+export { createItem, getItems, getItem, updateItem, deleteItem, restoreItem, bulkDelete, bulkRestore, duplicateItem, favoriteItem, archiveItem, uploadFile, getItemAnalytics };

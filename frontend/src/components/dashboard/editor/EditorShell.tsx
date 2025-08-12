@@ -6,7 +6,7 @@ const EditorShell: React.FC = () => {
   const [data, setData] = useState<OutputData | undefined>(undefined);
 
   return (
-    <div className="w-full w-full mx-auto">
+    <div className="w-full mx-auto">
       {/* <div className="flex items-center justify-between mb-4 px-1">
         <h1 className="text-xl font-semibold" style={{ color: "var(--foreground)" }}>
           Editor

@@ -1,6 +1,4 @@
-import { AuthStorage } from '../utils/authStorage';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 
 interface RequestConfig extends RequestInit {
   skipAuthClear?: boolean; // Skip clearing auth on 401 errors
@@ -29,9 +27,6 @@ class AuthApiService {
       if (!response.ok) {
         // Handle 401 Unauthorized - token expired or invalid
         if (response.status === 401 && !skipAuthClear) {
-          // Clear localStorage auth data on 401 errors
-          AuthStorage.removeUser();
-          
           // For login/register endpoints, don't redirect
           if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
             // Optional: Emit a custom event for unauthorized access
@@ -162,7 +157,7 @@ class AuthApiService {
 
   // Get current user for initial auth check - NO RETRIES, fast fail
   async getCurrentUserQuick() {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
     
     try {
       console.log('Making single API call to:', `${apiUrl}/users/profile`);
@@ -246,7 +241,6 @@ class AuthApiService {
       if (!response.ok) {
         // Handle 401 for avatar upload
         if (response.status === 401) {
-          AuthStorage.removeUser();
           window.dispatchEvent(new CustomEvent('auth:unauthorized'));
         }
         

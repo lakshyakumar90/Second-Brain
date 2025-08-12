@@ -13,6 +13,8 @@ import Marker from "@editorjs/marker";
 import Embed from "@editorjs/embed";
 import ImageTool from "@editorjs/image";
 // @ts-ignore
+import ToggleBlock from "editorjs-toggle-block";
+// @ts-ignore
 import Undo from "editorjs-undo";
 // @ts-ignore
 import DragDrop from "editorjs-drag-drop";
@@ -115,6 +117,10 @@ const EditorJSClient: React.FC<EditorJSClientProps> = ({
             },
           },
         },
+        toggle: {
+          class: ToggleBlock,
+          inlineToolbar: true,
+        },
       },
       onChange: async () => {
         if (onChange) {
@@ -149,7 +155,13 @@ const EditorJSClient: React.FC<EditorJSClientProps> = ({
   return (
     <div
       id={holderId}
-      className="prose max-w-none px-6 py-8 min-h-[60vh] text-foreground"
+      className="prose max-w-none py-8 min-h-[60vh] text-foreground overflow-x-hidden"
+      style={{
+        maxWidth: "100%",
+        // overflowX: "hidden",
+        wordWrap: "break-word",
+        overflowWrap: "break-word",
+      }}
     />
   );
 };

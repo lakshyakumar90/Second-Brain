@@ -16,12 +16,13 @@ import Shimmer from "./components/ui/Shimmer";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AIPage = lazy(() => import("./pages/AIPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
-const AboutPage = lazy(() => import("./pages/AboutPage"));
+  const AboutPage = lazy(() => import("./pages/AboutPage"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const DashboardHome = lazy(() => import("./pages/dashboard/DashboardHome"));
 const TextEditor = lazy(() => import("./pages/dashboard/TextEditor"));
+  const ItemsPage = lazy(() => import("./pages/dashboard/ItemsPage"));
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAppSelector(
@@ -88,6 +89,7 @@ function AppContent() {
             }
           >
             <Route path="home" element={<DashboardHome />} />
+            <Route path="items" element={<ItemsPage />} />
             <Route path="text-editor" element={<TextEditor />} />
           </Route>
           <Route path="*" element={<Navigate to="/" />} />
