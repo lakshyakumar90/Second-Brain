@@ -22,12 +22,22 @@ class PageApiService {
 			credentials: 'include',
 			...options,
 		};
-		const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-		if (!response.ok) {
-			const errorData = await response.json().catch(() => ({}));
-			throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+		
+		try {
+			const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+			}
+			return response.json();
+		} catch (error) {
+			// Handle network errors (connection refused, no internet, etc.)
+			if (error instanceof TypeError && error.message.includes('fetch')) {
+				throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+			}
+			// Re-throw other errors
+			throw error;
 		}
-		return response.json();
 	}
 
 	async createPage(data: CreatePageData): Promise<any> {
@@ -49,6 +59,10 @@ class PageApiService {
 
 	async getPage(pageId: string): Promise<any> {
 		return this.request(`/pages/${pageId}`);
+	}
+
+	async deletePage(pageId: string): Promise<any> {
+		return this.request(`/pages/${pageId}`, { method: 'DELETE' });
 	}
 }
 

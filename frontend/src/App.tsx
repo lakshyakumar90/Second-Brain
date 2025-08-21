@@ -17,12 +17,13 @@ import ErrorBoundary from "./components/ErrorBoundary";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AIPage = lazy(() => import("./pages/AIPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
-  const AboutPage = lazy(() => import("./pages/AboutPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const DashboardHome = lazy(() => import("./pages/dashboard/DashboardHome"));
 const TextEditor = lazy(() => import("./pages/dashboard/TextEditor"));
+const PageEditor = lazy(() => import("./pages/dashboard/PageEditor"));
 const ItemsPage = lazy(() => import("./pages/dashboard/ItemsPage"));
 const CategoriesPage = lazy(() => import("./pages/dashboard/CategoriesPage"));
 
@@ -94,6 +95,7 @@ function AppContent() {
             <Route path="items" element={<ItemsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="text-editor" element={<TextEditor />} />
+            <Route path="pages/:pageId" element={<PageEditor />} />
           </Route>
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
