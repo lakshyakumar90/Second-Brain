@@ -5,6 +5,7 @@ import ItemPreviewModal from "@/components/items/ItemPreviewModal";
 import ItemEditorModal from "@/components/items/ItemEditorModal";
 import { Button } from "@/components/ui/button";
 import type { ItemType } from "@/types/items";
+import { itemApi, type Block } from "@/services/itemApi";
 
 const sampleItems: UIItem[] = [
   { id: "1", type: "text", title: "Project Outline", preview: "Kickoff notes, goals, and milestones...", tags: ["project", "q1"], isPinned: true, color: "yellow" },
@@ -21,11 +22,32 @@ const sampleItems: UIItem[] = [
 ];
 
 const ItemsPage: React.FC = () => {
-  const [items, setItems] = useState<UIItem[]>(sampleItems.map(i => ({...i, color: undefined})));
+  const [items, setItems] = useState<UIItem[]>([]);
   const [previewItem, setPreviewItem] = useState<UIItem | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [quickNote, setQuickNote] = useState("");
   const [activeFilter, setActiveFilter] = useState<ItemType | 'all'>('all');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await itemApi.getItems({ page: 1, limit: 50 });
+        const list = (res?.data?.items || res?.items || []).map((it: any) => backendItemToUIItem(it));
+        if (mounted) setItems(list);
+      } catch (e: any) {
+        if (mounted) setError(e?.message || 'Failed to load items');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleTogglePin = (itemId: string) => {
     setItems(prev => prev.map(it => it.id === itemId ? { ...it, isPinned: !it.isPinned } : it));
@@ -75,22 +97,23 @@ const ItemsPage: React.FC = () => {
     }));
   };
 
-  const handleQuickAdd = () => {
-    const note = quickNote.trim();
-    if (!note) return;
-    const id = `${Date.now()}`;
-    const newItem: UIItem = { id, type: "text", title: "", preview: note } as UIItem;
-    setItems((prev) => [newItem, ...prev]);
-    setQuickNote("");
-    setPreviewItem(newItem);
-    setEditorOpen(true);
-  };
+  // const handleQuickAdd = () => {
+  //   const note = quickNote.trim();
+  //   if (!note) return;
+  //   const id = `${Date.now()}`;
+  //   const newItem: UIItem = { id, type: "text", title: "", preview: note } as UIItem;
+  //   setItems((prev) => [newItem, ...prev]);
+  //   setQuickNote("");
+  //   setPreviewItem(newItem);
+  //   setEditorOpen(true);
+  // };
 
   const handleDeleteItem = (itemId: string) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       setItems(prev => prev.filter(it => it.id !== itemId));
       setPreviewItem(null);
       setEditorOpen(false);
+      // Optional: call backend delete here in future
     }
   };
 
@@ -151,34 +174,24 @@ const ItemsPage: React.FC = () => {
           setEditorOpen(false)
           setPreviewItem(null)
         }}
-        onSave={({ type, title, content, todos, url, images, isPinned }) => {
-          // update
-          if (previewItem) {
-            setItems((prev) => prev.map((it) => {
-              if (it.id !== previewItem.id) return it;
-              const baseChanges = { ...it, type, title, preview: content, isPinned };
-              if (type === "text") return { ...baseChanges } as UIItem;
-              if (type === "todo") return { ...baseChanges, todos: todos || [] } as UIItem;
-              if (type === "link") return { ...baseChanges, url: url || "" } as UIItem;
-              if (type === "audio") return { ...baseChanges, src: url || "" } as UIItem;
-              if (type === "document") return { ...baseChanges, fileName: title || "file", fileType: "doc", url } as UIItem;
-              if (type === "image") return { ...baseChanges, images: images || [] } as UIItem;
-              return it;
-            }));
-          } else {
-            const id = `${Date.now()}`;
-            let newItem: UIItem;
-            const baseItem = { id, type, title, preview: content || "" };
-            if (type === "text") newItem = { ...baseItem } as UIItem;
-            else if (type === "todo") newItem = { ...baseItem, todos: todos || [] } as UIItem;
-            else if (type === "link") newItem = { ...baseItem, url: url || "" } as UIItem;
-            else if (type === "audio") newItem = { ...baseItem, src: url || "" } as UIItem;
-            else if (type === "document") newItem = { ...baseItem, fileName: title || "file", fileType: "doc", url } as UIItem;
-            else newItem = { ...baseItem, images: images || [] } as UIItem;
-            setItems((prev) => [newItem, ...prev]);
+        onSave={async ({ type, title, content, todos, url, images, isPinned }) => {
+          try {
+            const payload = uiPayloadToBackend({ type, title, content, todos, url, images });
+            if (previewItem) {
+              const updated = await itemApi.updateItem({ itemId: previewItem.id, ...payload });
+              const ui = backendItemToUIItem(updated?.item || updated);
+              setItems(prev => prev.map(it => (it.id === ui.id ? ui : it)));
+            } else {
+              const created = await itemApi.createItem(payload);
+              const ui = backendItemToUIItem(created?.item || created);
+              setItems(prev => [ui, ...prev]);
+            }
+          } catch (e) {
+            console.error('Failed to save item', e);
+          } finally {
+            setEditorOpen(false);
+            setPreviewItem(null);
           }
-          setEditorOpen(false);
-          setPreviewItem(null);
         }}
       />
     </div>
@@ -196,5 +209,49 @@ const FilterButton = ({ active, filter, onClick, children }: { active: string, f
 );
 
 export default ItemsPage;
+
+function uiPayloadToBackend({ type, title, content, todos, url, images }: { type: ItemType; title: string; content?: string; todos?: Array<{ id: string; text: string; done: boolean }>; url?: string; images?: { url: string }[]; }) {
+  const blocks: Block[] | undefined = todos && todos.length > 0 ? todos.map(t => ({
+    id: t.id,
+    type: 'checklist',
+    content: t.text,
+    checked: t.done,
+  })) : undefined;
+  return {
+    type: type === 'todo' ? 'text' : (type as any),
+    title: title || 'Untitled',
+    content: content || undefined,
+    blocks,
+    url: url || undefined,
+    // files upload persistence can be added later; focus on content + blocks
+  };
+}
+
+function backendItemToUIItem(it: any): UIItem {
+  const id = it._id || it.id;
+  const type = (it.type || 'text') as ItemType;
+  const title = it.title || '';
+  const preview = it.content || '';
+  // Derive UI type 'todo' from blocks
+  const checklistBlocks = (it.blocks || []).filter((b: any) => b.type === 'checklist');
+  if (checklistBlocks.length > 0) {
+    const todos = checklistBlocks.map((b: any) => ({ id: b.id, text: b.content || '', done: !!b.checked }));
+    return { id, type: 'todo', title, todos } as UIItem;
+  }
+  if (type === 'image') {
+    const images = it.images || [];
+    return { id, type: 'image', title, images } as UIItem;
+  }
+  if (type === 'link') {
+    return { id, type: 'link', title, url: it.url } as UIItem;
+  }
+  if (type === 'audio') {
+    return { id, type: 'audio', title, src: it.url || '' } as UIItem;
+  }
+  if (type === 'document') {
+    return { id, type: 'document', title, fileName: it.metadata?.fileName || 'file', fileType: it.metadata?.fileType || 'doc', url: it.url } as UIItem;
+  }
+  return { id, type: 'text', title, preview } as UIItem;
+}
 
 

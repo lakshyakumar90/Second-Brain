@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Palette, Hash, Eye, EyeOff, Brain, Plus, X as XIcon } from 'lucide-react';
+import { X, Brain, Plus, X as XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -119,10 +119,10 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
   };
 
   const handleAddKeyword = () => {
-    if (newKeyword.trim() && !formData.aiKeywords.includes(newKeyword.trim())) {
+    if (newKeyword.trim() && !(formData.aiKeywords ?? []).includes(newKeyword.trim())) {
       setFormData(prev => ({
         ...prev,
-        aiKeywords: [...prev.aiKeywords, newKeyword.trim()],
+        aiKeywords: [ ...(prev.aiKeywords ?? []), newKeyword.trim()],
       }));
       setNewKeyword('');
     }
@@ -131,7 +131,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
   const handleRemoveKeyword = (keyword: string) => {
     setFormData(prev => ({
       ...prev,
-      aiKeywords: prev.aiKeywords.filter(k => k !== keyword),
+      aiKeywords: (prev.aiKeywords ?? []).filter(k => k !== keyword),
     }));
   };
 
@@ -298,9 +298,9 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                   </Button>
                 </div>
 
-                {formData.aiKeywords.length > 0 && (
+                {(formData.aiKeywords ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {formData.aiKeywords.map((keyword) => (
+                    {(formData.aiKeywords ?? []).map((keyword) => (
                       <Badge key={keyword} variant="secondary" className="gap-1">
                         {keyword}
                         <button

@@ -10,6 +10,7 @@ import AIChat from "./aiChat.model";
 import AIUsage from "./aiUsage.model";
 import ActivityLog from "./activity.model";
 import Notification from "./notification.model";
+import Page from "./page.model";
 
 // Export all models
 export {
@@ -24,6 +25,7 @@ export {
   AIUsage,
   ActivityLog,
   Notification,
+  Page,
 };
 
 // This file ensures all models are registered with Mongoose

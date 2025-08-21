@@ -109,7 +109,9 @@ export class AuthStorage {
 
   static getToken(): string | null {
     const user = this.getUser();
-    return user?.token || null;
+    // Token may be nested depending on auth implementation; keep strict frontend-only behavior
+    // @ts-expect-error tolerate unknown user shape at runtime
+    return (user && (user.token as string | undefined)) ?? null;
   }
 
   // Remove user data from storage

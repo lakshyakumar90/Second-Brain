@@ -24,7 +24,6 @@ import {
 import SidebarHeader from "./SidebarHeader";
 import { cn } from "@/lib/utils";
 import SearchModal from "@/components/search/SearchModal";
-import { type UIItem } from "@/types/items";
 
 interface SidebarProps {
   onToggleSidebar?: (event: React.MouseEvent) => void;

@@ -10,8 +10,8 @@
 html, body {
   width: 100%;
   height: 100%;
-  overflow-x: hidden;
-  position: relative;
+  /* overflow-x: hidden; */
+  /* position: relative; */
 }
 
 body {
@@ -20,7 +20,8 @@ body {
   color: var(--foreground);
   line-height: 1.6;
   min-height: 100vh;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */
+  /* overflow-y: auto; */
 }
 
 @font-face {
@@ -97,169 +98,7 @@ body {
   --spacing: 0.25rem;
 }
 
-/* EditorJS Toggle Block Styles */
-.toggle-block {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin: 1rem 0;
-  overflow: hidden;
-  max-width: 100%;
-}
 
-/* Fix for the actual toggle block selector structure */
-.toggle-block__selector {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
-  padding: 0.75rem 1rem !important;
-  background: var(--secondary) !important;
-  cursor: pointer !important;
-  transition: background-color 0.2s ease !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
-}
-
-.toggle-block__selector:hover {
-  background: var(--accent) !important;
-}
-
-.toggle-block__icon {
-  transition: transform 0.2s ease !important;
-  color: var(--muted-foreground) !important;
-  flex-shrink: 0 !important;
-  width: 16px !important;
-  height: 16px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.toggle-block__input {
-  flex: 1 !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  font-weight: 500 !important;
-  color: var(--foreground) !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  outline: none !important;
-}
-
-.toggle-block__input:focus {
-  outline: none !important;
-  border: none !important;
-}
-
-.toggle-block__content-default {
-  padding: 1rem !important;
-  background: var(--card) !important;
-  border-top: 1px solid var(--border) !important;
-  overflow-x: auto !important;
-  word-wrap: break-word !important;
-  color: var(--muted-foreground) !important;
-  font-style: italic !important;
-}
-
-/* Legacy classes for backward compatibility */
-.toggle-block__header {
-  background: var(--secondary);
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s ease;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.toggle-block__header:hover {
-  background: var(--accent);
-}
-
-.toggle-block__title {
-  font-weight: 500;
-  color: var(--foreground);
-  margin: 0;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.toggle-block__icon--expanded {
-  transform: rotate(180deg);
-}
-
-.toggle-block__content {
-  padding: 1rem;
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  overflow-x: auto;
-  word-wrap: break-word;
-}
-
-.toggle-block__content--collapsed {
-  display: none;
-}
-
-/* Fix for EditorJS content overflow */
-.codex-editor__redactor {
-  overflow-x: auto;
-  max-width: 100%;
-}
-
-.codex-editor__redactor .codex-editor__redactor-zone {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-/* Ensure toggle content doesn't overflow */
-.toggle-block .codex-editor__redactor {
-  overflow-x: auto;
-  max-width: 100%;
-}
-
-.toggle-block .codex-editor__redactor .codex-editor__redactor-zone {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-/* Additional fixes for toggle block layout */
-.toggle-block .codex-editor__redactor .codex-editor__redactor-zone .codex-editor__redactor-zone {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-/* Fix for any nested content that might cause overflow */
-.toggle-block * {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* Ensure tables and other wide content don't break layout */
-.toggle-block table {
-  max-width: 100%;
-  overflow-x: auto;
-  display: block;
-}
-
-.toggle-block pre {
-  max-width: 100%;
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.toggle-block code {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
 
 .dark {
   --background: #191919;
@@ -375,215 +214,7 @@ body {
   }
 }
 
-/* ============================== */
-/* Editor.js Toolbox (slash menu) */
-/* ============================== */
 
-.ce-toolbar__plus,
-.ce-toolbar__settings-btn {
-  background-color: var(--background) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border-color) !important;
-  &:hover {
-    background-color: var(--accent) !important;
-    color: var(--foreground) !important;
-  }
-  border-radius: 0.5rem !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
-}
-
-.ce-popover .ce-popover__container {
-  background-color: var(--sidebar-accent) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 0.5rem !important;
-  box-shadow: var(--shadow-md) !important;
-}
-
-.ce-block__content {
-  padding-left: 0.5rem !important;
-}
-
-.ce-block--selected .ce-block__content {
-  background-color: var(--secondary) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border-color) !important;
-  box-shadow: var(--shadow-md) !important;
-}
-
-.ce-popover-item {
-  background-color: var(--sidebar-accent) !important;
-  color: var(--foreground) !important;
-  /* border: 1px solid var(--border-color) !important; */
-  border-radius: 0.5rem !important;
-  /* box-shadow: var(--shadow-md) !important; */
-  &:hover {
-    background-color: var(--secondary) !important;
-    color: var(--foreground) !important;
-  }
-}
-
-.ce-popover__search {
-  background-color: var(--secondary) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 0.5rem !important;
-}
-
-/* Notion-like: Move block action buttons (plus and dots) to the left */
-.ce-block {
-  position: relative;
-}
-
-/* Main toolbar container positioning */
-.ce-toolbar {
-  left: -48px !important;
-  right: auto !important;
-}
-
-/* Actions container that holds plus and dots */
-.ce-toolbar__actions {
-  left: -48px !important;
-  right: auto !important;
-  transform: translateX(0) !important;
-}
-
-/* Visual spacing from the content area */
-.ce-toolbar__plus,
-.ce-toolbar__settings-btn {
-  margin-right: 6px !important;
-}
-
-@media (min-width: 1024px) {
-  .ce-toolbar,
-  .ce-toolbar__actions {
-    left: -56px !important;
-  }
-}
-
-.ce-inline-tool {
-  background-color: var(--secondary) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 0.5rem !important;
-}
-
-.ce-inline-tool-input--showed {
-  background-color: var(--secondary) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 0.5rem !important;
-}
-
-.ce-block h1 {
-  font-size: 2rem !important;
-  font-weight: 700 !important;
-  margin: 1.2em 0 0.6em;
-  color: var(--foreground) !important;
-}
-
-.ce-block h2 {
-  font-size: 1.75rem !important;
-  font-weight: 600 !important;
-  margin: 1.1em 0 0.5em;
-  color: var(--foreground) !important;
-}
-
-.ce-block h3 {
-  font-size: 1.5rem !important;
-  font-weight: 600 !important;
-  margin: 1em 0 0.5em;
-  color: var(--foreground) !important;
-}
-
-.ce-block h4,
-.ce-block h5,
-.ce-block h6 {
-  font-size: 1.25rem !important;
-  font-weight: 500 !important;
-  margin: 0.9em 0 0.4em;
-  color: var(--foreground) !important;
-}
-
-/* Quote block */
-.cdx-block.cdx-quote {
-  border-left: 4px solid var(--muted-foreground) !important;
-  padding-left: 1rem !important;
-  font-style: italic !important;
-  color: var(--muted-foreground) !important;
-  background-color: var(--background) !important;
-  border-radius: 0.375rem !important;
-}
-
-/* Code block */
-.cdx-code {
-  background-color: var(--code-bg, #1e1e1e) !important;
-  color: var(--code-fg, #d4d4d4) !important;
-  font-family: monospace !important;
-  font-size: 0.9rem !important;
-  padding: 0.75rem 1rem !important;
-  border-radius: 0.375rem !important;
-  overflow-x: auto;
-}
-
-/* Inline code */
-.cdx-inline-code {
-  background-color: var(--border-color) !important;
-  color: var(--foreground) !important;
-  padding: 0.1rem 0.25rem !important;
-  border-radius: 0.25rem !important;
-  font-family: monospace !important;
-}
-
-.ce-code__textarea {
-  background-color: var(--secondary) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 0.5rem !important;
-}
-
-.cdx-input {
-  border: none !important;
-  min-height: none;
-  margin: 0 !important;
-  background-color: var(--background) !important;
-  color: var(--foreground) !important;
-  border-radius: 0.5rem !important;
-  &:focus {
-    outline: none !important;
-    border: none !important;
-  }
-}
-
-/* Clean minimal quote style for Editor.js */
-.cdx-quote {
-  padding: 0.5rem 0;
-  margin: 1.5rem 0;
-  outline: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  background-color: var(--background) !important;
-  color: var(--foreground) !important;
-  border-radius: 0.5rem !important;
-  border-left: 4px solid var(--muted-foreground) !important;
-}
-
-.cdx-quote__text {
-  font-size: 1.25rem; /* text-xl */
-  font-style: italic;
-  font-weight: 300;
-  color: #f3f4f6; /* Light text for dark mode */
-  line-height: 1.6;
-}
-
-.cdx-quote__caption {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.875rem; /* text-sm */
-  color: #9ca3af; /* Subtle gray for dark mode */
-  text-align: right;
-  font-style: normal;
-}
 
 @keyframes shimmer {
   0% {
@@ -620,6 +251,77 @@ body {
   --scrollbar-thumb-active: var(--secondary);
 }
 
+/* Ensure proper scrolling behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  scroll-behavior: smooth;
+}
+
+
+
+/* Ensure editor content is scrollable */
+[contenteditable="true"] {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Fix for Lexical editor scrolling */
+.lexical-editor {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Simple scrolling fix for public pages */
+html, body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: auto;
+  min-height: 100vh;
+}
+
+/* Ensure body scroll works on all pages (but not when modals are open) */
+body:not([style*="position: fixed"]) {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Fix for any potential scroll blocking */
+html {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Performance optimizations for text editor */
+[contenteditable="true"] {
+  /* Optimize for large selections */
+  contain: layout style paint;
+  will-change: auto;
+}
+
+/* Optimize Lexical editor performance */
+.lexical-editor,
+[data-lexical-editor="true"] {
+  /* Prevent layout thrashing during large selections */
+  contain: layout style paint;
+  will-change: auto;
+}
+
+/* Optimize text selection performance */
+[data-lexical-node-key] {
+  /* Prevent expensive layout calculations during selection */
+  contain: layout style;
+}
+
+/* Optimize placeholder positioning during large selections */
+.absolute[style*="position: absolute"] {
+  /* Use transform instead of top/left for better performance */
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
 /* Custom Scrollbar Styles for Dark/Light Theme */
 
 /* Webkit browsers (Chrome, Safari, Edge) */
@@ -653,82 +355,90 @@ body {
   scrollbar-color: var(--muted-foreground) var(--card);
 }
 
-/* Specific scrollbar styles for toggle blocks */
-.toggle-block::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Custom Notion Editor Components */
+
+/* Checklist styling */
+.checklist-item {
+  transition: all 0.2s ease;
+  border-radius: 0.375rem;
+  margin: 0;
 }
 
-.toggle-block::-webkit-scrollbar-track {
-  background: var(--card);
-  border-radius: 3px;
+.checklist-item:hover {
+  background-color: hsl(var(--muted) / 0.3);
 }
 
-.toggle-block::-webkit-scrollbar-thumb {
-  background: var(--muted-foreground);
-  border-radius: 3px;
+.checklist-item button {
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  color: hsl(var(--muted-foreground));
 }
 
-.toggle-block::-webkit-scrollbar-thumb:hover {
-  background: var(--foreground);
+.checklist-item button:hover {
+  transform: scale(1.05);
 }
 
-/* EditorJS specific scrollbar styles */
-.codex-editor__redactor::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.checklist-item input {
+  transition: all 0.2s ease;
+  outline: none;
+  border: none;
+  background: transparent;
 }
 
-.codex-editor__redactor::-webkit-scrollbar-track {
-  background: var(--background);
-  border-radius: 4px;
+.checklist-item input:focus {
+  outline: none;
+  border: none;
+  background: transparent;
 }
 
-.codex-editor__redactor::-webkit-scrollbar-thumb {
-  background: var(--muted-foreground);
-  border-radius: 4px;
+.checklist-item input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.6);
+  font-style: italic;
 }
 
-.codex-editor__redactor::-webkit-scrollbar-thumb:hover {
-  background: var(--foreground);
+/* Table styling */
+.table-container table {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
-/* Toggle block content scrollbar */
-.toggle-block__content::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.table-container th {
+  background-color: hsl(var(--muted) / 0.5);
+  font-weight: 600;
+  color: hsl(var(--foreground));
 }
 
-.toggle-block__content::-webkit-scrollbar-track {
-  background: var(--card);
-  border-radius: 3px;
+.table-container td {
+  transition: background-color 0.2s ease;
 }
 
-.toggle-block__content::-webkit-scrollbar-thumb {
-  background: var(--muted-foreground);
-  border-radius: 3px;
+.table-container tr:hover td {
+  background-color: hsl(var(--muted) / 0.2);
 }
 
-.toggle-block__content::-webkit-scrollbar-thumb:hover {
-  background: var(--foreground);
+.table-container button {
+  transition: all 0.2s ease;
 }
 
-/* Content default scrollbar */
-.toggle-block__content-default::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.table-container button:hover {
+  background-color: hsl(var(--muted) / 0.8);
+  transform: translateY(-1px);
 }
 
-.toggle-block__content-default::-webkit-scrollbar-track {
-  background: var(--card);
-  border-radius: 3px;
+/* Divider styling */
+.divider-container {
+  margin: 1.5rem 0;
 }
 
-.toggle-block__content-default::-webkit-scrollbar-thumb {
-  background: var(--muted-foreground);
-  border-radius: 3px;
+/* Content editable styling */
+[contenteditable="true"]:focus {
+  outline: none;
 }
 
-.toggle-block__content-default::-webkit-scrollbar-thumb:hover {
-  background: var(--foreground);
+[contenteditable="true"]:empty::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
 }
+

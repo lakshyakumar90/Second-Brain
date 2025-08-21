@@ -52,13 +52,19 @@ const BriefForm: React.FC<BriefFormProps> = ({ onClose }) => {
     document.body.style.top = `-${scrollY}px`;
     document.body.style.width = "100%";
     document.body.style.paddingRight = `${scrollbarWidth}px`;
+    // Ensure the modal itself can scroll
+    document.body.style.overflow = "hidden";
 
     return () => {
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.width = "";
       document.body.style.paddingRight = "";
-      window.scrollTo(0, scrollY);
+      document.body.style.overflow = "";
+      // Use setTimeout to ensure cleanup happens after component unmount
+      setTimeout(() => {
+        window.scrollTo(0, scrollY);
+      }, 0);
     };
   }, []);
 

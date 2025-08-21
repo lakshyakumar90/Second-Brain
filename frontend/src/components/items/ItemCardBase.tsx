@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Pin, Archive, MoreVertical, Trash2 } from "lucide-react";
+import { Pin, MoreVertical, Trash2 } from "lucide-react";
 
 interface ItemCardBaseProps {
   children: React.ReactNode;

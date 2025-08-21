@@ -13,11 +13,15 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
 
   useEffect(() => {
     document.body.classList.remove('dark');
-    // Keep body scroll enabled; Lenis will handle smoothing.
+    // Ensure proper scrolling for landing pages
     document.body.style.overflow = 'auto';
+    document.body.style.overflowY = 'auto';
+    document.body.style.overflowX = 'hidden';
 
     return () => {
       document.body.style.overflow = 'auto';
+      document.body.style.overflowY = 'auto';
+      document.body.style.overflowX = 'hidden';
     };
   }, []);
 
@@ -31,7 +35,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
     }
   }, [location.pathname, lenis]);
 
-  return <div className="overflow-x-hidden font-[neue-regular]">{children}</div>;
+  return <div className="overflow-x-hidden font-[neue-regular] min-h-screen">{children}</div>;
 };
 
 export default PublicLayout;

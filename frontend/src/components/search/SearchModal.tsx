@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Filter, SortAsc, SortDesc, Calendar, Tag, Hash, Star, Archive, Globe, Clock, Eye   } from 'lucide-react';
+import { Search, X, Filter, Star, Archive, Clock, Eye   } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+// import { Card } from '@/components/ui/card';
 import { type UIItem } from '@/types/items';
 import { type SearchFilters, searchApi } from '@/services/searchApi';
 import ItemCardBase from '@/components/items/ItemCardBase';

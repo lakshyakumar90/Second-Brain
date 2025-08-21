@@ -21,6 +21,7 @@ import searchRoutes from "./routes/search.routes";
 import analyticsRoutes from './routes/analytics.routes';
 import whiteboardRoutes from './routes/whiteboard.routes';
 import collaborationRoutes from "./routes/collaboration.routes";
+import pageRoutes from "./routes/page.routes";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { initCollaborationService } from './services/collaborationService';
@@ -55,6 +56,7 @@ app.use("/api/v1/search", searchRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 app.use('/api/v1/whiteboards', whiteboardRoutes);
 app.use("/api/v1/collaborations", collaborationRoutes);
+app.use("/api/v1/pages", pageRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");
