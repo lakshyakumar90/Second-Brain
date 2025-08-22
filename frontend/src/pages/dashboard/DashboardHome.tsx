@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
 import RecentlyVisited from "@/components/dashboard/dashboard-home/RecentlyVisited";
 import HeroHeader from "@/components/dashboard/dashboard-home/HeroHeader";
 import WorkspaceOverview from "@/components/dashboard/dashboard-home/WorkspaceOverview";
@@ -13,17 +14,41 @@ import { Plus, Loader2 } from "lucide-react";
 const DashboardHome = () => {
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+
+  // Debug authentication state
+  console.log('DashboardHome - Auth state:', { isAuthenticated, user: user ? { id: user._id, email: user.email } : null });
 
   const handleCreatePage = async () => {
     try {
+      console.log('Creating page - Auth state:', { isAuthenticated, user: user ? { id: user._id, email: user.email } : null });
       setIsCreating(true);
-      // Create a new empty page
+      // Create a new empty page with proper initial editor state
       const response = await pageApi.createPage({
         title: 'Untitled',
         content: '',
-        editorState: null
+        editorState: {
+          root: {
+            children: [
+              {
+                children: [],
+                direction: null,
+                format: "",
+                indent: 0,
+                type: "paragraph",
+                version: 1
+              }
+            ],
+            direction: null,
+            format: "",
+            indent: 0,
+            type: "root",
+            version: 1
+          }
+        }
       });
       
+      console.log('Page creation response:', response);
       const pageId = response?.page?._id || response?.page?.id;
       if (pageId) {
         // Navigate to the new page

@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const createPageSchema = z.object({
 	title: z.string().min(1).max(200).default('Untitled').optional(),
 	content: z.string().optional(),
-	editorState: z.any(),
+	editorState: z.any().optional(),
 	tags: z.array(z.string()).optional(),
 	categories: z.array(z.string()).optional(),
 	isPublic: z.boolean().optional(),

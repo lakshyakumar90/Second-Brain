@@ -23,14 +23,20 @@ class PageApiService {
 			...options,
 		};
 		
+		console.log('PageApi request:', { endpoint, config });
+		
 		try {
 			const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+			console.log('PageApi response:', { status: response.status, statusText: response.statusText });
+			
 			if (!response.ok) {
 				const errorData = await response.json().catch(() => ({}));
+				console.error('PageApi error response:', errorData);
 				throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
 			}
 			return response.json();
 		} catch (error) {
+			console.error('PageApi request error:', error);
 			// Handle network errors (connection refused, no internet, etc.)
 			if (error instanceof TypeError && error.message.includes('fetch')) {
 				throw new Error('Network error: Unable to connect to server. Please check your internet connection.');

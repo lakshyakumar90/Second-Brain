@@ -5,7 +5,7 @@ export interface IPage {
 	userId: ObjectId;
 	title: string;
 	content?: string; // plain text for search/preview
-	editorState: any; // serialized Lexical/Notion JSON
+	editorState?: any; // serialized Lexical/Notion JSON
 	summary?: string;
 	tags: string[];
 	categories: string[];
@@ -15,7 +15,7 @@ export interface IPage {
 	viewCount: number;
 	lastViewedAt?: Date;
 	lastEditedAt: Date;
-	lastEditedBy?: string;
+	lastEditedBy?: ObjectId;
 	version: number;
 	createdAt: Date;
 	updatedAt: Date;

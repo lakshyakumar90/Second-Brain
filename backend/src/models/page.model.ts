@@ -5,7 +5,28 @@ const PageSchema = new mongoose.Schema<IPage>({
 	userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 	title: { type: String, required: true, trim: true, default: 'Untitled' },
 	content: { type: String },
-	editorState: { type: mongoose.Schema.Types.Mixed, required: true },
+	editorState: { 
+		type: mongoose.Schema.Types.Mixed, 
+		default: {
+			root: {
+				children: [
+					{
+						children: [],
+						direction: null,
+						format: "",
+						indent: 0,
+						type: "paragraph",
+						version: 1
+					}
+				],
+				direction: null,
+				format: "",
+				indent: 0,
+				type: "root",
+				version: 1
+			}
+		}
+	},
 	summary: { type: String },
 	tags: [{ type: String, trim: true }],
 	categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],

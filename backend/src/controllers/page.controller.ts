@@ -31,7 +31,11 @@ export const createPage = async (req: AuthRequest, res: Response) => {
 		});
 		res.status(201).json({ message: 'Page created', page });
 	} catch (error) {
-		res.status(500).json({ message: 'Error creating page', error: 'Internal server error' });
+		console.error('Error creating page:', error);
+		res.status(500).json({ 
+			message: 'Error creating page', 
+			error: error instanceof Error ? error.message : 'Internal server error' 
+		});
 	}
 };
 
