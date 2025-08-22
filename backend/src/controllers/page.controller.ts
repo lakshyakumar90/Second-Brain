@@ -3,6 +3,9 @@ import { Page } from '../models';
 import { AuthRequest } from '../models/interfaces/userModel.interface';
 import { createPageSchema, updatePageSchema, pageIdSchema } from '../validations/pageValidation';
 import { extractPlainTextFromEditorState, generateSummary } from '../utils/editorUtils';
+import cloudinary from '../config/cloudinary';
+import { FILE_LIMITS } from '../config/constants';
+import mongoose from 'mongoose';
 
 export const createPage = async (req: AuthRequest, res: Response) => {
 	try {
@@ -168,6 +171,176 @@ export const deletePage = async (req: AuthRequest, res: Response) => {
 		res.status(200).json({ message: 'Page deleted', page: deleted });
 	} catch (error) {
 		res.status(500).json({ message: 'Error deleting page', error: 'Internal server error' });
+	}
+};
+
+export const uploadAttachment = async (req: AuthRequest, res: Response) => {
+	try {
+		if (!req.user?.userId) {
+			res.status(401).json({ message: 'Unauthorized', error: 'Authentication required' });
+			return;
+		}
+
+		const parsed = pageIdSchema.safeParse(req.params);
+		if (!parsed.success) {
+			res.status(400).json({ message: 'Validation failed', error: parsed.error.issues });
+			return;
+		}
+
+		const { pageId } = parsed.data;
+		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, isDeleted: false });
+		if (!page) {
+			res.status(404).json({ message: 'Page not found', error: 'Not found' });
+			return;
+		}
+
+		// Check if file exists
+		if (!req.file) {
+			res.status(400).json({ message: 'No file uploaded', error: 'Please select a file to upload' });
+			return;
+		}
+
+		// Validate file type
+		if (!FILE_LIMITS.ALLOWED_FILE_TYPES.includes(req.file.mimetype as any)) {
+			res.status(400).json({
+				message: 'Invalid file type',
+				error: `File type ${req.file.mimetype} is not allowed. Allowed types: ${FILE_LIMITS.ALLOWED_FILE_TYPES.join(', ')}`
+			});
+			return;
+		}
+
+		// Validate file size
+		if (req.file.size > FILE_LIMITS.MAX_FILE_SIZE) {
+			res.status(400).json({
+				message: 'File too large',
+				error: `File size ${req.file.size} bytes exceeds maximum allowed size of ${FILE_LIMITS.MAX_FILE_SIZE} bytes`
+			});
+			return;
+		}
+
+		// Check attachment limit
+		if (page.attachments.length >= FILE_LIMITS.MAX_FILES_PER_ITEM) {
+			res.status(400).json({
+				message: 'Attachment limit reached',
+				error: `Maximum ${FILE_LIMITS.MAX_FILES_PER_ITEM} attachments allowed per page`
+			});
+			return;
+		}
+
+		// Upload to Cloudinary
+		const result = await new Promise<any>((resolve, reject) => {
+			const uploadStream = cloudinary.uploader.upload_stream(
+				{
+					resource_type: 'auto',
+					folder: `pages/${pageId}/attachments`,
+					public_id: `${Date.now()}_${req.file!.originalname.replace(/\.[^/.]+$/, '')}`,
+				},
+				(error: any, result: any) => {
+					if (error) {
+						console.error('Cloudinary Error:', error);
+						return reject(error);
+					}
+					if (result) {
+						resolve(result);
+					} else {
+						reject(new Error('Upload failed, but no error was provided by Cloudinary.'));
+					}
+				}
+			);
+			uploadStream.end(req.file!.buffer);
+		});
+
+		// Create attachment object
+		const attachment = {
+			originalName: req.file.originalname,
+			filename: result.public_id,
+			url: result.secure_url,
+			publicId: result.public_id,
+			size: req.file.size,
+			mimetype: req.file.mimetype,
+			uploadedAt: new Date(),
+			uploadedBy: new mongoose.Types.ObjectId(req.user.userId),
+		};
+
+		// Add attachment to page
+		page.attachments.push(attachment);
+		page.lastEditedAt = new Date();
+		page.lastEditedBy = new mongoose.Types.ObjectId(req.user.userId);
+		page.version += 1;
+		await page.save();
+
+		res.status(201).json({
+			message: 'Attachment uploaded successfully',
+			attachment,
+			page: {
+				_id: page._id,
+				title: page.title,
+				attachmentCount: page.attachments.length
+			}
+		});
+	} catch (error) {
+		console.error('Error uploading attachment:', error);
+		res.status(500).json({ message: 'Error uploading attachment', error: 'Internal server error' });
+	}
+};
+
+export const deleteAttachment = async (req: AuthRequest, res: Response) => {
+	try {
+		if (!req.user?.userId) {
+			res.status(401).json({ message: 'Unauthorized', error: 'Authentication required' });
+			return;
+		}
+
+		const { pageId, attachmentId } = req.params;
+		
+		// Validate pageId
+		const pageIdParsed = pageIdSchema.safeParse({ pageId });
+		if (!pageIdParsed.success) {
+			res.status(400).json({ message: 'Validation failed', error: pageIdParsed.error.issues });
+			return;
+		}
+
+		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, isDeleted: false });
+		if (!page) {
+			res.status(404).json({ message: 'Page not found', error: 'Not found' });
+			return;
+		}
+
+		// Find attachment
+		const attachmentIndex = page.attachments.findIndex(att => (att as any)._id?.toString() === attachmentId);
+		if (attachmentIndex === -1) {
+			res.status(404).json({ message: 'Attachment not found', error: 'Not found' });
+			return;
+		}
+
+		const attachment = page.attachments[attachmentIndex];
+
+		// Delete from Cloudinary
+		try {
+			await cloudinary.uploader.destroy(attachment.publicId);
+		} catch (cloudinaryError) {
+			console.error('Error deleting from Cloudinary:', cloudinaryError);
+			// Continue with deletion even if Cloudinary fails
+		}
+
+		// Remove attachment from page
+		page.attachments.splice(attachmentIndex, 1);
+		page.lastEditedAt = new Date();
+		page.lastEditedBy = new mongoose.Types.ObjectId(req.user.userId);
+		page.version += 1;
+		await page.save();
+
+		res.status(200).json({
+			message: 'Attachment deleted successfully',
+			page: {
+				_id: page._id,
+				title: page.title,
+				attachmentCount: page.attachments.length
+			}
+		});
+	} catch (error) {
+		console.error('Error deleting attachment:', error);
+		res.status(500).json({ message: 'Error deleting attachment', error: 'Internal server error' });
 	}
 };
 

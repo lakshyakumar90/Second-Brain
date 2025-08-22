@@ -1,5 +1,17 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
+export interface PageAttachment {
+	_id: string;
+	originalName: string;
+	filename: string;
+	url: string;
+	publicId: string;
+	size: number;
+	mimetype: string;
+	uploadedAt: string;
+	uploadedBy: string;
+}
+
 export type CreatePageData = {
 	title?: string;
 	content?: string; // Optional - will be auto-generated from editorState

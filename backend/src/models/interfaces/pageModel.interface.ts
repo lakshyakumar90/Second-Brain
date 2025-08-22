@@ -17,6 +17,19 @@ export interface IPage {
 	lastEditedAt: Date;
 	lastEditedBy?: ObjectId;
 	version: number;
+	
+	// Attachments
+	attachments: Array<{
+		originalName: string;
+		filename: string;
+		url: string;
+		publicId: string;
+		size: number;
+		mimetype: string;
+		uploadedAt: Date;
+		uploadedBy: ObjectId;
+	}>;
+	
 	createdAt: Date;
 	updatedAt: Date;
 }

@@ -12,6 +12,8 @@ import {
   WifiOff,
   ArrowLeft,
 } from "lucide-react";
+import PageAttachments from "@/components/dashboard/page/PageAttachments";
+import type { PageAttachment } from "@/services/pageApi";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -35,6 +37,7 @@ const PageEditor = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [attachments, setAttachments] = useState<PageAttachment[]>([]);
 
   // Refs for managing autosave
   const latest = useRef<{ content: string; editorState: any } | null>(null);
@@ -144,12 +147,14 @@ const PageEditor = () => {
                 setPage({ ...pageData, _id: pageId });
                 setInitialState(draft.editorState);
                 setLastSavedAt(new Date(draft.timestamp));
+                setAttachments(pageData.attachments || []);
               } else {
                 setPage(pageData);
                 setInitialState(pageData.editorState || null);
                 setLastSavedAt(
                   new Date(pageData.updatedAt || pageData.createdAt)
                 );
+                setAttachments(pageData.attachments || []);
                 if (draft) {
                   clearDraft();
                 }
@@ -170,6 +175,7 @@ const PageEditor = () => {
               setPage({ _id: pageId, title: "Offline Page" });
               setInitialState(draft.editorState);
               setLastSavedAt(new Date(draft.timestamp));
+              setAttachments([]); // No attachments in offline mode
               setError("Working offline - using local backup");
               setIsOnline(false);
             } else {
@@ -509,6 +515,17 @@ const PageEditor = () => {
         initialEditorState={initialState}
         onChange={handleEditorChange}
       />
+
+      {/* Attachments Section */}
+      {pageId && (
+        <div className="mt-8">
+          <PageAttachments
+            pageId={pageId}
+            attachments={attachments}
+            onAttachmentsChange={setAttachments}
+          />
+        </div>
+      )}
     </div>
   );
 };

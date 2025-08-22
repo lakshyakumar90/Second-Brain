@@ -38,6 +38,18 @@ const PageSchema = new mongoose.Schema<IPage>({
 	lastEditedAt: { type: Date },
 	lastEditedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 	version: { type: Number, default: 1 },
+	
+	// Attachments
+	attachments: [{
+		originalName: { type: String, required: true },
+		filename: { type: String, required: true },
+		url: { type: String, required: true },
+		publicId: { type: String, required: true },
+		size: { type: Number, required: true },
+		mimetype: { type: String, required: true },
+		uploadedAt: { type: Date, default: Date.now },
+		uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+	}],
 }, {
 	timestamps: true,
 	toJSON: { virtuals: true },
