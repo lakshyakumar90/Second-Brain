@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { Page } from '../models';
 import { AuthRequest } from '../models/interfaces/userModel.interface';
 import { createPageSchema, updatePageSchema, pageIdSchema } from '../validations/pageValidation';
+import { extractPlainTextFromEditorState, generateSummary } from '../utils/editorUtils';
 
 export const createPage = async (req: AuthRequest, res: Response) => {
 	try {
@@ -15,11 +16,17 @@ export const createPage = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 		const data = parsed.data;
+		
+		// Extract plain text content from editor state
+		const plainTextContent = extractPlainTextFromEditorState(data.editorState);
+		const summary = generateSummary(plainTextContent);
+		
 		const page = await Page.create({
 			userId: req.user.userId,
 			title: data.title || 'Untitled',
-			content: data.content,
+			content: plainTextContent, // Use extracted plain text
 			editorState: data.editorState,
+			summary: summary, // Auto-generate summary
 			tags: data.tags || [],
 			categories: data.categories || [],
 			isPublic: !!data.isPublic,
@@ -117,9 +124,21 @@ export const updatePage = async (req: AuthRequest, res: Response) => {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;
 		}
+		
+		// Prepare update data
+		const updateData = { ...dataParsed.data };
+		
+		// If editorState is being updated, extract plain text and generate summary
+		if (updateData.editorState) {
+			const plainTextContent = extractPlainTextFromEditorState(updateData.editorState);
+			const summary = generateSummary(plainTextContent);
+			updateData.content = plainTextContent;
+			updateData.summary = summary;
+		}
+		
 		const updated = await Page.findByIdAndUpdate(
 			pageId,
-			{ ...dataParsed.data, lastEditedAt: new Date(), lastEditedBy: req.user.userId, version: existing.version + 1 },
+			{ ...updateData, lastEditedAt: new Date(), lastEditedBy: req.user.userId, version: existing.version + 1 },
 			{ new: true, runValidators: true }
 		);
 		res.status(200).json({ message: 'Page updated', page: updated });

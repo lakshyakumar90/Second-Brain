@@ -26,7 +26,6 @@ const DashboardHome = () => {
       // Create a new empty page with proper initial editor state
       const response = await pageApi.createPage({
         title: 'Untitled',
-        content: '',
         editorState: {
           root: {
             children: [

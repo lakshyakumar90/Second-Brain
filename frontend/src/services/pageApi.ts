@@ -2,8 +2,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/
 
 export type CreatePageData = {
 	title?: string;
-	content?: string;
+	content?: string; // Optional - will be auto-generated from editorState
 	editorState: any;
+	summary?: string; // Optional - will be auto-generated from content
 	tags?: string[];
 	categories?: string[];
 	isPublic?: boolean;
