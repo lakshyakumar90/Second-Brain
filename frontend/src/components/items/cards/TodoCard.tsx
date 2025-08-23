@@ -12,9 +12,13 @@ interface TodoCardProps {
   onAddTodo?: (itemId: string, text: string) => void;
   onRemoveTodo?: (itemId: string, todoId: string) => void;
   onTogglePin?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onOpenComments?: (id: string) => void;
+  commentCount?: number;
 }
 
-const TodoCard: React.FC<TodoCardProps> = ({ item, onToggleTodo, onOpenItem, onAddTodo, onRemoveTodo, onTogglePin }) => {
+const TodoCard: React.FC<TodoCardProps> = ({ item, onToggleTodo, onOpenItem, onAddTodo, onRemoveTodo, onTogglePin, onDelete, onEdit, onOpenComments, commentCount }) => {
   const completed = item.todos.filter((t) => t.done).length;
   const total = item.todos.length;
   const [newText, setNewText] = useState("");
@@ -23,6 +27,10 @@ const TodoCard: React.FC<TodoCardProps> = ({ item, onToggleTodo, onOpenItem, onA
     <ItemCardBase
       item={item}
       onTogglePin={onTogglePin}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onOpenComments={onOpenComments}
+      commentCount={commentCount}
       onClick={() => onOpenItem?.(item)}
       header={item.title}
       footer={<div className="truncate text-xs text-muted-foreground">{total > 0 ? `${completed}/${total} completed` : 'Todo List'}</div>}

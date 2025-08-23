@@ -6,18 +6,26 @@ interface LinkCardProps {
   item: LinkItem;
   onOpenItem?: (item: LinkItem) => void;
   onTogglePin?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onOpenComments?: (id: string) => void;
+  commentCount?: number;
 }
 
 const getDomain = (url: string) => {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
 };
 
-const LinkCard: React.FC<LinkCardProps> = ({ item, onOpenItem, onTogglePin }) => {
+const LinkCard: React.FC<LinkCardProps> = ({ item, onOpenItem, onTogglePin, onDelete, onEdit, onOpenComments, commentCount }) => {
   const domain = item.og?.domain || getDomain(item.url);
   return (
     <ItemCardBase
       item={item}
       onTogglePin={onTogglePin}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onOpenComments={onOpenComments}
+      commentCount={commentCount}
       onClick={() => onOpenItem?.(item)}
       header={item.title}
       footer={<div className="truncate">{domain}</div>}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { UIItem, ItemType } from "@/types/items";
 import { Button } from "@/components/ui/button";
-import { Pin, ListTodo, Image, Link2, Mic2, FileText, Plus, X, Loader2 } from "lucide-react";
+import { Pin, ListTodo, Image, Link2, Mic2, FileText, Plus, X, Loader2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useItemUpload } from "@/hooks/useItemUpload";
@@ -13,6 +13,7 @@ interface ItemEditorModalProps {
   open: boolean;
   item: UIItem | null;
   onClose: () => void;
+  onOpenComments?: () => void;
   onSave: (payload: {
     type: ItemType;
     title: string;
@@ -26,7 +27,7 @@ interface ItemEditorModalProps {
   }) => void;
 }
 
-const ItemEditorModal: React.FC<ItemEditorModalProps> = ({ open, item, onClose, onSave }) => {
+const ItemEditorModal: React.FC<ItemEditorModalProps> = ({ open, item, onClose, onOpenComments, onSave }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [todos, setTodos] = useState<Array<{ id: string; text: string; done: boolean }>>([]);
@@ -351,6 +352,17 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({ open, item, onClose, 
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
+                  {item && onOpenComments && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={onOpenComments}
+                      className="flex items-center gap-1"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      Comments
+                    </Button>
+                  )}
                   <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
                   <Button size="sm" onClick={handleSave}>Save</Button>
                 </div>

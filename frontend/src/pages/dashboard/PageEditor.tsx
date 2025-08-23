@@ -13,6 +13,7 @@ import {
   WifiOff,
   ArrowLeft,
   Search,
+  MessageSquare,
 } from "lucide-react";
 import PageAttachments from "@/components/dashboard/page/PageAttachments";
 import SearchModal from "@/components/search/SearchModal";
@@ -20,6 +21,8 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { PageAttachment } from "@/services/pageApi";
 import type { UIItem } from "@/types/items";
 import TagInput from "@/components/tags/TagInput";
+import { CommentsPanel } from "@/components/comments";
+import { useAppSelector } from "@/store/hooks";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -44,6 +47,7 @@ interface PageData {
 
 const PageEditor = () => {
   const { pageId } = useParams<{ pageId: string }>();
+  const { user } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
   const [page, setPage] = useState<PageData | null>(null);
   const [initialState, setInitialState] = useState<unknown>(null);
@@ -56,6 +60,7 @@ const PageEditor = () => {
   const [attachments, setAttachments] = useState<PageAttachment[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   // Refs for managing autosave
   const latest = useRef<{ content: string; editorState: unknown } | null>(null);
@@ -478,6 +483,19 @@ const PageEditor = () => {
             <Search className="h-4 w-4" />
             <span className="hidden sm:inline">Search</span>
           </Button>
+
+          {pageId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCommentsOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Comments</span>
+            </Button>
+          )}
+
           <StatusIndicator />
           {hasDraft && (
             <Badge variant="secondary" className="text-xs">
@@ -546,6 +564,17 @@ const PageEditor = () => {
         onClose={() => setIsSearchModalOpen(false)}
         onItemClick={handleSearchItemClick}
       />
+
+      {/* Comments Panel */}
+      {pageId && (
+        <CommentsPanel
+          pageId={pageId}
+          currentUserId={user?._id || ""}
+          isOpen={commentsOpen}
+          onToggle={() => setCommentsOpen(!commentsOpen)}
+        />
+      )}
+
     </div>
   );
 };

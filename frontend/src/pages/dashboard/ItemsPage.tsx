@@ -6,6 +6,9 @@ import ItemEditorModal from "@/components/items/ItemEditorModal";
 import { Button } from "@/components/ui/button";
 import type { ItemType } from "@/types/items";
 import { itemApi, type Block } from "@/services/itemApi";
+import { commentApi } from "@/services/commentApi";
+import { CommentsPanel } from "@/components/comments";
+import { useAppSelector } from "@/store/hooks";
 
 const sampleItems: UIItem[] = [
   { id: "1", type: "text", title: "Project Outline", preview: "Kickoff notes, goals, and milestones...", tags: ["project", "q1"], isPinned: true, color: "yellow" },
@@ -22,6 +25,7 @@ const sampleItems: UIItem[] = [
 ];
 
 const ItemsPage: React.FC = () => {
+  const { user } = useAppSelector((state) => state.auth);
   const [items, setItems] = useState<UIItem[]>([]);
   const [previewItem, setPreviewItem] = useState<UIItem | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -29,6 +33,9 @@ const ItemsPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<ItemType | 'all'>('all');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [selectedItemForComments, setSelectedItemForComments] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -37,7 +44,11 @@ const ItemsPage: React.FC = () => {
         setLoading(true);
         const res = await itemApi.getItems({ page: 1, limit: 50 });
         const list = (res?.data?.items || res?.items || []).map((it: any) => backendItemToUIItem(it));
-        if (mounted) setItems(list);
+        if (mounted) {
+          setItems(list);
+          // Load comment counts for all items
+          loadCommentCounts(list.map(item => item.id));
+        }
       } catch (e: any) {
         if (mounted) setError(e?.message || 'Failed to load items');
       } finally {
@@ -48,6 +59,25 @@ const ItemsPage: React.FC = () => {
       mounted = false;
     };
   }, []);
+
+  const loadCommentCounts = async (itemIds: string[]) => {
+    try {
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        itemIds.map(async (itemId) => {
+          try {
+            const response = await commentApi.getCommentsCount(itemId);
+            counts[itemId] = response.count;
+          } catch (error) {
+            counts[itemId] = 0;
+          }
+        })
+      );
+      setCommentCounts(counts);
+    } catch (error) {
+      console.error('Failed to load comment counts:', error);
+    }
+  };
 
   const handleTogglePin = (itemId: string) => {
     setItems(prev => prev.map(it => it.id === itemId ? { ...it, isPinned: !it.isPinned } : it));
@@ -95,6 +125,19 @@ const ItemsPage: React.FC = () => {
       if (it.id !== itemId || it.type !== "todo") return it;
       return { ...it, todos: (it as any).todos.filter((t: any) => t.id !== todoId) } as UIItem;
     }));
+  };
+
+  const handleOpenComments = (itemId: string) => {
+    setSelectedItemForComments(itemId);
+    setCommentsOpen(true);
+  };
+
+  const handleEdit = (itemId: string) => {
+    const item = items.find(it => it.id === itemId);
+    if (item) {
+      setPreviewItem(item);
+      setEditorOpen(true);
+    }
   };
 
   // const handleQuickAdd = () => {
@@ -146,13 +189,35 @@ const ItemsPage: React.FC = () => {
         {pinned.length > 0 && (
           <div className="mb-8">
             <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Pinned</h2>
-            <ItemGrid items={pinned} onToggleTodo={handleToggleTodo} onOpenItem={setPreviewItem} onAddTodo={handleAddTodo} onRemoveTodo={handleRemoveTodo} onTogglePin={handleTogglePin} onDelete={handleDeleteItem} />
+            <ItemGrid 
+            items={pinned} 
+            onToggleTodo={handleToggleTodo} 
+            onOpenItem={setPreviewItem} 
+            onAddTodo={handleAddTodo} 
+            onRemoveTodo={handleRemoveTodo} 
+            onTogglePin={handleTogglePin} 
+            onDelete={handleDeleteItem}
+            onEdit={handleEdit}
+            onOpenComments={handleOpenComments}
+            commentCounts={commentCounts}
+          />
           </div>
         )}
 
         <div>
           {pinned.length > 0 && <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Others</h2>}
-          <ItemGrid items={others} onToggleTodo={handleToggleTodo} onOpenItem={setPreviewItem} onAddTodo={handleAddTodo} onRemoveTodo={handleRemoveTodo} onTogglePin={handleTogglePin} onDelete={handleDeleteItem} />
+          <ItemGrid 
+            items={others} 
+            onToggleTodo={handleToggleTodo} 
+            onOpenItem={setPreviewItem} 
+            onAddTodo={handleAddTodo} 
+            onRemoveTodo={handleRemoveTodo} 
+            onTogglePin={handleTogglePin} 
+            onDelete={handleDeleteItem}
+            onEdit={handleEdit}
+            onOpenComments={handleOpenComments}
+            commentCounts={commentCounts}
+          />
         </div>
       </div>
       
@@ -174,6 +239,11 @@ const ItemsPage: React.FC = () => {
           setEditorOpen(false)
           setPreviewItem(null)
         }}
+        onOpenComments={() => {
+          if (previewItem) {
+            handleOpenComments(previewItem.id);
+          }
+        }}
         onSave={async ({ type, title, content, todos, url, images, isPinned, tags }) => {
           try {
             const payload = uiPayloadToBackend({ type, title, content, todos, url, images, tags });
@@ -194,6 +264,16 @@ const ItemsPage: React.FC = () => {
           }
         }}
       />
+
+      {/* Comments Panel */}
+      {selectedItemForComments && (
+        <CommentsPanel
+          itemId={selectedItemForComments}
+          currentUserId={user?._id || ""}
+          isOpen={commentsOpen}
+          onToggle={() => setCommentsOpen(!commentsOpen)}
+        />
+      )}
     </div>
   );
 };

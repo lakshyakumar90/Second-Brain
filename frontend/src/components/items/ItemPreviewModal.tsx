@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { UIItem } from "@/types/items";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import CommentableText from "@/components/comments/CommentableText";
+import { useAppSelector } from "@/store/hooks";
 
 interface ItemPreviewModalProps {
   open: boolean;
@@ -14,6 +16,8 @@ interface ItemPreviewModalProps {
 }
 
 const ItemPreviewModal: React.FC<ItemPreviewModalProps> = ({ open, item, onClose, onEdit, onDelete, onToggleTodo }) => {
+  const { user } = useAppSelector((state) => state.auth);
+  
   if (!item) return null;
   return (
     <AnimatePresence>
@@ -42,11 +46,21 @@ const ItemPreviewModal: React.FC<ItemPreviewModalProps> = ({ open, item, onClose
             </div>
             <div className="space-y-3 pr-2">
               {item.type === "text" && (
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.preview || ""}</p>
+                <CommentableText
+                  content={item.preview || ""}
+                  itemId={item.id}
+                  currentUserId={user?._id || ""}
+                  className="text-sm text-muted-foreground"
+                />
               )}
-                              {item.type !== "text" && (item as any).preview && (
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(item as any).preview}</p>
-                )}
+              {item.type !== "text" && (item as any).preview && (
+                <CommentableText
+                  content={(item as any).preview}
+                  itemId={item.id}
+                  currentUserId={user?._id || ""}
+                  className="text-sm text-muted-foreground"
+                />
+              )}
               {item.type === "image" && (
                 <div className="w-full overflow-hidden rounded-lg">
                   {(item as any).images?.[0]?.url && (

@@ -1,7 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Pin, MoreVertical, Trash2 } from "lucide-react";
+import { Pin, MoreVertical, Trash2, MessageSquare, Edit } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 interface ItemCardBaseProps {
   children: React.ReactNode;
@@ -12,9 +20,24 @@ interface ItemCardBaseProps {
   item: { id: string; isPinned?: boolean; };
   onTogglePin?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onOpenComments?: (id: string) => void;
+  commentCount?: number;
 }
 
-const ItemCardBase: React.FC<ItemCardBaseProps> = ({ children, className, onClick, header, footer, item, onTogglePin, onDelete }) => {
+const ItemCardBase: React.FC<ItemCardBaseProps> = ({ 
+  children, 
+  className, 
+  onClick, 
+  header, 
+  footer, 
+  item, 
+  onTogglePin, 
+  onDelete, 
+  onEdit, 
+  onOpenComments, 
+  commentCount = 0 
+}) => {
   const handleActionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -43,10 +66,45 @@ const ItemCardBase: React.FC<ItemCardBaseProps> = ({ children, className, onClic
             <button onClick={(e) => { handleActionClick(e); onTogglePin?.(item.id); }} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
               <Pin size={16} className={cn(item.isPinned && "fill-current")} />
             </button>
-            <button onClick={(e) => { handleActionClick(e); onDelete?.(item.id); }} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10"><Trash2 size={16} /></button>
-            <button onClick={handleActionClick} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10"><MoreVertical size={16} /></button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button onClick={handleActionClick} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
+                  <MoreVertical size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(item.id); }}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpenComments?.(item.id); }}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Comments
+                  {commentCount > 0 && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      {commentCount}
+                    </Badge>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={(e) => { e.stopPropagation(); onDelete?.(item.id); }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <div className="text-xs text-muted-foreground self-end">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground self-end">
+            {commentCount > 0 && (
+              <div className="flex items-center gap-1">
+                <MessageSquare className="w-3 h-3" />
+                <span>{commentCount}</span>
+              </div>
+            )}
             {footer}
           </div>
         </div>

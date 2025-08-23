@@ -2,7 +2,8 @@ import { z } from "zod";
 
 // Create comment validation schema
 export const createCommentSchema = z.object({
-  itemId: z.string().min(1, "Item ID is required"),
+  itemId: z.string().min(1, "Item ID is required").optional(),
+  pageId: z.string().min(1, "Page ID is required").optional(),
   content: z.string().min(1, "Comment content is required").max(1000, "Comment must be less than 1000 characters"),
   parentId: z.string().optional(), // For threaded comments
   position: z.object({
@@ -10,6 +11,16 @@ export const createCommentSchema = z.object({
     end: z.number().optional(),
     selectedText: z.string().optional(),
   }).optional(),
+}).refine((data) => {
+  return data.itemId || data.pageId;
+}, {
+  message: "Either itemId or pageId must be provided",
+  path: ["itemId"]
+}).refine((data) => {
+  return !(data.itemId && data.pageId);
+}, {
+  message: "Cannot provide both itemId and pageId",
+  path: ["itemId"]
 });
 
 // Get comments query validation schema

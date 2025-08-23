@@ -2,7 +2,8 @@ import { ObjectId } from "mongoose";
 
 export interface IComment {
   _id: ObjectId;
-  itemId: ObjectId;
+  itemId?: ObjectId;
+  pageId?: ObjectId;
   userId: ObjectId;
   content: string;
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Comment, Item } from "../models/index";
+import { Comment, Item, Page } from "../models/index";
 import mongoose from "mongoose";
 import {
   createCommentSchema,
@@ -41,21 +41,37 @@ const createComment = async (req: AuthRequest, res: Response) => {
 
     const validatedData = validationResult.data;
 
-    // Check if the item exists and user has access to it
-    const item = await Item.findOne({
-      _id: validatedData.itemId,
-      $or: [
-        { userId: req.user.userId },
-        { collaborators: req.user.userId },
-        { isPublic: true }
-      ],
-      isDeleted: false,
-    });
+    // Check if the item or page exists and user has access to it
+    let targetResource = null;
+    let resourceType = '';
+    
+    if (validatedData.itemId) {
+      targetResource = await Item.findOne({
+        _id: validatedData.itemId,
+        $or: [
+          { userId: req.user.userId },
+          { collaborators: req.user.userId },
+          { isPublic: true }
+        ],
+        isDeleted: false,
+      });
+      resourceType = 'item';
+    } else if (validatedData.pageId) {
+      targetResource = await Page.findOne({
+        _id: validatedData.pageId,
+        $or: [
+          { userId: req.user.userId },
+          { isPublic: true }
+        ],
+        isDeleted: false,
+      });
+      resourceType = 'page';
+    }
 
-    if (!item) {
+    if (!targetResource) {
       res.status(404).json({
-        message: "Item not found",
-        error: "The item you're trying to comment on doesn't exist or you don't have access to it",
+        message: `${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} not found`,
+        error: `The ${resourceType} you're trying to comment on doesn't exist or you don't have access to it`,
       });
       return;
     }
@@ -73,8 +89,7 @@ const createComment = async (req: AuthRequest, res: Response) => {
     }
 
     // Create comment object
-    const commentData = {
-      itemId: validatedData.itemId,
+    const commentData: any = {
       userId: req.user.userId,
       content: validatedData.content,
       parentId: validatedData.parentId,
@@ -84,6 +99,13 @@ const createComment = async (req: AuthRequest, res: Response) => {
       isEdited: false,
       reactions: [],
     };
+    
+    if (validatedData.itemId) {
+      commentData.itemId = validatedData.itemId;
+    }
+    if (validatedData.pageId) {
+      commentData.pageId = validatedData.pageId;
+    }
 
     // Create the comment
     const comment = await Comment.create(commentData);
@@ -96,20 +118,20 @@ const createComment = async (req: AuthRequest, res: Response) => {
       );
     }
 
-    // Notify the item owner (if not the commenter)
-    if (item.userId.toString() !== req.user.userId) {
+    // Notify the resource owner (if not the commenter)
+    if (targetResource.userId.toString() !== req.user.userId) {
       try {
         await Notification.create({
-          userId: item.userId,
+          userId: targetResource.userId,
           type: "comment",
-          title: "New comment on your item",
-          message: `A new comment was added to your item '${item.title}'.`,
-          relatedId: item._id,
-          relatedType: "item",
+          title: `New comment on your ${resourceType}`,
+          message: `A new comment was added to your ${resourceType} '${targetResource.title}'.`,
+          relatedId: targetResource._id,
+          relatedType: resourceType,
           senderId: req.user.userId,
-          actionUrl: `/items/${item._id}`
+          actionUrl: resourceType === 'item' ? `/items/${targetResource._id}` : `/pages/${targetResource._id}`
         });
-      } catch (e) { console.error('Notification creation error (item owner):', e); }
+      } catch (e) { console.error(`Notification creation error (${resourceType} owner):`, e); }
     }
     // If this is a reply, notify the parent comment author (if not the same as the commenter)
     if (parentComment && parentComment.userId && parentComment.userId.toString() !== req.user.userId) {
@@ -118,11 +140,11 @@ const createComment = async (req: AuthRequest, res: Response) => {
           userId: parentComment.userId,
           type: "comment",
           title: "New reply to your comment",
-          message: `Someone replied to your comment on item '${item.title}'.`,
-          relatedId: item._id,
-          relatedType: "item",
+          message: `Someone replied to your comment on ${resourceType} '${targetResource.title}'.`,
+          relatedId: targetResource._id,
+          relatedType: resourceType,
           senderId: req.user.userId,
-          actionUrl: `/items/${item._id}`
+          actionUrl: resourceType === 'item' ? `/items/${targetResource._id}` : `/pages/${targetResource._id}`
         });
       } catch (e) { console.error('Notification creation error (parent comment):', e); }
     }
@@ -181,17 +203,18 @@ const getComments = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    // Validate item ID from params
-    const itemIdValidation = itemIdForCommentsSchema.safeParse(req.params);
-    if (!itemIdValidation.success) {
+    // Get itemId or pageId from query parameters
+    const { itemId, pageId } = req.query;
+    if ((!itemId && !pageId) || (itemId && pageId)) {
       res.status(400).json({
         message: "Validation failed",
-        error: "Item ID is required",
+        error: "Either itemId or pageId must be provided (but not both)",
       });
       return;
     }
-
-    const { itemId } = itemIdValidation.data;
+    
+    const targetId = itemId || pageId;
+    const resourceType = itemId ? 'item' : 'page';
     const {
       page = 1,
       limit = 20,
@@ -200,29 +223,48 @@ const getComments = async (req: AuthRequest, res: Response) => {
       sortOrder = "desc",
     } = validationResult.data;
 
-    // Check if the item exists and user has access to it
-    const item = await Item.findOne({
-      _id: itemId,
-      $or: [
-        { userId: req.user.userId },
-        { collaborators: req.user.userId },
-        { isPublic: true }
-      ],
-      isDeleted: false,
-    });
+    // Check if the resource exists and user has access to it
+    let targetResource = null;
+    
+    if (resourceType === 'item') {
+      targetResource = await Item.findOne({
+        _id: targetId,
+        $or: [
+          { userId: req.user.userId },
+          { collaborators: req.user.userId },
+          { isPublic: true }
+        ],
+        isDeleted: false,
+      });
+    } else {
+      targetResource = await Page.findOne({
+        _id: targetId,
+        $or: [
+          { userId: req.user.userId },
+          { isPublic: true }
+        ],
+        isDeleted: false,
+      });
+    }
 
-    if (!item) {
+    if (!targetResource) {
       res.status(404).json({
-        message: "Item not found",
-        error: "The item you're trying to view comments for doesn't exist or you don't have access to it",
+        message: `${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} not found`,
+        error: `The ${resourceType} you're trying to view comments for doesn't exist or you don't have access to it`,
       });
       return;
     }
 
     // Build filter object
-    const filter: any = {
-      itemId: itemId,
-    };
+    const filter: any = {};
+    if (resourceType === 'item') {
+      filter.itemId = targetId;
+    } else {
+      filter.pageId = targetId;
+    }
+
+    // Filter out deleted comments
+    filter.isDeleted = { $ne: true };
 
     // Filter by parent ID (for threaded comments)
     if (parentId) {
@@ -313,18 +355,34 @@ const getComment = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    // Check if user has access to the item this comment belongs to
-    const item = await Item.findOne({
-      _id: comment.itemId,
-      $or: [
-        { userId: req.user.userId },
-        { collaborators: req.user.userId },
-        { isPublic: true }
-      ],
-      isDeleted: false,
-    });
+    // Check if user has access to the item or page this comment belongs to
+    let targetResource = null;
+    let resourceType = '';
+    
+    if (comment.itemId) {
+      targetResource = await Item.findOne({
+        _id: comment.itemId,
+        $or: [
+          { userId: req.user.userId },
+          { collaborators: req.user.userId },
+          { isPublic: true }
+        ],
+        isDeleted: false,
+      });
+      resourceType = 'item';
+    } else if (comment.pageId) {
+      targetResource = await Page.findOne({
+        _id: comment.pageId,
+        $or: [
+          { userId: req.user.userId },
+          { isPublic: true }
+        ],
+        isDeleted: false,
+      });
+      resourceType = 'page';
+    }
 
-    if (!item) {
+    if (!targetResource) {
       res.status(403).json({
         message: "Access denied",
         error: "You don't have permission to view this comment",
@@ -528,17 +586,40 @@ const resolveComment = async (req: AuthRequest, res: Response) => {
       res.status(404).json({ message: "Comment not found" });
       return;
     }
-    // Only the comment author or item owner/collaborator can resolve
-    const item = await Item.findById(comment.itemId);
-    if (!item) {
-      res.status(404).json({ message: "Item not found" });
+    // Only the comment author or resource owner/collaborator can resolve
+    let targetResource = null;
+    let resourceType = '';
+    
+    if (comment.itemId) {
+      targetResource = await Item.findById(comment.itemId);
+      resourceType = 'item';
+    } else if (comment.pageId) {
+      targetResource = await Page.findById(comment.pageId);
+      resourceType = 'page';
+    }
+    
+    if (!targetResource) {
+      res.status(404).json({ message: `${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} not found` });
       return;
     }
-    if (
-      String(comment.userId) !== req.user.userId &&
-      String(item.userId) !== req.user.userId &&
-      !(item.collaborators && item.collaborators.map(String).includes(req.user.userId))
-    ) {
+    
+    // Check permissions based on resource type
+    let hasPermission = false;
+    
+    if (String(comment.userId) === req.user.userId) {
+      // Comment author can always resolve
+      hasPermission = true;
+    } else if (resourceType === 'item') {
+      // For items: owner or collaborators can resolve
+      const item = targetResource as any;
+      hasPermission = String(item.userId) === req.user.userId ||
+        (item.collaborators && item.collaborators.map(String).includes(req.user.userId));
+    } else if (resourceType === 'page') {
+      // For pages: only owner can resolve (pages don't have collaborators)
+      hasPermission = String(targetResource.userId) === req.user.userId;
+    }
+    
+    if (!hasPermission) {
       res.status(403).json({ message: "Forbidden", error: "You don't have permission to resolve this comment" });
       return;
     }

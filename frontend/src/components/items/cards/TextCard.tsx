@@ -8,13 +8,29 @@ interface TextCardProps {
   item: TextItem;
   onOpenItem?: (item: TextItem) => void;
   onTogglePin?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onOpenComments?: (id: string) => void;
+  commentCount?: number;
 }
 
-const TextCard: React.FC<TextCardProps> = ({ item, onOpenItem, onTogglePin }) => {
+const TextCard: React.FC<TextCardProps> = ({ 
+  item, 
+  onOpenItem, 
+  onTogglePin, 
+  onDelete, 
+  onEdit, 
+  onOpenComments, 
+  commentCount 
+}) => {
   return (
     <ItemCardBase
       item={item}
       onTogglePin={onTogglePin}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onOpenComments={onOpenComments}
+      commentCount={commentCount}
       onClick={() => onOpenItem?.(item)}
       header={item.title}
       footer={

@@ -7,6 +7,10 @@ interface DocumentCardProps {
   item: DocumentItem;
   onOpenItem?: (item: DocumentItem) => void;
   onTogglePin?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onOpenComments?: (id: string) => void;
+  commentCount?: number;
 }
 
 const formatSize = (bytes?: number) => {
@@ -16,11 +20,15 @@ const formatSize = (bytes?: number) => {
   return `${n.toFixed(1)} ${units[i]}`;
 };
 
-const DocumentCard: React.FC<DocumentCardProps> = ({ item, onOpenItem, onTogglePin }) => {
+const DocumentCard: React.FC<DocumentCardProps> = ({ item, onOpenItem, onTogglePin, onDelete, onEdit, onOpenComments, commentCount }) => {
   return (
     <ItemCardBase
       item={item}
       onTogglePin={onTogglePin}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onOpenComments={onOpenComments}
+      commentCount={commentCount}
       onClick={() => onOpenItem?.(item)}
       header={item.title}
       footer={<div className="truncate uppercase text-[10px]">{item.fileType} {item.sizeBytes ? `• ${formatSize(item.sizeBytes)}` : ''}</div>}

@@ -7,6 +7,10 @@ interface AudioCardProps {
   item: AudioItem;
   onOpenItem?: (item: AudioItem) => void;
   onTogglePin?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onOpenComments?: (id: string) => void;
+  commentCount?: number;
 }
 
 const formatDuration = (sec?: number) => {
@@ -16,11 +20,15 @@ const formatDuration = (sec?: number) => {
   return `${m}:${s.toString().padStart(2, "0")}`;
 };
 
-const AudioCard: React.FC<AudioCardProps> = ({ item, onOpenItem, onTogglePin }) => {
+const AudioCard: React.FC<AudioCardProps> = ({ item, onOpenItem, onTogglePin, onDelete, onEdit, onOpenComments, commentCount }) => {
   return (
     <ItemCardBase
       item={item}
       onTogglePin={onTogglePin}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onOpenComments={onOpenComments}
+      commentCount={commentCount}
       onClick={() => onOpenItem?.(item)}
       header={item.title}
       footer={<div className="truncate">{item.tags?.map(t => `#${t}`).join("  ")}</div>}

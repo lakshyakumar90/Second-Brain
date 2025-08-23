@@ -15,15 +15,36 @@ interface ItemGridProps {
   onRemoveTodo?: (itemId: string, todoId: string) => void;
   onTogglePin?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onOpenComments?: (id: string) => void;
+  commentCounts?: Record<string, number>;
 }
 
-const ItemGrid: React.FC<ItemGridProps> = ({ items, onToggleTodo, onOpenItem, onAddTodo, onRemoveTodo, onTogglePin, onDelete }) => {
+const ItemGrid: React.FC<ItemGridProps> = ({ 
+  items, 
+  onToggleTodo, 
+  onOpenItem, 
+  onAddTodo, 
+  onRemoveTodo, 
+  onTogglePin, 
+  onDelete, 
+  onEdit, 
+  onOpenComments, 
+  commentCounts = {} 
+}) => {
   return (
     <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
       {items.map((item) => {
         const key = `${item.type}_${item.id}`;
         const renderCard = () => {
-          const cardProps = { onOpenItem, onTogglePin, onDelete };
+          const cardProps = { 
+            onOpenItem, 
+            onTogglePin, 
+            onDelete, 
+            onEdit, 
+            onOpenComments, 
+            commentCount: commentCounts[item.id] || 0 
+          };
           switch (item.type) {
             case "text":
               return <TextCard item={item} {...cardProps} />;
