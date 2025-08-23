@@ -4,6 +4,7 @@ import NotionEditor from "@/components/dashboard/notion/NotionEditor";
 import { pageApi } from "@/services/pageApi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
 import {
   Loader2,
   CheckCircle,
@@ -11,9 +12,13 @@ import {
   Clock,
   WifiOff,
   ArrowLeft,
+  Search,
 } from "lucide-react";
 import PageAttachments from "@/components/dashboard/page/PageAttachments";
+import SearchModal from "@/components/search/SearchModal";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { PageAttachment } from "@/services/pageApi";
+import type { UIItem } from "@/types/items";
 import TagInput from "@/components/tags/TagInput";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -22,17 +27,26 @@ const DRAFT_KEY = "page-editor-draft";
 
 interface DraftData {
   content: string;
-  editorState: any;
+  editorState: unknown;
   timestamp: number;
   pageId: string;
   tags?: string[];
 }
 
+interface PageData {
+  _id: string;
+  title: string;
+  content: string;
+  editorState: unknown;
+  tags?: string[];
+  attachments?: PageAttachment[];
+}
+
 const PageEditor = () => {
   const { pageId } = useParams<{ pageId: string }>();
   const navigate = useNavigate();
-  const [page, setPage] = useState<any>(null);
-  const [initialState, setInitialState] = useState<any>(null);
+  const [page, setPage] = useState<PageData | null>(null);
+  const [initialState, setInitialState] = useState<unknown>(null);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,9 +55,10 @@ const PageEditor = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [attachments, setAttachments] = useState<PageAttachment[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   // Refs for managing autosave
-  const latest = useRef<{ content: string; editorState: any } | null>(null);
+  const latest = useRef<{ content: string; editorState: unknown } | null>(null);
   const timer = useRef<number | null>(null);
   const dirty = useRef(false);
   const inFlight = useRef(false);
@@ -52,7 +67,7 @@ const PageEditor = () => {
 
   // Draft management functions
   const saveDraft = useCallback(
-    (data: { content: string; editorState: any }) => {
+    (data: { content: string; editorState: unknown }) => {
       if (!pageId) return;
       try {
         const draft: DraftData = {
@@ -103,6 +118,18 @@ const PageEditor = () => {
     }
   }, [pageId]);
 
+  // Search functionality
+  const handleSearchItemClick = useCallback((item: UIItem) => {
+    console.log('Search item clicked:', item);
+    // Navigate to the item or open it in editor
+    if (item.id) {
+      navigate(`/pages/${item.id}`);
+    }
+    setIsSearchModalOpen(false);
+  }, [navigate]);
+
+
+
   // Load page on mount
   useEffect(() => {
     // Flag to check if the component is still mounted
@@ -110,7 +137,7 @@ const PageEditor = () => {
 
     const loadPage = async () => {
       if (!pageId) {
-        navigate("/text-editor");
+        navigate("/home");
         return;
       }
 
@@ -137,8 +164,8 @@ const PageEditor = () => {
         if (pageData.attachments) {
           setAttachments(pageData.attachments);
         }
-      } catch (err) {
-        console.error("Failed to load page:", err);
+      } catch (error) {
+        console.error("Failed to load page:", error);
         if (isActive) {
           setError("Failed to load page");
         }
@@ -159,6 +186,7 @@ const PageEditor = () => {
       }
     };
   }, [pageId, navigate, loadDraft, clearDraft]);
+
   // Debounced autosave function
   const scheduleSave = useCallback(() => {
     if (timer.current) {
@@ -214,11 +242,11 @@ const PageEditor = () => {
           setStatus("idle");
         }
       }, 1500);
-    } catch (err) {
-      console.error("Autosave failed:", err);
+    } catch (error) {
+      console.error("Autosave failed:", error);
 
       // Check if it's a network error
-      if (err instanceof Error && err.message.includes("Network error")) {
+      if (error instanceof Error && error.message.includes("Network error")) {
         setStatus("error");
         pendingSave.current = true;
         setIsOnline(false);
@@ -245,7 +273,7 @@ const PageEditor = () => {
         await pageApi.getPage(pageId!);
         setIsOnline(true);
         setError(null);
-      } catch (err) {
+      } catch {
         setError("Server still unavailable - saving locally");
         return;
       }
@@ -256,7 +284,7 @@ const PageEditor = () => {
 
   // Handle editor changes
   const handleEditorChange = useCallback(
-    (data: { content: string; editorState: any }) => {
+    (data: { content: string; editorState: unknown }) => {
       latest.current = data;
       dirty.current = true;
 
@@ -273,6 +301,14 @@ const PageEditor = () => {
     [scheduleSave, saveDraft, isOnline]
   );
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSearch: () => setIsSearchModalOpen(true),
+    onSave: manualSave,
+  });
+
+
+
   // Auto-discard empty pages
   const checkAndDiscardEmpty = useCallback(async () => {
     if (!pageId || !page) return;
@@ -281,11 +317,16 @@ const PageEditor = () => {
     const isEmpty =
       (!latest.current?.content || latest.current.content.trim() === "") &&
       (!latest.current?.editorState ||
-        !latest.current.editorState.root?.children?.length ||
-        latest.current.editorState.root.children.every(
-          (child: any) =>
-            !child.children?.length ||
-            child.children.every((grandchild: any) => !grandchild.text?.trim())
+        !(latest.current.editorState as any)?.root?.children?.length ||
+        (latest.current.editorState as any).root.children.every(
+          (child: unknown) => {
+            const childObj = child as { children?: unknown[] };
+            return !childObj.children?.length ||
+              childObj.children.every((grandchild: unknown) => {
+                const grandchildObj = grandchild as { text?: string };
+                return !grandchildObj.text?.trim();
+              });
+          }
         ));
 
     if (isEmpty && !dirty.current) {
@@ -391,7 +432,7 @@ const PageEditor = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/text-editor")}
+            onClick={() => navigate("/home")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -403,7 +444,7 @@ const PageEditor = () => {
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Page Not Found</h2>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => navigate("/text-editor")}>
+            <Button onClick={() => navigate("/home")}>
               Create New Page
             </Button>
           </div>
@@ -419,7 +460,7 @@ const PageEditor = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/text-editor")}
+            onClick={() => navigate("/home")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -428,6 +469,15 @@ const PageEditor = () => {
           <h1 className="text-xl font-semibold">{page?.title || "Untitled"}</h1>
         </div>
         <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsSearchModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Search className="h-4 w-4" />
+            <span className="hidden sm:inline">Search</span>
+          </Button>
           <StatusIndicator />
           {hasDraft && (
             <Badge variant="secondary" className="text-xs">
@@ -443,6 +493,8 @@ const PageEditor = () => {
           </Button>
         </div>
       </div>
+
+
 
       {/* Tags Section */}
       <div className="mb-4">
@@ -487,6 +539,13 @@ const PageEditor = () => {
           />
         </div>
       )}
+
+      {/* Search Modal */}
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        onItemClick={handleSearchItemClick}
+      />
     </div>
   );
 };

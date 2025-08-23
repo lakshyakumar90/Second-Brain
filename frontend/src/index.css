@@ -442,3 +442,55 @@ html {
   pointer-events: none;
 }
 
+/* Search highlighting styles - Enhanced for better visibility */
+.search-highlighting {
+  background: linear-gradient(120deg, #fef3c7 0%, #fcd34d 100%) !important;
+  border-radius: 3px !important;
+  padding: 1px 3px !important;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.4) !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+}
+
+.search-current-match {
+  background: linear-gradient(120deg, #fed7aa 0%, #f97316 100%) !important;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.6) !important;
+  z-index: 10 !important;
+  transform: scale(1.02) !important;
+}
+
+/* Dark mode support for search highlighting */
+.dark .search-highlighting {
+  background: linear-gradient(120deg, #a16207 0%, #ca8a04 100%) !important;
+  box-shadow: 0 0 0 1px rgba(202, 138, 4, 0.6) !important;
+  color: #fefce8 !important;
+}
+
+.dark .search-current-match {
+  background: linear-gradient(120deg, #c2410c 0%, #ea580c 100%) !important;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.8) !important;
+  color: #fed7aa !important;
+}
+
+/* Ensure search highlights are visible in all contexts */
+.search-highlighting,
+.search-current-match {
+  font-weight: inherit !important;
+  text-decoration: none !important;
+  display: inline !important;
+}
+
+/* Animation for current match */
+@keyframes search-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.6) !important; 
+  }
+  50% { 
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.4) !important; 
+  }
+}
+
+.search-current-match {
+  animation: search-pulse 1.5s ease-in-out !important;
+}
+

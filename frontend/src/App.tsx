@@ -22,7 +22,6 @@ const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const DashboardHome = lazy(() => import("./pages/dashboard/DashboardHome"));
-const TextEditor = lazy(() => import("./pages/dashboard/TextEditor"));
 const PageEditor = lazy(() => import("./pages/dashboard/PageEditor"));
 const ItemsPage = lazy(() => import("./pages/dashboard/ItemsPage"));
 const CategoriesPage = lazy(() => import("./pages/dashboard/CategoriesPage"));
@@ -96,7 +95,6 @@ function AppContent() {
             <Route path="items" element={<ItemsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="tags" element={<TagsPage />} />
-            <Route path="text-editor" element={<TextEditor />} />
             <Route path="pages/:pageId" element={<PageEditor />} />
           </Route>
           <Route path="*" element={<Navigate to="/" />} />

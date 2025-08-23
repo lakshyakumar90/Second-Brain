@@ -213,7 +213,11 @@ function SlashMenu({
   );
 }
 
-export default function NotionEditor({ initialTitle = "Untitled", onChange, initialEditorState }: NotionEditorProps) {
+export default function NotionEditor({ 
+  initialTitle = "Untitled", 
+  onChange, 
+  initialEditorState
+}: NotionEditorProps) {
   const initialConfig = useMemo(
     () => ({
       namespace: "notion-editor",
@@ -420,6 +424,7 @@ export default function NotionEditor({ initialTitle = "Untitled", onChange, init
             <ColumnsPlugin />
             <SimpleTitlePlaceholder />
             <TitlePolicyPlugin />
+
           </div>
         </div>
         <SlashMenu
@@ -592,6 +597,8 @@ function insertCallout(editor: any) {
     $insertNodes([p]);
   });
 }
+
+
 
 
 
