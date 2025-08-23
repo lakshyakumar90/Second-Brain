@@ -5,6 +5,7 @@ import { pageApi } from "@/services/pageApi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, AlertCircle, Clock, Wifi, WifiOff } from "lucide-react";
+import TagInput from "@/components/tags/TagInput";
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -14,6 +15,7 @@ interface DraftData {
   content: string;
   editorState: any;
   timestamp: number;
+  tags?: string[];
 }
 
 const TextEditor = () => {
@@ -24,6 +26,7 @@ const TextEditor = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   
   // Refs for managing autosave
   const latest = useRef<{ content: string; editorState: any } | null>(null);
@@ -40,13 +43,14 @@ const TextEditor = () => {
         content: data.content,
         editorState: data.editorState,
         timestamp: Date.now(),
+        tags: selectedTags,
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
       setHasDraft(true);
     } catch (err) {
       console.warn('Failed to save draft:', err);
     }
-  }, []);
+  }, [selectedTags]);
 
   const loadDraft = useCallback((): DraftData | null => {
     try {
@@ -58,6 +62,10 @@ const TextEditor = () => {
       if (Date.now() - draft.timestamp > 24 * 60 * 60 * 1000) {
         localStorage.removeItem(DRAFT_KEY);
         return null;
+      }
+      // Load tags from draft
+      if (draft.tags) {
+        setSelectedTags(draft.tags);
       }
       return draft;
     } catch (err) {
@@ -168,14 +176,16 @@ const TextEditor = () => {
           pageId, 
           title: 'Untitled', 
           content: latest.current.content, 
-          editorState: latest.current.editorState 
+          editorState: latest.current.editorState,
+          tags: selectedTags,
         });
       } else {
         // Create new page
         const created = await pageApi.createPage({ 
           title: 'Untitled', 
           content: latest.current.content, 
-          editorState: latest.current.editorState 
+          editorState: latest.current.editorState,
+          tags: selectedTags,
         });
         const id = created?.page?._id || created?.page?.id;
         if (id) {
@@ -219,7 +229,7 @@ const TextEditor = () => {
     } finally {
       inFlight.current = false;
     }
-  }, [pageId, navigate, clearDraft, isOnline]);
+  }, [pageId, navigate, clearDraft, isOnline, selectedTags]);
 
   // Manual save function
   const manualSave = useCallback(async () => {
@@ -343,6 +353,17 @@ const TextEditor = () => {
             {status === 'saving' ? 'Saving...' : 'Save'}
           </Button>
         </div>
+      </div>
+      
+      {/* Tags Section */}
+      <div className="mb-4">
+        <label className="text-sm font-medium mb-2 block">Tags</label>
+        <TagInput
+          value={selectedTags}
+          onChange={setSelectedTags}
+          placeholder="Add tags to organize your page..."
+          maxTags={10}
+        />
       </div>
       
       {error && (

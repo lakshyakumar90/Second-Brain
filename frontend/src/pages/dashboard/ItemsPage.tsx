@@ -174,9 +174,9 @@ const ItemsPage: React.FC = () => {
           setEditorOpen(false)
           setPreviewItem(null)
         }}
-        onSave={async ({ type, title, content, todos, url, images, isPinned }) => {
+        onSave={async ({ type, title, content, todos, url, images, isPinned, tags }) => {
           try {
-            const payload = uiPayloadToBackend({ type, title, content, todos, url, images });
+            const payload = uiPayloadToBackend({ type, title, content, todos, url, images, tags });
             if (previewItem) {
               const updated = await itemApi.updateItem({ itemId: previewItem.id, ...payload });
               const ui = backendItemToUIItem(updated?.item || updated);
@@ -210,7 +210,7 @@ const FilterButton = ({ active, filter, onClick, children }: { active: string, f
 
 export default ItemsPage;
 
-function uiPayloadToBackend({ type, title, content, todos, url, images }: { type: ItemType; title: string; content?: string; todos?: Array<{ id: string; text: string; done: boolean }>; url?: string; images?: { url: string }[]; }) {
+function uiPayloadToBackend({ type, title, content, todos, url, images, tags }: { type: ItemType; title: string; content?: string; todos?: Array<{ id: string; text: string; done: boolean }>; url?: string; images?: { url: string }[]; tags?: string[]; }) {
   const blocks: Block[] | undefined = todos && todos.length > 0 ? todos.map(t => ({
     id: t.id,
     type: 'checklist',
@@ -223,6 +223,7 @@ function uiPayloadToBackend({ type, title, content, todos, url, images }: { type
     content: content || undefined,
     blocks,
     url: url || undefined,
+    tags: tags || undefined,
     // files upload persistence can be added later; focus on content + blocks
   };
 }
@@ -232,26 +233,27 @@ function backendItemToUIItem(it: any): UIItem {
   const type = (it.type || 'text') as ItemType;
   const title = it.title || '';
   const preview = it.content || '';
+  const tags = it.tags || [];
   // Derive UI type 'todo' from blocks
   const checklistBlocks = (it.blocks || []).filter((b: any) => b.type === 'checklist');
   if (checklistBlocks.length > 0) {
     const todos = checklistBlocks.map((b: any) => ({ id: b.id, text: b.content || '', done: !!b.checked }));
-    return { id, type: 'todo', title, todos } as UIItem;
+    return { id, type: 'todo', title, todos, tags } as UIItem;
   }
   if (type === 'image') {
     const images = it.images || [];
-    return { id, type: 'image', title, images } as UIItem;
+    return { id, type: 'image', title, images, tags } as UIItem;
   }
   if (type === 'link') {
-    return { id, type: 'link', title, url: it.url } as UIItem;
+    return { id, type: 'link', title, url: it.url, tags } as UIItem;
   }
   if (type === 'audio') {
-    return { id, type: 'audio', title, src: it.url || '' } as UIItem;
+    return { id, type: 'audio', title, src: it.url || '', tags } as UIItem;
   }
   if (type === 'document') {
-    return { id, type: 'document', title, fileName: it.metadata?.fileName || 'file', fileType: it.metadata?.fileType || 'doc', url: it.url } as UIItem;
+    return { id, type: 'document', title, fileName: it.metadata?.fileName || 'file', fileType: it.metadata?.fileType || 'doc', url: it.url, tags } as UIItem;
   }
-  return { id, type: 'text', title, preview } as UIItem;
+  return { id, type: 'text', title, preview, tags } as UIItem;
 }
 
 

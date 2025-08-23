@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useItemUpload } from "@/hooks/useItemUpload";
 import { Progress } from "@/components/ui/progress";
+import TagInput from "@/components/tags/TagInput";
 
 interface ItemEditorModalProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface ItemEditorModalProps {
     fileName?: string;
     images?: { url: string }[];
     isPinned?: boolean;
+    tags?: string[];
   }) => void;
 }
 
@@ -31,6 +33,7 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({ open, item, onClose, 
   const [url, setUrl] = useState("");
   const [images, setImages] = useState<{url: string}[]>([]);
   const [isPinned, setIsPinned] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newTodo, setNewTodo] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -47,6 +50,7 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({ open, item, onClose, 
       setTitle(item.title || "");
       setIsPinned(!!item.isPinned);
       setContent((item as any).preview || "");
+      setSelectedTags((item as any).tags || []);
       
       // Load todos if they exist
       if (item.type === "todo" || (item as any).todos) {
@@ -84,6 +88,7 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({ open, item, onClose, 
       setUrl("");
       setImages([]);
       setIsPinned(false);
+      setSelectedTags([]);
       setAudioFile(null);
       setDocumentFile(null);
       setNewTodo("");
@@ -116,6 +121,7 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({ open, item, onClose, 
       fileName: fileName || undefined,
       images: finalImages.length > 0 ? finalImages : undefined,
       isPinned,
+      tags: selectedTags,
     });
     onClose();
   };
@@ -196,6 +202,17 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({ open, item, onClose, 
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
               />
+
+              {/* Tags Section */}
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Tags</div>
+                <TagInput
+                  value={selectedTags}
+                  onChange={setSelectedTags}
+                  placeholder="Add tags..."
+                  maxTags={10}
+                />
+              </div>
 
               {/* Todos Section */}
               {todos.length > 0 && (

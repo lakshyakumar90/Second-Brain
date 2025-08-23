@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import ImageUpload from "@/components/ui/image-upload";
+import TagInput from "@/components/tags/TagInput";
 
 const schema = z.object({
   type: z.enum(["text", "image", "link", "document", "audio", "todo"] as const),
@@ -15,6 +16,7 @@ const schema = z.object({
   url: z.string().url().optional(),
   description: z.string().optional(),
   todos: z.array(z.object({ text: z.string().min(1), done: z.boolean().optional() })).optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -36,16 +38,17 @@ const typeOptions: { label: string; value: ItemType }[] = [
 
 const CreateItemModal: React.FC<CreateItemModalProps> = ({ open, onClose, onCreate }) => {
   const [submitting, setSubmitting] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { type: "text", title: "" }
+    defaultValues: { type: "text", title: "", tags: [] }
   });
 
   const selectedType = watch("type");
 
   const onSubmit = (data: FormValues) => {
     setSubmitting(true);
-    onCreate(data);
+    onCreate({ ...data, tags: selectedTags });
     setSubmitting(false);
     onClose();
   };
@@ -95,6 +98,16 @@ const CreateItemModal: React.FC<CreateItemModalProps> = ({ open, onClose, onCrea
                 <label className="text-sm">Title</label>
                 <Input placeholder="Enter title" {...register("title")} />
                 {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title.message}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm">Tags</label>
+                <TagInput
+                  value={selectedTags}
+                  onChange={setSelectedTags}
+                  placeholder="Add tags..."
+                  maxTags={10}
+                />
               </div>
 
               {(selectedType === "link" || selectedType === "audio") && (

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import PageAttachments from "@/components/dashboard/page/PageAttachments";
 import type { PageAttachment } from "@/services/pageApi";
+import TagInput from "@/components/tags/TagInput";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -24,6 +25,7 @@ interface DraftData {
   editorState: any;
   timestamp: number;
   pageId: string;
+  tags?: string[];
 }
 
 const PageEditor = () => {
@@ -38,6 +40,7 @@ const PageEditor = () => {
   const [hasDraft, setHasDraft] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [attachments, setAttachments] = useState<PageAttachment[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   // Refs for managing autosave
   const latest = useRef<{ content: string; editorState: any } | null>(null);
@@ -57,13 +60,14 @@ const PageEditor = () => {
           editorState: data.editorState,
           timestamp: Date.now(),
           pageId: pageId,
+          tags: selectedTags,
         };
         localStorage.setItem(`${DRAFT_KEY}-${pageId}`, JSON.stringify(draft));
       } catch (err) {
         console.warn("Failed to save draft:", err);
       }
     },
-    [pageId]
+    [pageId, selectedTags]
   );
 
   const loadDraft = useCallback((): DraftData | null => {
@@ -77,6 +81,10 @@ const PageEditor = () => {
       if (Date.now() - draft.timestamp > 24 * 60 * 60 * 1000) {
         localStorage.removeItem(`${DRAFT_KEY}-${pageId}`);
         return null;
+      }
+      // Load tags from draft
+      if (draft.tags) {
+        setSelectedTags(draft.tags);
       }
       return draft;
     } catch (err) {
@@ -106,96 +114,37 @@ const PageEditor = () => {
         return;
       }
 
-      // Set loading state only if the component is active
-      if (isActive) {
-        setIsLoading(true);
-        setError(null);
-      }
-
-      // Add timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        if (isActive) {
-          console.log("Loading timeout - forcing loading to false");
-          setIsLoading(false);
-          setError("Loading timeout - starting with empty editor");
-        }
-      }, 5000); // 5 second timeout
-
       try {
-        // Check for local draft first
+        setIsLoading(true);
+        const response = await pageApi.getPage(pageId);
+        const pageData = response.page;
+
+        if (!isActive) return;
+
+        setPage(pageData);
+        setSelectedTags(pageData.tags || []);
+        
+        // Check for draft first
         const draft = loadDraft();
-        if (isActive) {
-          setHasDraft(!!draft);
+        if (draft) {
+          setInitialState(draft.editorState);
+          setHasDraft(true);
+        } else {
+          setInitialState(pageData.editorState);
         }
 
-        // Try to get the page from server
-        try {
-          const res = await pageApi.getPage(pageId);
-          const pageData = res?.page;
-
-          // Clear timeout since we got a response
-          clearTimeout(timeoutId);
-
-          if (isActive) {
-            // Guard all state updates
-            if (pageData) {
-              const serverTimestamp = new Date(
-                pageData.updatedAt || pageData.createdAt
-              ).getTime();
-
-              if (draft && draft.timestamp > serverTimestamp) {
-                setPage({ ...pageData, _id: pageId });
-                setInitialState(draft.editorState);
-                setLastSavedAt(new Date(draft.timestamp));
-                setAttachments(pageData.attachments || []);
-              } else {
-                setPage(pageData);
-                setInitialState(pageData.editorState || null);
-                setLastSavedAt(
-                  new Date(pageData.updatedAt || pageData.createdAt)
-                );
-                setAttachments(pageData.attachments || []);
-                if (draft) {
-                  clearDraft();
-                }
-              }
-            } else {
-              setError("Page not found");
-            }
-          }
-        } catch (serverError) {
-          clearTimeout(timeoutId);
-          if (isActive) {
-            // Guard all state updates
-            const draft = loadDraft(); // Re-check draft inside the catch block
-            // ... (rest of your error handling logic for serverError)
-            // Make sure to wrap state setters in `if (isActive)` here too.
-            // For brevity, I'm showing a simplified version:
-            if (draft) {
-              setPage({ _id: pageId, title: "Offline Page" });
-              setInitialState(draft.editorState);
-              setLastSavedAt(new Date(draft.timestamp));
-              setAttachments([]); // No attachments in offline mode
-              setError("Working offline - using local backup");
-              setIsOnline(false);
-            } else {
-              setError("Page not found or server unavailable");
-              setIsOnline(false);
-            }
-          }
+        // Load attachments
+        if (pageData.attachments) {
+          setAttachments(pageData.attachments);
         }
       } catch (err) {
         console.error("Failed to load page:", err);
-        clearTimeout(timeoutId);
         if (isActive) {
-          // Guard all state updates
           setError("Failed to load page");
         }
       } finally {
         if (isActive) {
-          // Guard the final state update
           setIsLoading(false);
-          console.log("Loading set to false");
         }
       }
     };
@@ -247,6 +196,7 @@ const PageEditor = () => {
         title: page?.title || "Untitled",
         content: latest.current.content,
         editorState: latest.current.editorState,
+        tags: selectedTags,
       });
 
       dirty.current = false;
@@ -281,7 +231,7 @@ const PageEditor = () => {
     } finally {
       inFlight.current = false;
     }
-  }, [pageId, page?.title, clearDraft, isOnline]);
+  }, [pageId, page?.title, clearDraft, isOnline, selectedTags]);
 
   // Manual save function
   const manualSave = useCallback(async () => {
@@ -492,6 +442,17 @@ const PageEditor = () => {
             {status === "saving" ? "Saving..." : "Save"}
           </Button>
         </div>
+      </div>
+
+      {/* Tags Section */}
+      <div className="mb-4">
+        <label className="text-sm font-medium mb-2 block">Tags</label>
+        <TagInput
+          value={selectedTags}
+          onChange={setSelectedTags}
+          placeholder="Add tags to organize your page..."
+          maxTags={10}
+        />
       </div>
 
       {error && (
