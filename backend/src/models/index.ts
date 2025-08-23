@@ -2,6 +2,7 @@
 import User from "./user.model";
 import Item from "./item.model";
 import Category from "./category.model";
+import Tag from "./tag.model";
 import Workspace from "./workspace.model";
 import Share from "./share.model";
 import Comment from "./comment.model";
@@ -17,6 +18,7 @@ export {
   User,
   Item,
   Category,
+  Tag,
   Workspace,
   Share,
   Comment,

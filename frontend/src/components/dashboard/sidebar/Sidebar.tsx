@@ -19,7 +19,8 @@ import {
   Clock,
   Hash,
   FolderPlus,
-  CircleQuestionMark
+  CircleQuestionMark,
+  Tag
 } from "lucide-react";
 import SidebarHeader from "./SidebarHeader";
 import { cn } from "@/lib/utils";
@@ -274,6 +275,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState, onSear
                     >
                       <Hash className="h-4 w-4" />
                       <span>Manage Categories</span>
+                    </div>
+                    <div 
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-secondary/50 text-sm text-muted-foreground"
+                      onClick={() => navigate('/tags')}
+                    >
+                      <Tag className="h-4 w-4" />
+                      <span>Manage Tags</span>
                     </div>
                   </div>
                 )}

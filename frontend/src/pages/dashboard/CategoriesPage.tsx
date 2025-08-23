@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Filter, MoreVertical, Edit, Trash2, Copy, Download, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,11 +22,7 @@ const CategoriesPage: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     setIsLoading(true);
     try {
       console.log('Loading categories...');
@@ -35,13 +31,25 @@ const CategoriesPage: React.FC = () => {
         limit: 100,
       });
       console.log('Categories response:', response);
-      setCategories(response.data.categories);
+      
+      // Ensure categories is always an array
+      const categoriesArray = Array.isArray(response?.data?.categories) 
+        ? response.data.categories 
+        : [];
+      
+      setCategories(categoriesArray);
     } catch (error) {
       console.error('Failed to load categories:', error);
+      // Set empty array on error to prevent filter issues
+      setCategories([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
 
   const handleCreateCategory = async (data: CreateCategoryData) => {
     try {
@@ -142,10 +150,12 @@ const CategoriesPage: React.FC = () => {
     }
   };
 
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    category.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCategories = Array.isArray(categories) 
+    ? categories.filter(category =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        category.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="space-y-6">
