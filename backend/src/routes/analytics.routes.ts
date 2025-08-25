@@ -1,5 +1,8 @@
-import express from 'express';
-import { authMiddleware, registrationCompleteMiddleware } from '../middlewares/authMiddleware';
+import express from "express";
+import {
+  authMiddleware,
+  registrationCompleteMiddleware,
+} from "../middlewares/authMiddleware";
 import {
   getDashboardData,
   getUsageAnalytics,
@@ -7,20 +10,33 @@ import {
   getCategoryAnalytics,
   getShareAnalytics,
   getAIAnalytics,
-  exportAnalytics
-} from '../controllers/analytics.controller';
+  getActivityFeed,
+  getTimeBasedAnalytics,
+  getGrowthAnalytics,
+  getMostUsedCategories,
+  getActivityTrends,
+  exportAnalytics,
+} from "../controllers/analytics.controller";
 
 const router = express.Router();
 
 router.use(authMiddleware);
 router.use(registrationCompleteMiddleware);
 
-router.get('/dashboard', getDashboardData);
-router.get('/usage', getUsageAnalytics);
-router.get('/item', getItemAnalytics);
-router.get('/category', getCategoryAnalytics);
-router.get('/share', getShareAnalytics);
-router.get('/ai', getAIAnalytics);
-router.get('/export', exportAnalytics);
+// Basic analytics endpoints
+router.get("/dashboard", getDashboardData);
+router.get("/usage", getUsageAnalytics);
+router.get("/item", getItemAnalytics);
+router.get("/category", getCategoryAnalytics);
+router.get("/share", getShareAnalytics);
+router.get("/ai", getAIAnalytics);
 
-export default router; 
+// Enhanced analytics endpoints
+router.get("/activity", getActivityFeed);
+router.get("/time-based", getTimeBasedAnalytics);
+router.get("/growth", getGrowthAnalytics);
+router.get("/categories/most-used", getMostUsedCategories);
+router.get("/activity/trends", getActivityTrends);
+router.get("/export", exportAnalytics);
+
+export default router;

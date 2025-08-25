@@ -26,6 +26,7 @@ const PageEditor = lazy(() => import("./pages/dashboard/PageEditor"));
 const ItemsPage = lazy(() => import("./pages/dashboard/ItemsPage"));
 const CategoriesPage = lazy(() => import("./pages/dashboard/CategoriesPage"));
 const TagsPage = lazy(() => import("./pages/dashboard/TagsPage"));
+const AnalyticsPage = lazy(() => import("./pages/dashboard/AnalyticsPage"));
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAppSelector(
@@ -95,6 +96,7 @@ function AppContent() {
             <Route path="items" element={<ItemsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="tags" element={<TagsPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="pages/:pageId" element={<PageEditor />} />
           </Route>
           <Route path="*" element={<Navigate to="/" />} />

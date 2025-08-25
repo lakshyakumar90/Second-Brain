@@ -53,11 +53,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   onSave,
   isLoading: externalLoading = false,
 }) => {
-  const { user, updateProfile, refreshUserData, willExpireSoon, getExpirationTime, heartbeatCheck } = useAuth();
+  const { user, updateProfile, refreshUser } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isValidatingSession, setIsValidatingSession] = useState(false);
 
   // Use user from auth hook if currentUser prop is not provided
   const userData = currentUser || user;
@@ -147,61 +146,26 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const handleRefreshUserData = async () => {
     try {
       setIsRefreshing(true);
-      const result = await refreshUserData();
+      const result = await refreshUser();
       
       if (result.success) {
-        setSuccessMessage('Profile data refreshed successfully!');
-        setTimeout(() => setSuccessMessage(null), 2000);
+        setSuccessMessage('User data refreshed successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         setError('root', {
           type: 'manual',
-          message: 'Failed to refresh profile data',
+          message: result.error || 'Failed to refresh user data',
         });
       }
     } catch (error: any) {
       setError('root', {
         type: 'manual',
-        message: error.message || 'Failed to refresh profile data',
+        message: error.message || 'Failed to refresh user data',
       });
     } finally {
       setIsRefreshing(false);
     }
   };
-
-  const handleValidateSession = async () => {
-    try {
-      setIsValidatingSession(true);
-      const result = await heartbeatCheck();
-      
-      if (result.success) {
-        setSuccessMessage('Session is valid! Cookies and authentication are working.');
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } else {
-        if (result.reason === 'authentication_failed') {
-          setError('root', {
-            type: 'manual',
-            message: 'Session validation failed - cookies may be cleared or expired. You will be logged out.',
-          });
-        } else {
-          setError('root', {
-            type: 'manual',
-            message: 'Session validation failed - not authenticated.',
-          });
-        }
-      }
-    } catch (error: any) {
-      setError('root', {
-        type: 'manual',
-        message: error.message || 'Failed to validate session',
-      });
-    } finally {
-      setIsValidatingSession(false);
-    }
-  };
-
-  // Check if auth data will expire soon
-  const authWillExpireSoon = willExpireSoon();
-  const expirationTime = getExpirationTime();
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -222,17 +186,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleValidateSession}
-              disabled={isValidatingSession}
-              className="flex items-center gap-1"
-            >
-              <Shield className={`h-4 w-4 ${isValidatingSession ? 'animate-pulse' : ''}`} />
-              Validate
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
               onClick={handleRefreshUserData}
               disabled={isRefreshing}
               className="flex items-center gap-1"
@@ -244,15 +197,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         </div>
 
         {/* Auth expiration warning */}
-        {authWillExpireSoon && expirationTime && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-3">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <AlertCircle className="h-4 w-4 inline mr-1" />
-              Your session will expire soon at {expirationTime.toLocaleTimeString()}. 
-              Your changes will be saved to localStorage.
-            </p>
-          </div>
-        )}
+        {/* Removed authWillExpireSoon and expirationTime as they are no longer tracked */}
 
         {/* Success Message */}
         {successMessage && (

@@ -20,7 +20,8 @@ import {
   Hash,
   FolderPlus,
   CircleQuestionMark,
-  Tag
+  Tag,
+  BarChart3
 } from "lucide-react";
 import SidebarHeader from "./SidebarHeader";
 import { cn } from "@/lib/utils";
@@ -292,6 +293,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState, onSear
 
         {/* Section 4: Settings, Templates, Trash */}
         <div className="px-2 mb-4">
+          <MenuItem 
+            icon={BarChart3} 
+            label="Analytics" 
+            isActive={location.pathname === '/analytics'}
+            onClick={() => navigate('/analytics')}
+          />
           <MenuItem icon={Settings} label="Settings" />
           <MenuItem icon={FileStack} label="Templates" />
           <MenuItem icon={Trash2} label="Trash" />
