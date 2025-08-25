@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const summarizeContentSchema = z.object({
-  itemId: z.string().min(1, "Item ID is required"),
+  itemId: z.string().min(1, "Item ID is required").optional(),
   content: z.string().min(1, "Content is required").max(10000, "Content too long"),
 });
 

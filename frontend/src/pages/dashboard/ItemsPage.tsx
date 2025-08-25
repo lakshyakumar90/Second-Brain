@@ -10,20 +10,6 @@ import { commentApi } from "@/services/commentApi";
 import { CommentsPanel } from "@/components/comments";
 import { useAppSelector } from "@/store/hooks";
 
-const sampleItems: UIItem[] = [
-  { id: "1", type: "text", title: "Project Outline", preview: "Kickoff notes, goals, and milestones...", tags: ["project", "q1"], isPinned: true, color: "yellow" },
-  { id: "2", type: "image", title: "Moodboard", images: [{ url: "https://images.unsplash.com/photo-1529634899235-9efa9f88ab22" }], tags: ["design"], color: "blue" },
-  // video sample removed
-  { id: "4", type: "link", title: "Great article", url: "https://vercel.com/blog", og: { title: "Vercel Blog", description: "Ship and iterate faster.", image: "https://assets.vercel.com/image/upload/front/vercel/dps.png", domain: "vercel.com" }, isPinned: true },
-  { id: "5", type: "document", title: "Spec v1", fileName: "spec-v1.pdf", fileType: "pdf", sizeBytes: 845923 },
-  { id: "6", type: "audio", title: "Meeting Recap", src: "", durationSec: 213, color: "green" },
-  { id: "7", type: "todo", title: "Groceries", todos: [
-    { id: "t1", text: "Milk", done: true },
-    { id: "t2", text: "Eggs", done: false },
-    { id: "t3", text: "Bread", done: false },
-  ], color: "indigo" },
-];
-
 const ItemsPage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const [items, setItems] = useState<UIItem[]>([]);
@@ -31,8 +17,6 @@ const ItemsPage: React.FC = () => {
   const [editorOpen, setEditorOpen] = useState(false);
   const [quickNote, setQuickNote] = useState("");
   const [activeFilter, setActiveFilter] = useState<ItemType | 'all'>('all');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [selectedItemForComments, setSelectedItemForComments] = useState<string | null>(null);
@@ -41,18 +25,14 @@ const ItemsPage: React.FC = () => {
     let mounted = true;
     (async () => {
       try {
-        setLoading(true);
         const res = await itemApi.getItems({ page: 1, limit: 50 });
         const list = (res?.data?.items || res?.items || []).map((it: any) => backendItemToUIItem(it));
         if (mounted) {
-          setItems(list);
-          // Load comment counts for all items
-          loadCommentCounts(list.map(item => item.id));
+          setItems(list); // TODO: add pagination and sorting here
+          loadCommentCounts(list.map((item: any) => item.id));
         }
       } catch (e: any) {
-        if (mounted) setError(e?.message || 'Failed to load items');
-      } finally {
-        if (mounted) setLoading(false);
+        if (mounted) console.error('Failed to load items', e);
       }
     })();
     return () => {
@@ -160,6 +140,11 @@ const ItemsPage: React.FC = () => {
     }
   };
 
+  // const handleCreateItem = (item: any) => {
+  //   const ui = backendItemToUIItem(item);
+  //   setItems(prev => [ui, ...prev]);
+  // };
+
   return (
     <div className="flex-1 flex flex-col gap-8 p-4 md:p-6 min-w-0">
       <div className="max-w-2xl mx-auto w-full">
@@ -231,6 +216,7 @@ const ItemsPage: React.FC = () => {
         onDelete={() => previewItem && handleDeleteItem(previewItem.id)}
         onToggleTodo={handleToggleTodo}
       />
+      
       {/* The ItemEditorModal is used for both creating and editing items */}
       <ItemEditorModal
         open={editorOpen}

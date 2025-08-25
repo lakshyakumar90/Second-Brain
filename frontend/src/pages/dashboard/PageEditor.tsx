@@ -4,6 +4,7 @@ import NotionEditor from "@/components/dashboard/notion/NotionEditor";
 import { pageApi } from "@/services/pageApi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import AIEnhancedPageEditor from "@/components/ai/AIEnhancedPageEditor";
 
 import {
   Loader2,
@@ -61,6 +62,9 @@ const PageEditor = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [pageTitle, setPageTitle] = useState("");
+  const [pageContent, setPageContent] = useState("");
+  const [pageSummary, setPageSummary] = useState<string>("");
 
   // Refs for managing autosave
   const latest = useRef<{ content: string; editorState: unknown } | null>(null);
@@ -133,7 +137,105 @@ const PageEditor = () => {
     setIsSearchModalOpen(false);
   }, [navigate]);
 
+  // Simple formatter for displaying AI text (*** headings, - bullets, ``` code)
+  const renderFormatted = useCallback((text: string) => {
+    const applyInlineBold = (segment: string) => {
+      const parts = segment.split(/(\*\*[^*]+\*\*)/g);
+      return parts.map((part, i) => {
+        if (/^\*\*[^*]+\*\*$/.test(part)) {
+          return <strong key={i}>{part.slice(2, -2)}</strong>;
+        }
+        return <span key={i}>{part}</span>;
+      });
+    };
 
+    const lines = text.split('\n');
+    const elements: React.ReactNode[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      if (trimmed.length === 0) {
+        elements.push(<div key={`sp-${i}`} className="h-2" />);
+        continue;
+      }
+
+      if (trimmed.startsWith('***')) {
+        elements.push(
+          <div key={`h3-${i}`} className="font-semibold text-sm">
+            {applyInlineBold(trimmed.replace(/^\*\*\*/, '').trim())}
+          </div>
+        );
+        continue;
+      }
+
+      if (trimmed.startsWith('**')) {
+        elements.push(
+          <div key={`h2-${i}`} className="font-semibold text-sm">
+            {applyInlineBold(trimmed.replace(/^\*\*/, '').trim())}
+          </div>
+        );
+        continue;
+      }
+
+      if (trimmed.startsWith('```')) {
+        elements.push(
+          <pre key={`code-${i}`} className="bg-muted/50 rounded p-2 text-xs overflow-x-auto">
+            {trimmed.replace(/^```/, '')}
+          </pre>
+        );
+        continue;
+      }
+
+      if (trimmed.startsWith('- ')) {
+        elements.push(
+          <div key={`li-${i}`} className="text-sm pl-4">• {applyInlineBold(trimmed.replace(/^-\s*/, ''))}</div>
+        );
+        continue;
+      }
+
+      elements.push(
+        <div key={`p-${i}`} className="text-sm text-muted-foreground">
+          {applyInlineBold(line)}
+        </div>
+      );
+    }
+
+    return <div className="space-y-1">{elements}</div>;
+  }, []);
+
+  // Handle AI suggestions
+  const handleAITitleChange = (title: string) => {
+    setPageTitle(title);
+    if (page) {
+      setPage({ ...page, title });
+    }
+  };
+
+  const handleAITagsChange = async (tags: string[]) => {
+    setSelectedTags(tags);
+    // Persist tags immediately
+    try {
+      if (pageId) {
+        await pageApi.updatePage({ pageId, tags });
+      }
+    } catch (e) {
+      console.error('Failed to update tags immediately:', e);
+    }
+  };
+
+  const handleAISummaryChange = async (summary: string) => {
+    setPageSummary(summary);
+    // Persist summary immediately
+    try {
+      if (pageId) {
+        await pageApi.updatePage({ pageId, summary });
+      }
+    } catch (e) {
+      console.error('Failed to update summary immediately:', e);
+    }
+  };
 
   // Load page on mount
   useEffect(() => {
@@ -155,14 +257,19 @@ const PageEditor = () => {
 
         setPage(pageData);
         setSelectedTags(pageData.tags || []);
+        setPageTitle(pageData.title || '');
+        setPageContent(pageData.content || '');
+        setPageSummary((pageData as any).summary || '');
         
         // Check for draft first
         const draft = loadDraft();
         if (draft) {
           setInitialState(draft.editorState);
+          setPageContent(draft.content);
           setHasDraft(true);
         } else {
           setInitialState(pageData.editorState);
+          setPageContent(pageData.content || '');
         }
 
         // Load attachments
@@ -230,6 +337,7 @@ const PageEditor = () => {
         content: latest.current.content,
         editorState: latest.current.editorState,
         tags: selectedTags,
+        ...(pageSummary ? { summary: pageSummary } : {}),
       });
 
       dirty.current = false;
@@ -264,7 +372,7 @@ const PageEditor = () => {
     } finally {
       inFlight.current = false;
     }
-  }, [pageId, page?.title, clearDraft, isOnline, selectedTags]);
+  }, [pageId, page?.title, clearDraft, isOnline, selectedTags, pageSummary]);
 
   // Manual save function
   const manualSave = useCallback(async () => {
@@ -292,6 +400,9 @@ const PageEditor = () => {
     (data: { content: string; editorState: unknown }) => {
       latest.current = data;
       dirty.current = true;
+
+      // Update the pageContent state for AI features
+      setPageContent(data.content);
 
       // Save to localStorage immediately for safety
       saveDraft(data);
@@ -512,18 +623,38 @@ const PageEditor = () => {
         </div>
       </div>
 
-
+      {/* AI-Enhanced Page Editor */}
+      <div className="mb-6">
+        <AIEnhancedPageEditor
+          title={page?.title || ""}
+          content={pageContent}
+          onContentChange={(content, editorState) => handleEditorChange({ content, editorState })}
+          onTitleChange={handleAITitleChange}
+          onTagsChange={handleAITagsChange}
+          onSummaryChange={handleAISummaryChange}
+        />
+      </div>
 
       {/* Tags Section */}
       <div className="mb-4">
         <label className="text-sm font-medium mb-2 block">Tags</label>
         <TagInput
           value={selectedTags}
-          onChange={setSelectedTags}
+          onChange={handleAITagsChange}
           placeholder="Add tags to organize your page..."
           maxTags={10}
         />
       </div>
+
+      {/* Summary Section */}
+      {pageSummary && (
+        <div className="mb-4">
+          <label className="text-sm font-medium mb-2 block">Summary</label>
+          <div className="p-3 bg-muted/50 rounded-md">
+            {renderFormatted(pageSummary)}
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">

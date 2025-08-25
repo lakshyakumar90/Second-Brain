@@ -14,6 +14,7 @@ import {
 
 const router = Router();
 
+// Protected AI endpoints (require authentication)
 router.post("/summarize", authMiddleware, registrationCompleteMiddleware, summarizeContent);
 router.post("/suggest-tags", authMiddleware, registrationCompleteMiddleware, suggestTags);
 router.post("/categorize", authMiddleware, registrationCompleteMiddleware, categorizeContent);

@@ -25,7 +25,11 @@ export type CreateItemData = {
 	parentId?: string;
 };
 
-export type UpdateItemData = Partial<CreateItemData> & { itemId: string };
+// Allow aiData for updates (to store AI-generated summary, etc.)
+export type UpdateItemData = Partial<CreateItemData> & { 
+	itemId: string;
+	aiData?: { summary?: string };
+};
 
 export class ItemApiService {
 	private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

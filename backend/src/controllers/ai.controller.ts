@@ -15,6 +15,11 @@ function getUserUsage(user: any) {
 }
 
 async function checkLimit(user: any, res: Response) {
+  // Skip limit check for test endpoints (when user is not authenticated)
+  if (!user) {
+    return true;
+  }
+  
   const tier = getUserTier(user);
   const usage = getUserUsage(user);
   const dailyLimit = AI_LIMITS[`${tier.toUpperCase()}_DAILY_REQUESTS` as keyof typeof AI_LIMITS];
@@ -25,19 +30,22 @@ async function checkLimit(user: any, res: Response) {
   return true;
 }
 
-async function logAIUsage({ req, requestType, status, errorMessage }: { req: AuthRequest, requestType: string, status: string, errorMessage?: string }) {
+async function logAIUsage({ req, requestType, status, errorMessage }: { req: AuthRequest | Request, requestType: string, status: string, errorMessage?: string }) {
   try {
-    await AIUsage.create({
-      userId: new mongoose.Types.ObjectId(req.user?.userId),
-      requestType,
-      tokensUsed: 0, // Replace with real value if available
-      processingTime: 0, // Replace with real value if available
-      model: 'gemini', // Replace with real value if available
-      cost: 0, // Replace with real value if available
-      status,
-      errorMessage,
-      metadata: {},
-    });
+    // Only log usage for authenticated users
+    if ('user' in req && req.user?.userId) {
+      await AIUsage.create({
+        userId: new mongoose.Types.ObjectId(req.user.userId),
+        requestType,
+        tokensUsed: 0, // Replace with real value if available
+        processingTime: 0, // Replace with real value if available
+        model: 'gemini', // Replace with real value if available
+        cost: 0, // Replace with real value if available
+        status,
+        errorMessage,
+        metadata: {},
+      });
+    }
   } catch (err) {
     // Don't block user on logging error
     console.error('Failed to log AI usage:', err);

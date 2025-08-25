@@ -134,9 +134,12 @@ export const updatePage = async (req: AuthRequest, res: Response) => {
 		// If editorState is being updated, extract plain text and generate summary
 		if (updateData.editorState) {
 			const plainTextContent = extractPlainTextFromEditorState(updateData.editorState);
-			const summary = generateSummary(plainTextContent);
 			updateData.content = plainTextContent;
-			updateData.summary = summary;
+			// Only auto-generate summary if no AI summary is provided
+			if (!updateData.summary) {
+				const autoSummary = generateSummary(plainTextContent);
+				updateData.summary = autoSummary;
+			}
 		}
 		
 		const updated = await Page.findByIdAndUpdate(
