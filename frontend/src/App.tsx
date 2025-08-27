@@ -94,6 +94,7 @@ function AppContent() {
           >
             <Route path="home" element={<DashboardHome />} />
             <Route path="items" element={<ItemsPage />} />
+            <Route path="items/:itemId" element={<ItemsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="tags" element={<TagsPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />

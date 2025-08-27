@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import ItemGrid from "@/components/items/ItemGrid";
 import type { UIItem } from "@/types/items";
 import ItemPreviewModal from "@/components/items/ItemPreviewModal";
@@ -21,6 +22,9 @@ const ItemsPage: React.FC = () => {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [selectedItemForComments, setSelectedItemForComments] = useState<string | null>(null);
 
+  const { itemId } = useParams<{ itemId: string }>();
+  const navigate = useNavigate();
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -40,6 +44,20 @@ const ItemsPage: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (itemId && items.length > 0) {
+      const itemToPreview = items.find(item => item.id === itemId);
+      if (itemToPreview) {
+        setPreviewItem(itemToPreview);
+      } else {
+        // Optional: handle case where item ID is not found, e.g., show a notification
+        console.warn(`Item with id ${itemId} not found.`);
+        navigate('/items', { replace: true });
+      }
+    }
+  }, [itemId, items, navigate]);
+
+
   const loadCommentCounts = async (itemIds: string[]) => {
     try {
       const counts: Record<string, number> = {};
@@ -57,6 +75,16 @@ const ItemsPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to load comment counts:', error);
     }
+  };
+
+  const handleOpenPreview = (item: UIItem) => {
+    setPreviewItem(item);
+    navigate(`/items/${item.id}`);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewItem(null);
+    navigate('/items');
   };
 
   const handleTogglePin = (itemId: string) => {
@@ -177,7 +205,7 @@ const ItemsPage: React.FC = () => {
             <ItemGrid 
             items={pinned} 
             onToggleTodo={handleToggleTodo} 
-            onOpenItem={setPreviewItem} 
+            onOpenItem={handleOpenPreview} 
             onAddTodo={handleAddTodo} 
             onRemoveTodo={handleRemoveTodo} 
             onTogglePin={handleTogglePin} 
@@ -194,7 +222,7 @@ const ItemsPage: React.FC = () => {
           <ItemGrid 
             items={others} 
             onToggleTodo={handleToggleTodo} 
-            onOpenItem={setPreviewItem} 
+            onOpenItem={handleOpenPreview} 
             onAddTodo={handleAddTodo} 
             onRemoveTodo={handleRemoveTodo} 
             onTogglePin={handleTogglePin} 
@@ -209,7 +237,7 @@ const ItemsPage: React.FC = () => {
       <ItemPreviewModal 
         open={!!previewItem && !editorOpen} 
         item={previewItem} 
-        onClose={() => setPreviewItem(null)} 
+        onClose={handleClosePreview} 
         onEdit={() => {
           setEditorOpen(true);
         }}
@@ -223,7 +251,11 @@ const ItemsPage: React.FC = () => {
         item={previewItem}
         onClose={() => {
           setEditorOpen(false)
-          setPreviewItem(null)
+          if (itemId) {
+            handleClosePreview();
+          } else {
+            setPreviewItem(null);
+          }
         }}
         onOpenComments={() => {
           if (previewItem) {
@@ -246,7 +278,11 @@ const ItemsPage: React.FC = () => {
             console.error('Failed to save item', e);
           } finally {
             setEditorOpen(false);
-            setPreviewItem(null);
+            if (itemId) {
+              handleClosePreview();
+            } else {
+              setPreviewItem(null);
+            }
           }
         }}
       />

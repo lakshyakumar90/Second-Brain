@@ -38,6 +38,12 @@ export interface SearchResponse {
   };
 }
 
+export interface SearchSuggestion {
+  type: 'title' | 'tag' | 'content';
+  value: string;
+  count: number;
+}
+
 class SearchApiService {
   private baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
@@ -154,6 +160,111 @@ class SearchApiService {
     } catch (error) {
       console.error('Failed to get search suggestions:', error);
       return [];
+    }
+  }
+
+  // New methods for enhanced search functionality
+
+  async getAdvancedSuggestions(query: string): Promise<SearchSuggestion[]> {
+    try {
+      const endpoint = `/search/advanced-suggestions?q=${encodeURIComponent(query)}`;
+      const response = await this.makeRequest<SearchSuggestion[]>(endpoint);
+      return response;
+    } catch (error) {
+      console.error('Failed to get advanced suggestions:', error);
+      return [];
+    }
+  }
+
+  async searchWithOperators(query: string, operators: {
+    exactPhrases?: string[];
+    exclusions?: string[];
+    fieldSpecific?: Record<string, string>;
+  }): Promise<SearchResponse> {
+    try {
+      const endpoint = '/search/advanced';
+      const response = await this.makeRequest<any>(endpoint, {
+        method: 'POST',
+        body: JSON.stringify({ query, operators }),
+      });
+      
+      return {
+        message: "Advanced search completed",
+        data: {
+          items: response.items || [],
+          pagination: response.pagination || {
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: response.items?.length || 0,
+            itemsPerPage: response.items?.length || 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {
+            applied: {},
+          },
+        },
+      };
+    } catch (error) {
+      console.error('Advanced search error:', error);
+      return {
+        message: "Advanced search failed",
+        data: {
+          items: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 0,
+            totalItems: 0,
+            itemsPerPage: 20,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {
+            applied: {},
+          },
+        },
+      };
+    }
+  }
+
+  async exportSearchResults(query: string, filters: SearchFilters): Promise<Blob> {
+    try {
+      const endpoint = '/search/export';
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ query, filters }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`);
+      }
+      
+      return response.blob();
+    } catch (error) {
+      console.error('Export error:', error);
+      throw error;
+    }
+  }
+
+  async getSearchAnalytics(): Promise<{
+    totalSearches: number;
+    popularQueries: Array<{ query: string; count: number }>;
+    searchTrends: Array<{ date: string; count: number }>;
+  }> {
+    try {
+      const response = await this.makeRequest<any>('/search/analytics');
+      return response;
+    } catch (error) {
+      console.error('Failed to get search analytics:', error);
+      return {
+        totalSearches: 0,
+        popularQueries: [],
+        searchTrends: [],
+      };
     }
   }
 }
