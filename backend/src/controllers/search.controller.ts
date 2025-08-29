@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import { Item, Category, ActivityLog } from "../models";
+import { Item, Category, ActivityLog, Page } from "../models";
 import * as aiService from "../services/aiService";
 import mongoose from "mongoose";
 import { AuthRequest } from "../models/interfaces/userModel.interface";
+import Workspace  from "../models/workspace.model";
 
 // Helper: Check if user can access item
 async function canAccessItem(userId: string, item: any): Promise<boolean> {
@@ -10,12 +11,17 @@ async function canAccessItem(userId: string, item: any): Promise<boolean> {
   if (item.userId?.toString() === userId) return true;
   // Check workspace/collaborators if present
   if (item.workspaceId) {
-    // Assume you have a Workspace model and can check membership
-    const Workspace = require("../models/workspace.model").default;
     const workspace = await Workspace.findById(item.workspaceId).lean();
     if (workspace && workspace.members?.some((m: any) => m.toString() === userId)) return true;
   }
   if (item.collaborators && item.collaborators.some((c: any) => c.toString() === userId)) return true;
+  return false;
+}
+
+// Helper: Check if user can access page
+async function canAccessPage(userId: string, page: any): Promise<boolean> {
+  if (page.isPublic) return true;
+  if (page.userId?.toString() === userId) return true;
   return false;
 }
 
@@ -27,6 +33,7 @@ export const searchItems = async (req: AuthRequest, res: Response) => {
       res.status(400).json({ message: "Missing userId or query" });
       return;
     }
+    
     // Find items owned by user or shared with them (private or public)
     const items = await Item.find({
       isDeleted: false,
@@ -45,14 +52,93 @@ export const searchItems = async (req: AuthRequest, res: Response) => {
         },
       ],
     }).lean();
-    // Filter by permission
-    const filtered = [];
+    
+    // Find pages owned by user (searching only by title)
+    const pages = await Page.find({
+      isDeleted: false,
+      userId: new mongoose.Types.ObjectId(userId),
+      title: { $regex: q, $options: "i" }
+    }).lean();
+    
+    // Filter items by permission
+    const filteredItems = [];
     for (const item of items) {
-      if (await canAccessItem(userId, item)) filtered.push(item);
+      if (await canAccessItem(userId, item)) {
+        filteredItems.push({
+          ...item,
+          type: 'item',
+          searchType: 'item'
+        });
+      }
     }
-    res.json(filtered);
+    
+    // Filter pages by permission
+    const filteredPages = [];
+    for (const page of pages) {
+      if (await canAccessPage(userId, page)) {
+        filteredPages.push({
+          ...page,
+          type: 'document',
+          searchType: 'page',
+          id: page._id
+        });
+      }
+    }
+    
+    // Combine and sort results
+    const combinedResults = [...filteredItems, ...filteredPages].sort((a, b) => {
+      // Sort by relevance (exact title matches first, then partial matches)
+      const aExactTitle = a.title.toLowerCase() === q.toLowerCase();
+      const bExactTitle = b.title.toLowerCase() === q.toLowerCase();
+      
+      if (aExactTitle && !bExactTitle) return -1;
+      if (!aExactTitle && bExactTitle) return 1;
+      
+      // Then sort by updated date (newer first)
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+    
+    res.json(combinedResults);
   } catch (err) {
     res.status(500).json({ message: "Error searching items", error: err });
+  }
+};
+
+export const searchPages = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const q = req.query.q as string;
+    if (!userId || !q) {
+      res.status(400).json({ message: "Missing userId or query" });
+      return;
+    }
+    
+    // Find pages owned by user (searching only by title)
+    const pages = await Page.find({
+      isDeleted: false,
+      userId: new mongoose.Types.ObjectId(userId),
+      title: { $regex: q, $options: "i" }
+    })
+    .sort({ updatedAt: -1 })
+    .lean();
+    
+    // Filter pages by permission
+    const filteredPages = [];
+    for (const page of pages) {
+      if (await canAccessPage(userId, page)) {
+        filteredPages.push({
+          ...page,
+          _id: page._id.toString(), // Ensure _id is a string
+          type: 'document',
+          searchType: 'page',
+          id: page._id.toString() // Use _id as id for consistency
+        });
+      }
+    }
+    
+    res.json(filteredPages);
+  } catch (err) {
+    res.status(500).json({ message: "Error searching pages", error: err });
   }
 };
 

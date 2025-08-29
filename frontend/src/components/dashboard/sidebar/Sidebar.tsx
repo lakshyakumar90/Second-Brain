@@ -18,7 +18,6 @@ import {
   Star,
   Clock,
   Hash,
-  FolderPlus,
   CircleQuestionMark,
   Tag,
   BarChart3
@@ -26,6 +25,10 @@ import {
 import SidebarHeader from "./SidebarHeader";
 import { cn } from "@/lib/utils";
 import SearchModal from "@/components/search/SearchModal";
+import WorkspaceSwitcher from "@/components/workspaces/WorkspaceSwitcher";
+import CreateWorkspaceModal from "@/components/workspaces/CreateWorkspaceModal";
+import WorkspaceSettingsModal from "@/components/workspaces/WorkspaceSettingsModal";
+import WorkspaceMembersModal from "@/components/workspaces/WorkspaceMembersModal";
 
 interface SidebarProps {
   onToggleSidebar?: (event: React.MouseEvent) => void;
@@ -33,25 +36,6 @@ interface SidebarProps {
   onSearchOpen?: () => void;
   onCloseSidebar?: () => void;
 }
-
-// Sample data structure - replace with actual API calls
-const sampleWorkspaces = [
-  {
-    id: 1,
-    name: "Lakshya Kumar's Second Brain",
-    emoji: "🧠",
-    isOwner: true,
-    memberCount: 3,
-  },
-  {
-    id: 2,
-    name: "Team Collaboration",
-    emoji: "👥",
-    isOwner: false,
-    memberCount: 8,
-  },
-  { id: 3, name: "Project Alpha", emoji: "🚀", isOwner: false, memberCount: 5 },
-];
 
 const sampleCategories = [
   { id: 1, name: "Learning", icon: "📚", color: "#3B82F6", count: 12 },
@@ -63,6 +47,12 @@ const sampleCategories = [
 const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState, onSearchOpen, onCloseSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Workspace state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  
   const [isWorkspacesExpanded, setIsWorkspacesExpanded] = useState(true);
   const [isPrivateExpanded, setIsPrivateExpanded] = useState(true);
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
@@ -148,6 +138,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState, onSear
     </div>
   );
 
+  const handleSearchOpen = () => {
+    setIsSearchModalOpen(true);
+    onSearchOpen?.();
+    onCloseSidebar?.();
+  };
+
+  const handleItemClick = (item: any) => {
+    // Simple navigation - check if it's a page and navigate accordingly
+    const isPage = (item as any).searchType === 'page' || item.type === 'document';
+    const targetUrl = isPage ? `/pages/${item.id}` : `/items/${item.id}`;
+    navigate(targetUrl);
+    setIsSearchModalOpen(false);
+  };
+
   return (
     <div
       className={cn(
@@ -170,10 +174,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState, onSear
           <MenuItem 
             icon={Search} 
             label="Search" 
-            onClick={() => {
-              onSearchOpen?.();
-              onCloseSidebar?.();
-            }} 
+            onClick={handleSearchOpen}
           />
           <MenuItem 
             icon={Home} 
@@ -191,27 +192,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState, onSear
             isExpanded={isWorkspacesExpanded}
             onToggle={() => setIsWorkspacesExpanded(!isWorkspacesExpanded)}
             hasAddButton
-            onAdd={() => console.log("Add workspace")}
+            onAdd={() => setIsCreateModalOpen(true)}
           />
-          {isWorkspacesExpanded && showLabels && (
-            <div className="ml-2 space-y-1 mt-2">
-              {sampleWorkspaces.map((workspace) => (
-                <div
-                  key={workspace.id}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-secondary/50 text-sm"
-                >
-                  <span className="text-sm">{workspace.emoji}</span>
-                  <span className="flex-1 truncate">{workspace.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {workspace.memberCount}
-                  </span>
-                </div>
-              ))}
-              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-secondary/50 text-sm text-muted-foreground">
-                <FolderPlus className="h-4 w-4" />
-                <span>Create workspace</span>
-              </div>
-            </div>
+          {isWorkspacesExpanded && (
+            <WorkspaceSwitcher
+              onOpenCreateModal={() => setIsCreateModalOpen(true)}
+              onOpenSettings={() => setIsSettingsModalOpen(true)}
+              onOpenMembers={() => setIsMembersModalOpen(true)}
+            />
           )}
         </div>
 
@@ -321,11 +309,21 @@ const Sidebar: React.FC<SidebarProps> = ({ onToggleSidebar, sidebarState, onSear
     <SearchModal
       isOpen={isSearchModalOpen}
       onClose={() => setIsSearchModalOpen(false)}
-      onItemClick={(item) => {
-        console.log('Item clicked:', item);
-        // TODO: Navigate to item or open in editor
-        setIsSearchModalOpen(false);
-      }}
+      onItemClick={handleItemClick}
+    />
+
+    {/* Workspace Modals */}
+    <CreateWorkspaceModal
+      isOpen={isCreateModalOpen}
+      onClose={() => setIsCreateModalOpen(false)}
+    />
+    <WorkspaceSettingsModal
+      isOpen={isSettingsModalOpen}
+      onClose={() => setIsSettingsModalOpen(false)}
+    />
+    <WorkspaceMembersModal
+      isOpen={isMembersModalOpen}
+      onClose={() => setIsMembersModalOpen(false)}
     />
     </div>
   );

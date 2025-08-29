@@ -1,25 +1,39 @@
-import { useEffect, useState } from "react";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getRoot, $getSelection, $isRangeSelection, $createTextNode } from "lexical";
-import { $setBlocksType } from "@lexical/selection";
-import { $createHeadingNode } from "@lexical/rich-text";
+import { useEffect, useState } from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $getRoot, $getSelection, $isRangeSelection, $createTextNode } from 'lexical';
+import { $createHeadingNode } from '@lexical/rich-text';
+import { $setBlocksType } from '@lexical/selection';
 
-export default function SimpleTitlePlaceholder() {
+interface TitlePlaceholdersProps {
+  onTitleChange?: (title: string) => void;
+}
+
+export default function SimpleTitlePlaceholder({ onTitleChange }: TitlePlaceholdersProps) {
   const [editor] = useLexicalComposerContext();
   const [showPlaceholder, setShowPlaceholder] = useState(true);
 
   useEffect(() => {
-    return editor.registerUpdateListener(() => {
-      editor.getEditorState().read(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
         const root = $getRoot();
         const first = root.getFirstChild();
         
-        // Show placeholder only if there's no content or first block is empty
-        const hasContent = first && (first as any).getTextContent?.() !== "";
-        setShowPlaceholder(!hasContent);
+        if (first && first.getType() === 'heading') {
+          const textContent = first.getTextContent();
+          const hasContent = textContent.trim().length > 0;
+          
+          setShowPlaceholder(!hasContent);
+          
+          // Call the title change callback if provided
+          if (onTitleChange && hasContent) {
+            onTitleChange(textContent.trim());
+          }
+        } else {
+          setShowPlaceholder(true);
+        }
       });
     });
-  }, [editor]);
+  }, [editor, onTitleChange]);
 
   const handlePlaceholderClick = () => {
     editor.update(() => {

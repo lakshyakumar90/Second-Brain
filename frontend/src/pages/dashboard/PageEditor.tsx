@@ -213,6 +213,32 @@ const PageEditor = () => {
     }
   };
 
+  const handleTitleChange = useCallback((newTitle: string) => {
+    setPageTitle(newTitle);
+    // Update the page title in the backend
+    if (pageId && newTitle.trim()) {
+      const updateData = {
+        pageId,
+        title: newTitle.trim()
+      };
+      
+      // Debounce the title update to avoid too many API calls
+      if (timer.current) {
+        clearTimeout(timer.current);
+      }
+      
+      timer.current = window.setTimeout(async () => {
+        try {
+          await pageApi.updatePage(updateData);
+          // Update local page state
+          setPage(prev => prev ? { ...prev, title: newTitle.trim() } : null);
+        } catch (error) {
+          console.error('Failed to update page title:', error);
+        }
+      }, 1000); // 1 second debounce
+    }
+  }, [pageId]);
+
   const handleAITagsChange = async (tags: string[]) => {
     setSelectedTags(tags);
     // Persist tags immediately
@@ -243,15 +269,20 @@ const PageEditor = () => {
     let isActive = true;
 
     const loadPage = async () => {
+      console.log('PageEditor - Loading page with ID:', pageId);
+      
       if (!pageId) {
+        console.log('PageEditor - No pageId, navigating to home');
         navigate("/home");
         return;
       }
 
       try {
         setIsLoading(true);
+        console.log('PageEditor - Fetching page data...');
         const response = await pageApi.getPage(pageId);
         const pageData = response.page;
+        console.log('PageEditor - Page data received:', pageData);
 
         if (!isActive) return;
 
@@ -626,10 +657,10 @@ const PageEditor = () => {
       {/* AI-Enhanced Page Editor */}
       <div className="mb-6">
         <AIEnhancedPageEditor
-          title={page?.title || ""}
+          title={pageTitle}
           content={pageContent}
+          onTitleChange={handleTitleChange}
           onContentChange={(content, editorState) => handleEditorChange({ content, editorState })}
-          onTitleChange={handleAITitleChange}
           onTagsChange={handleAITagsChange}
           onSummaryChange={handleAISummaryChange}
         />
@@ -676,6 +707,7 @@ const PageEditor = () => {
       <NotionEditor
         initialEditorState={initialState}
         onChange={handleEditorChange}
+        onTitleChange={handleTitleChange}
       />
 
       {/* Attachments Section */}

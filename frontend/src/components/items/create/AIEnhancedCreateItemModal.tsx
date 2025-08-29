@@ -17,6 +17,7 @@ import ImageUpload from '@/components/ui/image-upload';
 import AISuggestions from '@/components/ai/AISuggestions';
 import { itemApi, type CreateItemData } from '@/services/itemApi';
 import type { ItemType } from '@/types/items';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 const createItemSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -58,6 +59,7 @@ export default function AIEnhancedCreateItemModal({
     category: '',
     summary: '',
   });
+  const { currentWorkspace } = useWorkspace();
 
   const {
     register,
@@ -85,6 +87,8 @@ export default function AIEnhancedCreateItemModal({
         ...data,
         // Include AI-generated summary if available
         ...(aiGeneratedContent.summary && { summary: aiGeneratedContent.summary }),
+        // Include current workspace
+        workspace: currentWorkspace?._id,
       };
 
       const response = await itemApi.createItem(itemData as unknown as CreateItemData);

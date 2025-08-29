@@ -10,9 +10,11 @@ import { itemApi, type Block } from "@/services/itemApi";
 import { commentApi } from "@/services/commentApi";
 import { CommentsPanel } from "@/components/comments";
 import { useAppSelector } from "@/store/hooks";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const ItemsPage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
+  const { currentWorkspace } = useWorkspace();
   const [items, setItems] = useState<UIItem[]>([]);
   const [previewItem, setPreviewItem] = useState<UIItem | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -29,7 +31,11 @@ const ItemsPage: React.FC = () => {
     let mounted = true;
     (async () => {
       try {
-        const res = await itemApi.getItems({ page: 1, limit: 50 });
+        const params: any = { page: 1, limit: 50 };
+        if (currentWorkspace) {
+          params.workspace = currentWorkspace._id;
+        }
+        const res = await itemApi.getItems(params);
         const list = (res?.data?.items || res?.items || []).map((it: any) => backendItemToUIItem(it));
         if (mounted) {
           setItems(list); // TODO: add pagination and sorting here
@@ -42,7 +48,7 @@ const ItemsPage: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [currentWorkspace]);
 
   useEffect(() => {
     if (itemId && items.length > 0) {

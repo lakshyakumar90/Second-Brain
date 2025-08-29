@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Loader2, FileText, Newspaper } from 'lucide-react';
+import { Search, X, Loader2, FileText, Newspaper, Image, Link, Music, CheckSquare } from 'lucide-react';
 import { type UIItem } from '@/types/items';
 import { searchApi } from '@/services/searchApi';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom'; // Added for navigation
 
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onItemClick?: (item: UIItem) => void; // Added for custom item click handling
 }
 
 const SimplifiedSearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
@@ -17,6 +19,7 @@ const SimplifiedSearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   // Debounced search effect
   useEffect(() => {
@@ -83,21 +86,26 @@ const SimplifiedSearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) 
   };
 
   const handleItemClick = (item: UIItem) => {
-    // Documents are treated as 'pages', other types are 'items'.
-    const targetUrl = item.type === 'document' 
-      ? `/pages/${item.id}` 
-      : `/items/${item.id}`;
-      
-    // Use window.location.assign for a reliable redirect.
-    window.location.assign(targetUrl);
-    onClose(); // Close modal on navigation
+    const isPage = (item as any).searchType === "page" || item.type === "document";
+    const targetUrl = isPage ? `/pages/${item.id}` : `/items/${item.id}`;
+    console.log("SearchModal - Navigating to:", targetUrl);
+  
+    navigate(targetUrl);
+    setTimeout(() => {
+      onClose();
+    }, 0); // let navigate finish
   };
+  
   
   const getItemPreviewText = (item: UIItem): string => {
     switch (item.type) {
       case 'text':
         return item.preview || '';
       case 'document':
+        // For pages, show summary or content preview
+        if ((item as any).searchType === 'page') {
+          return item.preview || 'Page';
+        }
         return item.fileName || item.title || 'Document';
       case 'audio':
         return item.src || item.title || 'Audio';
@@ -112,8 +120,26 @@ const SimplifiedSearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) 
     }
   };
 
-  const getItemIcon = (itemType: string) => {
-    return itemType === 'document' ? <Newspaper className="h-5 w-5 text-muted-foreground" /> : <FileText className="h-5 w-5 text-muted-foreground" />;
+  const getItemIcon = (itemType: string, searchType?: string) => {
+    // Special handling for pages
+    if (searchType === 'page') {
+      return <Newspaper className="h-4 w-4 text-blue-500" />;
+    }
+    
+    switch (itemType) {
+      case 'document':
+        return <Newspaper className="h-4 w-4 text-blue-500" />;
+      case 'image':
+        return <Image className="h-4 w-4 text-green-500" />;
+      case 'link':
+        return <Link className="h-4 w-4 text-purple-500" />;
+      case 'audio':
+        return <Music className="h-4 w-4 text-orange-500" />;
+      case 'todo':
+        return <CheckSquare className="h-4 w-4 text-red-500" />;
+      default:
+        return <FileText className="h-4 w-4 text-gray-500" />;
+    }
   };
 
   if (!isOpen) {
@@ -161,7 +187,7 @@ const SimplifiedSearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) 
                   onClick={() => handleItemClick(item)}
                   className="flex items-center gap-3 p-3 rounded-md hover:bg-muted cursor-pointer"
                 >
-                  {getItemIcon(item.type)}
+                  {getItemIcon(item.type, (item as any).searchType)}
                   <div className="flex flex-col">
                     <span className="font-medium">{item.title}</span>
                     <span className="text-sm text-muted-foreground line-clamp-1">

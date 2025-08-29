@@ -76,21 +76,30 @@ class SearchApiService {
     
     try {
       const response = await this.makeRequest<any>(endpoint);
+      
       // Transform the response to match our expected format
+      const transformedItems = response.map((item: any) => ({
+        id: item._id || item.id,
+        type: item.type || 'text',
+        title: item.title || '',
+        preview: item.content?.substring(0, 100) || item.summary?.substring(0, 100) || '',
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        isFavorite: item.isFavorite || false,
+        isPinned: item.isPinned || false,
+        tags: item.tags || [],
+        searchType: item.searchType || 'item', // 'item' or 'page'
+        fileName: item.fileName, // for documents
+        url: item.url, // for links
+        images: item.images, // for images
+        todos: item.todos, // for todos
+        src: item.src, // for audio
+      }));
+      
       return {
         message: "Items retrieved successfully",
         data: {
-          items: response.map((item: any) => ({
-            id: item._id,
-            type: item.type || 'text',
-            title: item.title || '',
-            preview: item.content?.substring(0, 100) || '',
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-            isFavorite: item.isFavorite || false,
-            isPinned: item.isPinned || false,
-            tags: item.tags || [],
-          })),
+          items: transformedItems,
           pagination: {
             currentPage: 1,
             totalPages: 1,
@@ -105,9 +114,68 @@ class SearchApiService {
         },
       };
     } catch (error) {
-      console.error('Search error:', error);
       return {
         message: "No items found",
+        data: {
+          items: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 0,
+            totalItems: 0,
+            itemsPerPage: 20,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {
+            applied: filters,
+          },
+        },
+      };
+    }
+  }
+
+  async searchPages(filters: SearchFilters = {}): Promise<SearchResponse> {
+    const query = filters.search || '';
+    const endpoint = `/search/pages?q=${encodeURIComponent(query)}`;
+    
+    try {
+      const response = await this.makeRequest<any>(endpoint);
+      
+      // Transform pages to match UIItem format
+      const transformedPages = response.map((page: any) => ({
+        id: page._id || page.id,
+        type: 'document' as const,
+        title: page.title || '',
+        preview: page.summary?.substring(0, 100) || page.content?.substring(0, 100) || '',
+        createdAt: page.createdAt,
+        updatedAt: page.updatedAt,
+        isFavorite: false,
+        isPinned: false,
+        tags: page.tags || [],
+        searchType: 'page',
+        fileName: page.title, // Use title as filename for pages
+      }));
+      
+      return {
+        message: "Pages retrieved successfully",
+        data: {
+          items: transformedPages,
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: response.length,
+            itemsPerPage: response.length,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {
+            applied: filters,
+          },
+        },
+      };
+    } catch (error) {
+      return {
+        message: "No pages found",
         data: {
           items: [],
           pagination: {
@@ -131,7 +199,6 @@ class SearchApiService {
       const response = await this.makeRequest<any[]>('/search/history');
       return response.map(item => item.query).filter(Boolean);
     } catch (error) {
-      console.error('Failed to get recent searches:', error);
       return [];
     }
   }
@@ -158,7 +225,6 @@ class SearchApiService {
       
       return suggestions.slice(0, 10); // Limit to 10 suggestions
     } catch (error) {
-      console.error('Failed to get search suggestions:', error);
       return [];
     }
   }
@@ -171,7 +237,6 @@ class SearchApiService {
       const response = await this.makeRequest<SearchSuggestion[]>(endpoint);
       return response;
     } catch (error) {
-      console.error('Failed to get advanced suggestions:', error);
       return [];
     }
   }
@@ -206,7 +271,6 @@ class SearchApiService {
         },
       };
     } catch (error) {
-      console.error('Advanced search error:', error);
       return {
         message: "Advanced search failed",
         data: {
@@ -245,7 +309,6 @@ class SearchApiService {
       
       return response.blob();
     } catch (error) {
-      console.error('Export error:', error);
       throw error;
     }
   }
@@ -259,7 +322,6 @@ class SearchApiService {
       const response = await this.makeRequest<any>('/search/analytics');
       return response;
     } catch (error) {
-      console.error('Failed to get search analytics:', error);
       return {
         totalSearches: 0,
         popularQueries: [],

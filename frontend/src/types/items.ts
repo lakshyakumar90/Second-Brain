@@ -4,6 +4,7 @@ export interface BaseItem {
   id: string;
   type: ItemType;
   title: string;
+  preview?: string; // Added for search results and page summaries
   createdAt?: string;
   updatedAt?: string;
   isFavorite?: boolean;

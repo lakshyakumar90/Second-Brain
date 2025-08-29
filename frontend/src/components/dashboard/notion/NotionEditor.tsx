@@ -38,6 +38,7 @@ type NotionEditorProps = {
   initialTitle?: string;
   onChange?: (data: { content: string; editorState: any }) => void;
   initialEditorState?: any;
+  onTitleChange?: (title: string) => void;
 };
 
 const theme = {
@@ -216,7 +217,8 @@ function SlashMenu({
 export default function NotionEditor({ 
   initialTitle = "Untitled", 
   onChange, 
-  initialEditorState
+  initialEditorState,
+  onTitleChange
 }: NotionEditorProps) {
   const initialConfig = useMemo(
     () => ({
@@ -422,7 +424,7 @@ export default function NotionEditor({
             <BubbleToolbar />
             {/* Dragging disabled per request */}
             <ColumnsPlugin />
-            <SimpleTitlePlaceholder />
+            <SimpleTitlePlaceholder onTitleChange={onTitleChange} />
             <TitlePolicyPlugin />
 
           </div>

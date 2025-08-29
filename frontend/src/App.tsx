@@ -10,6 +10,7 @@ import AuthLayout from "./layouts/AuthLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import AuthInitializer from "./components/AuthInitializer";
 import { DarkModeContext, DarkModeProvider } from "./contexts/DarkModeContext";
+import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import { useAppSelector } from "./store/hooks";
 import Shimmer from "./components/ui/Shimmer";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -83,9 +84,11 @@ function AppContent() {
             element={
               isAuthenticated ? (
                 <DarkModeProvider>
-                  <DashboardLayout>
-                    <Outlet />
-                  </DashboardLayout>
+                  <WorkspaceProvider>
+                    <DashboardLayout>
+                      <Outlet />
+                    </DashboardLayout>
+                  </WorkspaceProvider>
                 </DarkModeProvider>
               ) : (
                 <Navigate to="/auth/login" />

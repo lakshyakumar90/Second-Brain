@@ -2,6 +2,7 @@ import express from 'express';
 import { authMiddleware, registrationCompleteMiddleware } from '../middlewares/authMiddleware';
 import {
   searchItems,
+  searchPages,
   searchGlobal,
   searchByCategory,
   searchByTags,
@@ -14,6 +15,7 @@ import {
 const router = express.Router();
 
 router.get('/items', authMiddleware, registrationCompleteMiddleware, searchItems);
+router.get('/pages', authMiddleware, registrationCompleteMiddleware, searchPages);
 router.get('/global', searchGlobal);
 router.get('/category/:categoryId', authMiddleware, registrationCompleteMiddleware, searchByCategory);
 router.get('/tags', authMiddleware, registrationCompleteMiddleware, searchByTags);

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import ImageUpload from "@/components/ui/image-upload";
 import TagInput from "@/components/tags/TagInput";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const schema = z.object({
   type: z.enum(["text", "image", "link", "document", "audio", "todo"] as const),
@@ -39,6 +40,7 @@ const typeOptions: { label: string; value: ItemType }[] = [
 const CreateItemModal: React.FC<CreateItemModalProps> = ({ open, onClose, onCreate }) => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const { currentWorkspace } = useWorkspace();
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { type: "text", title: "", tags: [] }
@@ -48,7 +50,11 @@ const CreateItemModal: React.FC<CreateItemModalProps> = ({ open, onClose, onCrea
 
   const onSubmit = (data: FormValues) => {
     setSubmitting(true);
-    onCreate({ ...data, tags: selectedTags });
+    onCreate({ 
+      ...data, 
+      tags: selectedTags,
+      workspace: currentWorkspace?._id 
+    });
     setSubmitting(false);
     onClose();
   };
