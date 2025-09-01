@@ -17,7 +17,7 @@ export type CreateItemData = {
 	metadata?: Record<string, unknown>;
 	categories?: string[];
 	tags?: string[];
-	workspace?: string;
+	workspace: string; // Required
 	isPublic?: boolean;
 	collaborators?: string[];
 	isFavorite?: boolean;
@@ -65,10 +65,54 @@ export class ItemApiService {
 		});
 	}
 
-	async getItems(params: { page?: number; limit?: number } = {}): Promise<any> {
+	async getItems(params: {
+		page?: number;
+		limit?: number;
+		type?: 'text' | 'image' | 'video' | 'link' | 'document' | 'audio';
+		isPublic?: boolean;
+		isFavorite?: boolean;
+		isArchived?: boolean;
+		search?: string;
+		tags?: string[] | string;
+		categories?: string[] | string;
+		workspace: string; // Required
+		socialPlatform?: 'twitter' | 'instagram' | 'youtube' | 'linkedin' | 'tiktok' | 'reddit' | 'pinterest';
+		sentiment?: 'positive' | 'negative' | 'neutral';
+		complexity?: 'low' | 'medium' | 'high';
+		dateFrom?: string; // ISO string
+		dateTo?: string; // ISO string
+		sortBy?: 'createdAt' | 'updatedAt' | 'title' | 'viewCount' | 'lastViewedAt' | 'lastEditedAt';
+		sortOrder?: 'asc' | 'desc';
+	}): Promise<any> {
 		const query = new URLSearchParams();
-		if (params.page) query.set('page', String(params.page));
-		if (params.limit) query.set('limit', String(params.limit));
+		const setIf = (key: string, value: any) => {
+			if (value !== undefined && value !== null && value !== '') {
+				query.set(key, String(value));
+			}
+		};
+		setIf('page', params.page);
+		setIf('limit', params.limit);
+		setIf('type', params.type);
+		if (params.isPublic !== undefined) setIf('isPublic', params.isPublic);
+		if (params.isFavorite !== undefined) setIf('isFavorite', params.isFavorite);
+		if (params.isArchived !== undefined) setIf('isArchived', params.isArchived);
+		setIf('search', params.search);
+		if (params.tags) {
+			const tags = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
+			setIf('tags', tags);
+		}
+		if (params.categories) {
+			const cats = Array.isArray(params.categories) ? params.categories.join(',') : params.categories;
+			setIf('categories', cats);
+		}
+		setIf('workspace', params.workspace);
+		setIf('socialPlatform', params.socialPlatform);
+		setIf('sentiment', params.sentiment);
+		setIf('complexity', params.complexity);
+		setIf('dateFrom', params.dateFrom);
+		setIf('dateTo', params.dateTo);
+		setIf('sortBy', params.sortBy);
+		setIf('sortOrder', params.sortOrder);
 		const qs = query.toString();
 		return this.request<any>(`/items/all${qs ? `?${qs}` : ''}`);
 	}

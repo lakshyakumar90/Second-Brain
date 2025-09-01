@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building2, Save, Trash2 } from 'lucide-react';
+import { X, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -22,9 +23,10 @@ import {
 interface WorkspaceSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isSubPanel?: boolean;
 }
 
-const WorkspaceSettingsModal: React.FC<WorkspaceSettingsModalProps> = ({ isOpen, onClose }) => {
+const WorkspaceSettingsModal: React.FC<WorkspaceSettingsModalProps> = ({ isOpen, onClose, isSubPanel = false }) => {
   const { currentWorkspace, updateWorkspace, deleteWorkspace } = useWorkspace();
   const { toast } = useToast();
   
@@ -113,11 +115,14 @@ const WorkspaceSettingsModal: React.FC<WorkspaceSettingsModalProps> = ({ isOpen,
     }
   };
 
-  if (!isOpen || !currentWorkspace) return null;
+  if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-background rounded-lg shadow-lg w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+  const content = (
+    <div className={cn(
+      "bg-background rounded-lg shadow-lg",
+      isSubPanel ? "w-full h-full" : "w-full max-w-md mx-4"
+    )}>
+      {!isSubPanel && (
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
@@ -132,118 +137,110 @@ const WorkspaceSettingsModal: React.FC<WorkspaceSettingsModalProps> = ({ isOpen,
             <X className="h-4 w-4" />
           </Button>
         </div>
+      )}
 
-        <div className="p-6 space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Workspace Name *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter workspace name"
+      <div className={cn("space-y-4", isSubPanel ? "p-4" : "p-6")}>
+        <div className="space-y-2">
+          <Label htmlFor="name">Workspace Name *</Label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter workspace name"
+            disabled={isLoading || isDeleting}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Optional description for your workspace"
+            disabled={isLoading || isDeleting}
+            rows={3}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>Public Workspace</Label>
+            <Switch
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
               disabled={isLoading || isDeleting}
             />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description for your workspace"
+          
+          <div className="flex items-center justify-between">
+            <Label>Allow Invites</Label>
+            <Switch
+              checked={allowInvites}
+              onCheckedChange={setAllowInvites}
               disabled={isLoading || isDeleting}
-              rows={3}
             />
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Public Workspace</Label>
-                <p className="text-sm text-muted-foreground">
-                  Allow anyone to view this workspace
-                </p>
-              </div>
-              <Switch
-                checked={isPublic}
-                onCheckedChange={setIsPublic}
-                disabled={isLoading || isDeleting}
-              />
-            </div>
+        <div className="flex gap-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isLoading || isDeleting}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={isLoading || isDeleting || !name.trim()}
+            className="flex-1"
+          >
+            {isLoading ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Allow Invites</Label>
-                <p className="text-sm text-muted-foreground">
-                  Allow members to invite others
-                </p>
-              </div>
-              <Switch
-                checked={allowInvites}
-                onCheckedChange={setAllowInvites}
-                disabled={isLoading || isDeleting}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading || isDeleting}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={isLoading || isDeleting || !name.trim()}
-              className="flex-1"
-            >
-              {isLoading ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-
-          {currentWorkspace.isOwner && (
-            <div className="pt-4 border-t">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="w-full"
-                    disabled={isLoading || isDeleting}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Workspace
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{currentWorkspace.name}"? This action cannot be undone and will permanently remove all workspace data.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {isDeleting ? "Deleting..." : "Delete"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
+        <div className="pt-4 border-t">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                className="w-full"
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete Workspace"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{currentWorkspace?.name}"? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
+    </div>
+  );
+
+  if (isSubPanel) {
+    return content;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      {content}
     </div>
   );
 };

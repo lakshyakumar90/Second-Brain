@@ -7,20 +7,43 @@ import {
   DashboardCarouselNext 
 } from "@/components/ui/dashboard-carousel";
 import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { itemApi } from "@/services/itemApi";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
-// Example data (more items added)
-const pinnedItems = [
-  { title: "C++ Basics and STL" },
-  { title: "DSA" },
-  { title: "Basic Hashing" },
-  { title: "Sorting" },
-  { title: "Basic Recursion" },
-  { title: "Arrays and Strings" },
-  { title: "Linked Lists" },
-  { title: "Trees and Graphs" },
-];
+type SimpleItem = { id: string; title: string };
 
 const PinnedItems = () => {
+  const [items, setItems] = useState<SimpleItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { currentWorkspace } = useWorkspace();
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        // Using isFavorite to represent pinned/favorite items
+        const params: any = { isFavorite: true, limit: 20, sortBy: 'updatedAt', sortOrder: 'desc' };
+        if (currentWorkspace) {
+          params.workspace = currentWorkspace._id;
+        }
+        const res = await itemApi.getItems(params);
+        const list = (res?.data?.items || res?.items || []).map((it: any) => ({ id: it._id || it.id, title: it.title || 'Untitled' }));
+        if (mounted) setItems(list);
+      } catch (e) {
+        if (mounted) setItems([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [currentWorkspace]);
+
+  if (!loading && items.length === 0) {
+    return null;
+  }
+
   return (
     <div>
       <div className="flex flex-col gap-2">
@@ -38,10 +61,10 @@ const PinnedItems = () => {
             }}
           >
             <DashboardCarouselContent className="-ml-4">
-              {pinnedItems.map((item, i) => (
+              {(loading ? Array.from({ length: 6 }).map((_, i) => ({ id: `skeleton-${i}`, title: '' })) : items).map((item, i) => (
                 <DashboardCarouselItem key={i} className="pl-4 basis-[140px]">
                   <Card className="h-24 bg-secondary flex items-end p-4 shadow-none">
-                    <span className="font-medium text-sm">{item.title}</span>
+                    <span className="font-medium text-sm">{loading ? ' ' : item.title}</span>
                   </Card>
                 </DashboardCarouselItem>
               ))}

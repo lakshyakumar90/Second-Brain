@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Users, UserPlus, Mail, Crown, Shield, Eye } from 'lucide-react';
+import { X, Users, Crown, Shield, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import {
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { workspaceApi, type WorkspaceMember } from '@/services/workspaceApi';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -28,9 +29,10 @@ import {
 interface WorkspaceMembersModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isSubPanel?: boolean;
 }
 
-const WorkspaceMembersModal: React.FC<WorkspaceMembersModalProps> = ({ isOpen, onClose }) => {
+const WorkspaceMembersModal: React.FC<WorkspaceMembersModalProps> = ({ isOpen, onClose, isSubPanel = false }) => {
   const { currentWorkspace } = useWorkspace();
   const { toast } = useToast();
   
@@ -104,15 +106,17 @@ const WorkspaceMembersModal: React.FC<WorkspaceMembersModalProps> = ({ isOpen, o
     }
   };
 
-  const handleRemoveMember = async (userId: string) => {
+  const handleRemoveMember = async (memberId: string) => {
     if (!currentWorkspace) return;
 
     try {
-      await workspaceApi.removeMember(currentWorkspace._id, userId);
+      await workspaceApi.removeMember(currentWorkspace._id, memberId);
+      
       toast({
         title: "Success",
         description: "Member removed successfully",
       });
+      
       await loadMembers(); // Refresh members list
     } catch (error: any) {
       toast({
@@ -123,15 +127,17 @@ const WorkspaceMembersModal: React.FC<WorkspaceMembersModalProps> = ({ isOpen, o
     }
   };
 
-  const handleUpdateRole = async (userId: string, newRole: 'view' | 'edit' | 'admin') => {
+  const handleUpdateMemberRole = async (memberId: string, newRole: 'view' | 'edit' | 'admin') => {
     if (!currentWorkspace) return;
 
     try {
-      await workspaceApi.updateMemberRole(currentWorkspace._id, userId, newRole);
+      await workspaceApi.updateMemberRole(currentWorkspace._id, memberId, newRole);
+      
       toast({
         title: "Success",
         description: "Member role updated successfully",
       });
+      
       await loadMembers(); // Refresh members list
     } catch (error: any) {
       toast({
@@ -148,8 +154,10 @@ const WorkspaceMembersModal: React.FC<WorkspaceMembersModalProps> = ({ isOpen, o
         return <Crown className="h-4 w-4 text-yellow-500" />;
       case 'edit':
         return <Shield className="h-4 w-4 text-blue-500" />;
-      default:
+      case 'view':
         return <Eye className="h-4 w-4 text-gray-500" />;
+      default:
+        return <Users className="h-4 w-4" />;
     }
   };
 
@@ -159,170 +167,188 @@ const WorkspaceMembersModal: React.FC<WorkspaceMembersModalProps> = ({ isOpen, o
         return 'Admin';
       case 'edit':
         return 'Editor';
-      default:
+      case 'view':
         return 'Viewer';
+      default:
+        return role;
     }
   };
 
-  if (!isOpen || !currentWorkspace) return null;
+  const handleClose = () => {
+    if (!isInviting) {
+      onClose();
+    }
+  };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-background rounded-lg shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+  if (!isOpen) return null;
+
+  const content = (
+    <div className={cn(
+      "bg-background rounded-lg shadow-lg",
+      isSubPanel ? "w-full h-full" : "w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+    )}>
+      {!isSubPanel && (
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Workspace Members</h2>
+            <h2 className="text-lg font-semibold">Manage Members</h2>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            onClick={onClose}
+            onClick={handleClose}
+            disabled={isInviting}
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
+      )}
 
-        <div className="p-6 space-y-6">
-          {/* Invite New Member */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3 flex items-center gap-2">
-              <UserPlus className="h-4 w-4" />
-              Invite Member
-            </h3>
-            <form onSubmit={handleInviteMember} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="Enter email address"
-                    disabled={isInviting}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={inviteRole}
-                    onValueChange={(value: 'view' | 'edit' | 'admin') => setInviteRole(value)}
-                    disabled={isInviting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="view">Viewer</SelectItem>
-                      <SelectItem value="edit">Editor</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+      <div className={cn("space-y-6", isSubPanel ? "p-4" : "p-6")}>
+        {/* Invite Member Form */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium">Invite New Member</h3>
+          <form onSubmit={handleInviteMember} className="space-y-3">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label htmlFor="email" className="text-xs">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="Enter email address"
+                  disabled={isInviting}
+                  className="h-8 text-sm"
+                />
               </div>
-              <Button
-                type="submit"
-                disabled={isInviting || !inviteEmail.trim()}
-                className="w-full"
-              >
-                {isInviting ? "Sending..." : "Send Invitation"}
-              </Button>
-            </form>
-          </div>
+              <div className="w-32">
+                <Label htmlFor="role" className="text-xs">Role</Label>
+                <Select
+                  value={inviteRole}
+                  onValueChange={(value: 'view' | 'edit' | 'admin') => setInviteRole(value)}
+                  disabled={isInviting}
+                >
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="view">Viewer</SelectItem>
+                    <SelectItem value="edit">Editor</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isInviting || !inviteEmail.trim()}
+              className="w-full h-8 text-sm"
+            >
+              {isInviting ? "Sending..." : "Send Invitation"}
+            </Button>
+          </form>
+        </div>
 
-          {/* Members List */}
-          <div>
-            <h3 className="font-medium mb-3">Current Members ({members.length})</h3>
-            {isLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
-                    <div className="w-8 h-8 bg-muted animate-pulse rounded-full" />
-                    <div className="flex-1 space-y-1">
-                      <div className="h-4 bg-muted animate-pulse rounded" />
-                      <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
+        {/* Members List */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium">Current Members</h3>
+          {isLoading ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              Loading members...
+            </div>
+          ) : members.length === 0 ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              No members found
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {members.map((member) => (
+                <div
+                  key={member.userId._id}
+                  className="flex items-center justify-between p-3 border rounded-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      {member.userId.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">{member.userId.name}</div>
+                      <div className="text-xs text-muted-foreground">{member.userId.email}</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {members.map((member) => (
-                  <div key={member.userId._id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                        {member.userId.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-medium">{member.userId.name}</div>
-                        <div className="text-sm text-muted-foreground">{member.userId.email}</div>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      {getRoleIcon(member.role)}
+                      <span className="text-xs text-muted-foreground">
+                        {getRoleLabel(member.role)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    {member.userId._id !== currentWorkspace?.ownerId?._id && (
                       <div className="flex items-center gap-1">
-                        {getRoleIcon(member.role)}
-                        <span className="text-sm">{getRoleLabel(member.role)}</span>
-                      </div>
-                      
-                      {currentWorkspace.isOwner && member.userId._id !== currentWorkspace.ownerId._id && (
-                        <div className="flex items-center gap-1">
-                          <Select
-                            value={member.role}
-                            onValueChange={(value: 'view' | 'edit' | 'admin') => 
-                              handleUpdateRole(member.userId._id, value)
-                            }
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="view">Viewer</SelectItem>
-                              <SelectItem value="edit">Editor</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                        <Select
+                          value={member.role}
+                          onValueChange={(value: 'view' | 'edit' | 'admin') => 
+                            handleUpdateMemberRole(member.userId._id, value)
+                          }
+                        >
+                          <SelectTrigger className="h-6 w-20 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="view">Viewer</SelectItem>
+                            <SelectItem value="edit">Editor</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove Member</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove {member.userId.name} from this workspace?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRemoveMember(member.userId._id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
                                 Remove
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remove Member</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to remove {member.userId.name} from this workspace?
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleRemoveMember(member.userId._id)}
-                                  className="bg-red-500 text-white hover:bg-red-600"
-                                >
-                                  Remove
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      )}
-                    </div>
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
                   </div>
-                ))}
-                
-                {members.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No members found
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+    </div>
+  );
+
+  if (isSubPanel) {
+    return content;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      {content}
     </div>
   );
 };

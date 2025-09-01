@@ -8,28 +8,23 @@ const PageSchema = new mongoose.Schema<IPage>({
 	editorState: { 
 		type: mongoose.Schema.Types.Mixed, 
 		default: {
-			root: {
-				children: [
-					{
-						children: [],
-						direction: null,
-						format: "",
-						indent: 0,
-						type: "paragraph",
-						version: 1
-					}
-				],
-				direction: null,
-				format: "",
-				indent: 0,
-				type: "root",
-				version: 1
-			}
+			type: "doc",
+			content: [
+				{
+					type: "paragraph",
+					content: []
+				}
+			]
 		}
 	},
 	summary: { type: String },
 	tags: [{ type: String, trim: true }],
 	categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+	workspace: { 
+		type: mongoose.Schema.Types.ObjectId, 
+		ref: 'Workspace', 
+		required: true 
+	},
 	isPublic: { type: Boolean, default: false },
 	isArchived: { type: Boolean, default: false },
 	isDeleted: { type: Boolean, default: false },

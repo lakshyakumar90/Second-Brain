@@ -40,7 +40,7 @@ export const createItemSchema = z.object({
   // Categories and tags
   categories: z.array(z.string()).optional(),
   tags: z.array(z.string().min(1, "Tag cannot be empty")).optional(),
-  workspace: z.string().optional(),
+  workspace: z.string().min(1, "Workspace is required"),
   
   // Settings
   isPublic: z.boolean().default(false),
@@ -92,7 +92,7 @@ export const updateItemSchema = z.object({
   // Categories and tags
   categories: z.array(z.string()).optional(),
   tags: z.array(z.string().min(1, "Tag cannot be empty")).optional(),
-  workspace: z.string().optional(),
+  workspace: z.string().min(1, "Workspace is required"),
   
   // Settings
   isPublic: z.boolean().default(false),
@@ -115,7 +115,7 @@ export const getItemsQuerySchema = z.object({
   search: z.string().optional(),
   tags: z.string().optional(),
   categories: z.string().optional(),
-  workspace: z.string().optional(),
+  workspace: z.string().min(1, "Workspace is required"),
   socialPlatform: z.enum([
     "twitter", "instagram", "youtube", "linkedin", 
     "tiktok", "reddit", "pinterest"

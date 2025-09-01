@@ -9,6 +9,7 @@ export interface IPage {
 	summary?: string;
 	tags: string[];
 	categories: string[];
+	workspace: string | ObjectId;
 	isPublic: boolean;
 	isArchived: boolean;
 	isDeleted: boolean;

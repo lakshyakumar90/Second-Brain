@@ -7,6 +7,7 @@ export const createPageSchema = z.object({
 	summary: z.string().optional(),
 	tags: z.array(z.string()).optional(),
 	categories: z.array(z.string()).optional(),
+	workspace: z.string().min(1, "Workspace is required"),
 	isPublic: z.boolean().optional(),
 	isArchived: z.boolean().optional(),
 });
@@ -18,6 +19,7 @@ export const updatePageSchema = z.object({
 	summary: z.string().optional(),
 	tags: z.array(z.string()).optional(),
 	categories: z.array(z.string()).optional(),
+	workspace: z.string().min(1, "Workspace is required").optional(),
 	isPublic: z.boolean().optional(),
 	isArchived: z.boolean().optional(),
 });

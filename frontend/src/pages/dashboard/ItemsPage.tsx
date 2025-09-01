@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import ItemGrid from "@/components/items/ItemGrid";
 import type { UIItem } from "@/types/items";
 import ItemPreviewModal from "@/components/items/ItemPreviewModal";
@@ -16,6 +16,25 @@ const ItemsPage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { currentWorkspace } = useWorkspace();
   const [items, setItems] = useState<UIItem[]>([]);
+
+  const uiPayloadToBackend = ({ type, title, content, todos, url, tags }: { type: ItemType; title: string; content?: string; todos?: Array<{ id: string; text: string; done: boolean }>; url?: string; tags?: string[]; }) => {
+    const blocks: Block[] | undefined = todos && todos.length > 0 ? todos.map(t => ({
+      id: t.id,
+      type: 'checklist',
+      content: t.text,
+      checked: t.done,
+    })) : undefined;
+    return {
+      type: type === 'todo' ? 'text' : (type as any),
+      title: title || 'Untitled',
+      content: content || undefined,
+      blocks,
+      url: url || undefined,
+      tags: tags || undefined,
+      workspace: currentWorkspace!._id,
+      // files upload persistence can be added later; focus on content + blocks
+    };
+  };
   const [previewItem, setPreviewItem] = useState<UIItem | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [quickNote, setQuickNote] = useState("");
@@ -26,15 +45,44 @@ const ItemsPage: React.FC = () => {
 
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const params: any = { page: 1, limit: 50 };
-        if (currentWorkspace) {
-          params.workspace = currentWorkspace._id;
+        if (!currentWorkspace) {
+          console.log('No workspace selected, skipping items load');
+          return;
         }
+        
+        const params: any = { page: 1, limit: 50, workspace: currentWorkspace._id };
+        // Parse URL query parameters and pass through to API
+        const searchParams = new URLSearchParams(location.search);
+        const setBool = (key: string) => {
+          const v = searchParams.get(key);
+          if (v === 'true' || v === 'false') params[key] = v === 'true';
+        };
+        const setStr = (key: string) => {
+          const v = searchParams.get(key);
+          if (v) params[key] = v;
+        };
+        const setEnum = (key: string) => setStr(key);
+        // supported filters
+        setStr('type');
+        setBool('isPublic');
+        setBool('isFavorite');
+        setBool('isArchived');
+        setStr('search');
+        setStr('tags');
+        setStr('categories');
+        setStr('socialPlatform');
+        setEnum('sentiment');
+        setEnum('complexity');
+        setStr('dateFrom');
+        setStr('dateTo');
+        setStr('sortBy');
+        setEnum('sortOrder');
         const res = await itemApi.getItems(params);
         const list = (res?.data?.items || res?.items || []).map((it: any) => backendItemToUIItem(it));
         if (mounted) {
@@ -48,7 +96,7 @@ const ItemsPage: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [currentWorkspace]);
+  }, [currentWorkspace, location.search]);
 
   useEffect(() => {
     if (itemId && items.length > 0) {
@@ -205,39 +253,52 @@ const ItemsPage: React.FC = () => {
           <FilterButton active={activeFilter} filter="document" onClick={setActiveFilter}>Document</FilterButton>
         </div>
 
-        {pinned.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Pinned</h2>
-            <ItemGrid 
-            items={pinned} 
-            onToggleTodo={handleToggleTodo} 
-            onOpenItem={handleOpenPreview} 
-            onAddTodo={handleAddTodo} 
-            onRemoveTodo={handleRemoveTodo} 
-            onTogglePin={handleTogglePin} 
-            onDelete={handleDeleteItem}
-            onEdit={handleEdit}
-            onOpenComments={handleOpenComments}
-            commentCounts={commentCounts}
-          />
+        {items.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground mb-4">
+              {currentWorkspace ? `No items found in ${currentWorkspace.name}` : 'No items found'}
+            </div>
+            <Button onClick={() => setEditorOpen(true)}>
+              Create your first item
+            </Button>
           </div>
-        )}
+        ) : (
+          <>
+            {pinned.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Pinned</h2>
+                <ItemGrid 
+                items={pinned} 
+                onToggleTodo={handleToggleTodo} 
+                onOpenItem={handleOpenPreview} 
+                onAddTodo={handleAddTodo} 
+                onRemoveTodo={handleRemoveTodo} 
+                onTogglePin={handleTogglePin} 
+                onDelete={handleDeleteItem}
+                onEdit={handleEdit}
+                onOpenComments={handleOpenComments}
+                commentCounts={commentCounts}
+              />
+              </div>
+            )}
 
-        <div>
-          {pinned.length > 0 && <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Others</h2>}
-          <ItemGrid 
-            items={others} 
-            onToggleTodo={handleToggleTodo} 
-            onOpenItem={handleOpenPreview} 
-            onAddTodo={handleAddTodo} 
-            onRemoveTodo={handleRemoveTodo} 
-            onTogglePin={handleTogglePin} 
-            onDelete={handleDeleteItem}
-            onEdit={handleEdit}
-            onOpenComments={handleOpenComments}
-            commentCounts={commentCounts}
-          />
-        </div>
+            <div>
+              {pinned.length > 0 && <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Others</h2>}
+              <ItemGrid 
+                items={others} 
+                onToggleTodo={handleToggleTodo} 
+                onOpenItem={handleOpenPreview} 
+                onAddTodo={handleAddTodo} 
+                onRemoveTodo={handleRemoveTodo} 
+                onTogglePin={handleTogglePin} 
+                onDelete={handleDeleteItem}
+                onEdit={handleEdit}
+                onOpenComments={handleOpenComments}
+                commentCounts={commentCounts}
+              />
+            </div>
+          </>
+        )}
       </div>
       
       <ItemPreviewModal 
@@ -268,9 +329,12 @@ const ItemsPage: React.FC = () => {
             handleOpenComments(previewItem.id);
           }
         }}
-        onSave={async ({ type, title, content, todos, url, images, isPinned, tags }) => {
+        onSave={async ({ type, title, content, todos, url, tags }) => {
           try {
-            const payload = uiPayloadToBackend({ type, title, content, todos, url, images, tags });
+            if (!currentWorkspace) {
+              throw new Error('No workspace selected');
+            }
+            const payload = uiPayloadToBackend({ type, title, content, todos, url, tags });
             if (previewItem) {
               const updated = await itemApi.updateItem({ itemId: previewItem.id, ...payload });
               const ui = backendItemToUIItem(updated?.item || updated);
@@ -318,23 +382,7 @@ const FilterButton = ({ active, filter, onClick, children }: { active: string, f
 
 export default ItemsPage;
 
-function uiPayloadToBackend({ type, title, content, todos, url, images, tags }: { type: ItemType; title: string; content?: string; todos?: Array<{ id: string; text: string; done: boolean }>; url?: string; images?: { url: string }[]; tags?: string[]; }) {
-  const blocks: Block[] | undefined = todos && todos.length > 0 ? todos.map(t => ({
-    id: t.id,
-    type: 'checklist',
-    content: t.text,
-    checked: t.done,
-  })) : undefined;
-  return {
-    type: type === 'todo' ? 'text' : (type as any),
-    title: title || 'Untitled',
-    content: content || undefined,
-    blocks,
-    url: url || undefined,
-    tags: tags || undefined,
-    // files upload persistence can be added later; focus on content + blocks
-  };
-}
+
 
 function backendItemToUIItem(it: any): UIItem {
   const id = it._id || it.id;

@@ -113,19 +113,33 @@ class CategoryApiService {
     
     try {
       const response = await this.makeRequest<any>(endpoint);
+      // Normalize categories array from various possible backend shapes
+      let categories: Category[] = [] as any;
+      if (Array.isArray(response)) {
+        categories = response as any;
+      } else if (Array.isArray(response?.data?.categories)) {
+        categories = response.data.categories as any;
+      } else if (Array.isArray(response?.categories)) {
+        categories = response.categories as any;
+      } else if (Array.isArray(response?.data)) {
+        categories = response.data as any;
+      }
+
+      const pagination = response?.data?.pagination || response?.pagination || {
+        currentPage: 1,
+        totalPages: 1,
+        totalCategories: categories.length,
+        categoriesPerPage: categories.length,
+        hasNextPage: false,
+        hasPrevPage: false,
+      };
+
       // Transform the response to match our expected format
       return {
         message: "Categories retrieved successfully",
         data: {
-          categories: response.categories || response || [],
-          pagination: response.pagination || {
-            currentPage: 1,
-            totalPages: 1,
-            totalCategories: (response.categories || response || []).length,
-            categoriesPerPage: (response.categories || response || []).length,
-            hasNextPage: false,
-            hasPrevPage: false,
-          },
+          categories,
+          pagination,
           filters: {
             applied: filters,
           },

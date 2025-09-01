@@ -13,6 +13,19 @@ interface LexicalEditorState {
   };
 }
 
+interface TipTapNode {
+  type: string;
+  content?: TipTapNode[];
+  text?: string;
+  attrs?: Record<string, any>;
+  marks?: Array<{ type: string; attrs?: Record<string, any> }>;
+}
+
+interface TipTapDocument {
+  type: 'doc';
+  content?: TipTapNode[];
+}
+
 /**
  * Extracts plain text content from Lexical editor state
  * @param editorState - The Lexical editor state object
@@ -79,6 +92,80 @@ function isBlockElement(nodeType: string): boolean {
     'image',
     'video',
     'embed'
+  ];
+  
+  return blockElements.includes(nodeType);
+}
+
+/**
+ * Extracts plain text content from TipTap JSON document
+ * @param document - The TipTap document object
+ * @returns Plain text string extracted from the document
+ */
+export function extractPlainTextFromTipTap(document: TipTapDocument | null): string {
+  if (!document || !document.content) {
+    return '';
+  }
+
+  const extractTextFromNode = (node: TipTapNode): string => {
+    let text = '';
+
+    // Handle text nodes
+    if (node.type === 'text' && node.text) {
+      text += node.text;
+    }
+
+    // Handle nodes with content (recursive)
+    if (node.content && Array.isArray(node.content)) {
+      for (const child of node.content) {
+        text += extractTextFromNode(child);
+      }
+    }
+
+    // Add appropriate spacing/line breaks for block-level elements
+    if (isTipTapBlockElement(node.type)) {
+      text += '\n';
+    } else if (node.type === 'hardBreak') {
+      text += '\n';
+    }
+
+    return text;
+  };
+
+  // Process all document content
+  let plainText = '';
+  for (const node of document.content) {
+    plainText += extractTextFromNode(node);
+  }
+
+  // Clean up extra whitespace and normalize line breaks
+  return plainText
+    .replace(/\n\s*\n\s*\n/g, '\n\n') // Replace multiple line breaks with double line breaks
+    .replace(/\n+$/, '') // Remove trailing line breaks
+    .trim();
+}
+
+/**
+ * Determines if a TipTap node type is a block-level element
+ * @param nodeType - The type of the TipTap node
+ * @returns True if the node is a block element
+ */
+function isTipTapBlockElement(nodeType: string): boolean {
+  const blockElements = [
+    'paragraph',
+    'heading',
+    'bulletList',
+    'orderedList',
+    'listItem',
+    'blockquote',
+    'codeBlock',
+    'horizontalRule',
+    'table',
+    'tableRow',
+    'tableCell',
+    'tableHeader',
+    'taskList',
+    'taskItem'
   ];
   
   return blockElements.includes(nodeType);

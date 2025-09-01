@@ -4,16 +4,15 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface SidebarHeaderProps {
-  onToggleSidebar?: (event: React.MouseEvent) => void;
-  sidebarState?: 'collapsed' | 'shrunk' | 'expanded';
+  onToggleSidebar?: () => void;
+  sidebarState?: 'collapsed' | 'expanded';
 }
 
 const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggleSidebar, sidebarState }) => {
   const [isHovered, setIsHovered] = useState(false);
   
   const isCollapsed = sidebarState === 'collapsed';
-  const isShrunk = sidebarState === 'shrunk';
-  const showLabels = !isCollapsed && !isShrunk;
+  const showLabels = !isCollapsed;
 
   return (
     <div
@@ -35,7 +34,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggleSidebar, sidebarS
           </AvatarFallback>
         </Avatar>
         
-        { (
+        {showLabels && (
           <div className="flex-1 min-w-0 pr-2">
             <div className="flex items-center gap-2">
               <h2 className="font-medium text-sm text-foreground truncate">
@@ -50,15 +49,12 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggleSidebar, sidebarS
       </div>
       
       <div className="flex items-center gap-1 flex-shrink-0">
-        {/* Hide chevron left icon when sidebar is in shrunk state */}
-        {sidebarState !== 'shrunk' && (
-          <div 
-            className="p-1 hover:bg-secondary rounded-sm cursor-pointer transition-colors"
-            onClick={onToggleSidebar}
-          >
-            <ChevronsLeft className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-          </div>
-        )}
+        <div 
+          className="p-1 hover:bg-secondary rounded-sm cursor-pointer transition-colors"
+          onClick={onToggleSidebar}
+        >
+          <ChevronsLeft className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        </div>
         <div className="p-1 hover:bg-secondary rounded-sm cursor-pointer transition-colors">
           <SquarePen className="h-4 w-4 text-muted-foreground hover:text-foreground" />
         </div>

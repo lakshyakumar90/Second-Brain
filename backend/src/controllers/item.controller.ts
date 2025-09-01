@@ -240,10 +240,15 @@ const getItems = async (req: AuthRequest, res: Response) => {
       filter.categories = { $in: categoryArray };
     }
 
-    // Workspace filter
-    if (workspace) {
-      filter.workspace = workspace;
+    // Workspace filter (required)
+    if (!workspace) {
+      res.status(400).json({
+        message: "Workspace is required",
+        error: "Missing workspace parameter",
+      });
+      return;
     }
+    filter.workspace = workspace;
 
     // Social platform filter
     if (socialPlatform) {

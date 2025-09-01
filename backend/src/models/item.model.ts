@@ -70,7 +70,11 @@ const ItemSchema = new mongoose.Schema<IItem>(
 
     categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
     tags: [{ type: String, trim: true }],
-    workspace: { type: mongoose.Schema.Types.ObjectId, ref: "Workspace" },
+    workspace: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Workspace", 
+      required: true 
+    },
 
     aiData: {
       summary: { type: String },

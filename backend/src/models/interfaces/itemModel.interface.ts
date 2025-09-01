@@ -45,7 +45,7 @@ export interface IItem {
     
     categories: string[];
     tags: string[];
-    workspace?: string;
+    workspace: string | ObjectId;
     
     aiData: {
       summary?: string;

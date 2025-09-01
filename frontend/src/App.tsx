@@ -23,10 +23,8 @@ const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const DashboardHome = lazy(() => import("./pages/dashboard/DashboardHome"));
-const PageEditor = lazy(() => import("./pages/dashboard/PageEditor"));
+const CompleteTipTapPageEditor = lazy(() => import("./components/pages/CompleteTipTapPageEditor"));
 const ItemsPage = lazy(() => import("./pages/dashboard/ItemsPage"));
-const CategoriesPage = lazy(() => import("./pages/dashboard/CategoriesPage"));
-const TagsPage = lazy(() => import("./pages/dashboard/TagsPage"));
 const AnalyticsPage = lazy(() => import("./pages/dashboard/AnalyticsPage"));
 
 function AppContent() {
@@ -98,10 +96,8 @@ function AppContent() {
             <Route path="home" element={<DashboardHome />} />
             <Route path="items" element={<ItemsPage />} />
             <Route path="items/:itemId" element={<ItemsPage />} />
-            <Route path="categories" element={<CategoriesPage />} />
-            <Route path="tags" element={<TagsPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="pages/:pageId" element={<PageEditor />} />
+            <Route path="pages/:pageId" element={<CompleteTipTapPageEditor />} />
           </Route>
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

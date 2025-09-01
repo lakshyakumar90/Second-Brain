@@ -51,4 +51,3 @@ export interface TodoItem extends BaseItem {
 
 export type UIItem = TextItem | ImageItem | LinkItem | DocumentItem | AudioItem | TodoItem;
 
-

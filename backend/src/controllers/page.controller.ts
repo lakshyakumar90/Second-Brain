@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { Page } from '../models';
 import { AuthRequest } from '../models/interfaces/userModel.interface';
 import { createPageSchema, updatePageSchema, pageIdSchema } from '../validations/pageValidation';
-import { extractPlainTextFromEditorState, generateSummary } from '../utils/editorUtils';
+import { extractPlainTextFromTipTap, generateSummary } from '../utils/editorUtils';
 import cloudinary from '../config/cloudinary';
 import { FILE_LIMITS } from '../config/constants';
 import mongoose from 'mongoose';
@@ -20,8 +20,8 @@ export const createPage = async (req: AuthRequest, res: Response) => {
 		}
 		const data = parsed.data;
 		
-		// Extract plain text content from editor state
-		const plainTextContent = extractPlainTextFromEditorState(data.editorState);
+		// Extract plain text content from TipTap editor state
+		const plainTextContent = extractPlainTextFromTipTap(data.editorState);
 		const summary = generateSummary(plainTextContent);
 		
 		const page = await Page.create({
@@ -32,6 +32,7 @@ export const createPage = async (req: AuthRequest, res: Response) => {
 			summary: summary, // Auto-generate summary
 			tags: data.tags || [],
 			categories: data.categories || [],
+			workspace: data.workspace,
 			isPublic: !!data.isPublic,
 			isArchived: !!data.isArchived,
 			isDeleted: false,
@@ -55,12 +56,20 @@ export const getPages = async (req: AuthRequest, res: Response) => {
 			res.status(401).json({ message: 'Unauthorized', error: 'Authentication required' });
 			return;
 		}
+		
+		// Get workspace from query params or headers
+		const workspaceId = req.query.workspace as string || req.headers['x-workspace-id'] as string;
+		if (!workspaceId) {
+			res.status(400).json({ message: 'Workspace ID is required', error: 'Missing workspace' });
+			return;
+		}
+		
 		const page = Number(req.query.page || 1);
 		const limit = Number(req.query.limit || 20);
 		const skip = (page - 1) * limit;
 		const [pages, total] = await Promise.all([
-			Page.find({ userId: req.user.userId, isDeleted: false }).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
-			Page.countDocuments({ userId: req.user.userId, isDeleted: false }),
+			Page.find({ userId: req.user.userId, workspace: workspaceId, isDeleted: false }).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
+			Page.countDocuments({ userId: req.user.userId, workspace: workspaceId, isDeleted: false }),
 		]);
 		res.status(200).json({
 			message: 'Pages retrieved',
@@ -93,7 +102,15 @@ export const getPage = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 		const { pageId } = parsed.data;
-		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, isDeleted: false }).lean();
+		
+		// Get workspace from query params or headers
+		const workspaceId = req.query.workspace as string || req.headers['x-workspace-id'] as string;
+		if (!workspaceId) {
+			res.status(400).json({ message: 'Workspace ID is required', error: 'Missing workspace' });
+			return;
+		}
+		
+		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, workspace: workspaceId, isDeleted: false }).lean();
 		if (!page) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;
@@ -122,7 +139,15 @@ export const updatePage = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 		const { pageId } = idParsed.data;
-		const existing = await Page.findOne({ _id: pageId, userId: req.user.userId, isDeleted: false });
+		
+		// Get workspace from query params or headers
+		const workspaceId = req.query.workspace as string || req.headers['x-workspace-id'] as string;
+		if (!workspaceId) {
+			res.status(400).json({ message: 'Workspace ID is required', error: 'Missing workspace' });
+			return;
+		}
+		
+		const existing = await Page.findOne({ _id: pageId, userId: req.user.userId, workspace: workspaceId, isDeleted: false });
 		if (!existing) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;
@@ -133,7 +158,7 @@ export const updatePage = async (req: AuthRequest, res: Response) => {
 		
 		// If editorState is being updated, extract plain text and generate summary
 		if (updateData.editorState) {
-			const plainTextContent = extractPlainTextFromEditorState(updateData.editorState);
+			const plainTextContent = extractPlainTextFromTipTap(updateData.editorState);
 			updateData.content = plainTextContent;
 			// Only auto-generate summary if no AI summary is provided
 			if (!updateData.summary) {
@@ -149,6 +174,7 @@ export const updatePage = async (req: AuthRequest, res: Response) => {
 		);
 		res.status(200).json({ message: 'Page updated', page: updated });
 	} catch (error) {
+		console.error('Error updating page:', error);
 		res.status(500).json({ message: 'Error updating page', error: 'Internal server error' });
 	}
 };
@@ -165,7 +191,15 @@ export const deletePage = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 		const { pageId } = parsed.data;
-		const existing = await Page.findOne({ _id: pageId, userId: req.user.userId, isDeleted: false });
+		
+		// Get workspace from query params or headers
+		const workspaceId = req.query.workspace as string || req.headers['x-workspace-id'] as string;
+		if (!workspaceId) {
+			res.status(400).json({ message: 'Workspace ID is required', error: 'Missing workspace' });
+			return;
+		}
+		
+		const existing = await Page.findOne({ _id: pageId, userId: req.user.userId, workspace: workspaceId, isDeleted: false });
 		if (!existing) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;
@@ -173,6 +207,7 @@ export const deletePage = async (req: AuthRequest, res: Response) => {
 		const deleted = await Page.findByIdAndUpdate(pageId, { isDeleted: true, lastEditedAt: new Date(), lastEditedBy: req.user.userId, version: existing.version + 1 }, { new: true });
 		res.status(200).json({ message: 'Page deleted', page: deleted });
 	} catch (error) {
+		console.error('Error deleting page:', error);
 		res.status(500).json({ message: 'Error deleting page', error: 'Internal server error' });
 	}
 };
@@ -191,7 +226,15 @@ export const uploadAttachment = async (req: AuthRequest, res: Response) => {
 		}
 
 		const { pageId } = parsed.data;
-		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, isDeleted: false });
+		
+		// Get workspace from query params or headers
+		const workspaceId = req.query.workspace as string || req.headers['x-workspace-id'] as string;
+		if (!workspaceId) {
+			res.status(400).json({ message: 'Workspace ID is required', error: 'Missing workspace' });
+			return;
+		}
+		
+		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, workspace: workspaceId, isDeleted: false });
 		if (!page) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;

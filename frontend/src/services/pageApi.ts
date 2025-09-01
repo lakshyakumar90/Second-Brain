@@ -19,11 +19,12 @@ export type CreatePageData = {
 	summary?: string; // Optional - will be auto-generated from content
 	tags?: string[];
 	categories?: string[];
+	workspace: string; // Required
 	isPublic?: boolean;
 	isArchived?: boolean;
 };
 
-export type UpdatePageData = Partial<CreatePageData> & { pageId: string };
+export type UpdatePageData = Partial<Omit<CreatePageData, 'workspace'>> & { pageId: string; workspace?: string };
 
 class PageApiService {
 	private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -64,24 +65,34 @@ class PageApiService {
 	}
 
 	async updatePage(data: UpdatePageData): Promise<any> {
-		const { pageId, ...payload } = data;
-		return this.request(`/pages/${pageId}`, { method: 'PUT', body: JSON.stringify(payload) });
+		const { pageId, workspace, ...payload } = data;
+		const q = new URLSearchParams();
+		if (workspace) q.set('workspace', workspace);
+		const qs = q.toString();
+		return this.request(`/pages/${pageId}${qs ? `?${qs}` : ''}`, { method: 'PUT', body: JSON.stringify(payload) });
 	}
 
-	async getPages(params: { page?: number; limit?: number } = {}): Promise<any> {
+	async getPages(params: { page?: number; limit?: number; workspace: string }): Promise<any> {
 		const q = new URLSearchParams();
 		if (params.page) q.set('page', String(params.page));
 		if (params.limit) q.set('limit', String(params.limit));
+		q.set('workspace', params.workspace);
 		const qs = q.toString();
 		return this.request(`/pages/all${qs ? `?${qs}` : ''}`);
 	}
 
-	async getPage(pageId: string): Promise<any> {
-		return this.request(`/pages/${pageId}`);
+	async getPage(pageId: string, workspace: string): Promise<any> {
+		const q = new URLSearchParams();
+		q.set('workspace', workspace);
+		const qs = q.toString();
+		return this.request(`/pages/${pageId}${qs ? `?${qs}` : ''}`);
 	}
 
-	async deletePage(pageId: string): Promise<any> {
-		return this.request(`/pages/${pageId}`, { method: 'DELETE' });
+	async deletePage(pageId: string, workspace: string): Promise<any> {
+		const q = new URLSearchParams();
+		q.set('workspace', workspace);
+		const qs = q.toString();
+		return this.request(`/pages/${pageId}${qs ? `?${qs}` : ''}`, { method: 'DELETE' });
 	}
 }
 

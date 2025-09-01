@@ -11,10 +11,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const [isHovering, setIsHovering] = useState(false);
-  const [sidebarState, setSidebarState] = useState<
-    "collapsed" | "shrunk" | "expanded"
-  >("collapsed");
+  const [sidebarState, setSidebarState] = useState<"collapsed" | "expanded">("collapsed");
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024); // lg breakpoint (1024px)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
@@ -22,12 +19,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   useEffect(() => {
     const savedSidebarState = localStorage.getItem("sidebarState") as
       | "collapsed"
-      | "shrunk"
       | "expanded"
       | null;
     if (
       savedSidebarState &&
-      ["collapsed", "shrunk", "expanded"].includes(savedSidebarState)
+      ["collapsed", "expanded"].includes(savedSidebarState)
     ) {
       setSidebarState(savedSidebarState);
     }
@@ -48,50 +44,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const toggleSidebar = (event: React.MouseEvent) => {
-    if (sidebarState === "expanded") {
-      const isInHoverSpace = event.clientX <= 20 + 256;
-      if (isInHoverSpace) {
-        setSidebarState("shrunk");
-      } else {
-        setSidebarState("collapsed");
-      }
-    } else {
-      setSidebarState("expanded");
-    }
+  const toggleSidebar = () => {
+    setSidebarState(sidebarState === "collapsed" ? "expanded" : "collapsed");
   };
 
   const closeSidebar = () => {
     setSidebarState("collapsed");
   };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const triggerWidth = 20;
-      const sidebarWidth = 248;
-
-      if (
-        e.clientX <= triggerWidth &&
-        !isHovering &&
-        sidebarState !== "expanded"
-      ) {
-        setSidebarState("shrunk");
-        setIsHovering(true);
-      }
-
-      const isOverSidebar = e.clientX >= 0 && e.clientX <= sidebarWidth;
-      if (!isOverSidebar && sidebarState !== "expanded") {
-        setSidebarState("collapsed");
-        setIsHovering(false);
-      }
-    };
-
-    document.body.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      document.body.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, [isHovering, sidebarState]);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -101,10 +60,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     },
   });
 
-  // Framer Motion variants for main content (dynamic based on state and screen size)
+  // Framer Motion variants for main content
   const mainVariants = {
     collapsed: { paddingLeft: 0 },
-    shrunk: { paddingLeft: 0 }, // No shift on hover (overlays)
     expanded: { paddingLeft: isLargeScreen ? 256 : 0 }, // Shift only on large screens; overlays on small
   };
 
@@ -121,25 +79,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 ? "-translate-x-full"
                 : "translate-x-0"
             }
-            ${
-              sidebarState === "shrunk"
-                ? "rounded-r-lg border-2"
-                : "h-full top-0"
-            }
-            ${sidebarState === "expanded" ? "h-full top-0" : ""}
           `}
-          style={{
-            top: sidebarState === "shrunk" ? "10vh" : "",
-            height:
-              sidebarState === "shrunk" ? "calc(80vh)" : "100vh",
-          }}
         >
-                                <Sidebar
-                        onToggleSidebar={toggleSidebar}
-                        sidebarState={sidebarState}
-                        onSearchOpen={() => setIsSearchModalOpen(true)}
-                        onCloseSidebar={closeSidebar}
-                      />
+          <Sidebar
+            onToggleSidebar={toggleSidebar}
+            sidebarState={sidebarState}
+            onSearchOpen={() => setIsSearchModalOpen(true)}
+            onCloseSidebar={closeSidebar}
+          />
         </div>
 
         {/* Main Content - Scrollable */}
