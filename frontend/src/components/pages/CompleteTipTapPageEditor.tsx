@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { useWorkspacePermissions } from '@/hooks/useWorkspacePermissions';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import collaborationService from '@/services/collaborationService';
+import { CollaborativeUsersPanel } from '@/components/collaboration';
+
+import WorkspaceGuard from '@/components/workspace/WorkspaceGuard';
 import type { Editor, JSONContent } from '@/components/ui/kibo-ui/editor';
 import {
   EditorBubbleMenu,
@@ -87,7 +94,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { toast } from 'sonner';
+
 import { debounce } from 'lodash';
 
 interface PageData {
@@ -114,6 +121,8 @@ interface AISuggestions {
 const CompleteTipTapPageEditor: React.FC = () => {
   const { pageId } = useParams<{ pageId: string }>();
   const { currentWorkspace } = useWorkspace();
+  const permissions = useWorkspacePermissions();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Page state
@@ -144,6 +153,39 @@ const CompleteTipTapPageEditor: React.FC = () => {
 
   // Refs
   const isDirtyRef = useRef(false);
+  const editorRef = useRef<Editor | null>(null);
+  const isApplyingRemoteRef = useRef(false);
+  const titleRef = useRef(title);
+  const contentRef = useRef(content);
+  const summaryRef = useRef(summary);
+  const tagsRef = useRef(tags);
+  const isPublicRef = useRef(isPublic);
+  const isArchivedRef = useRef(isArchived);
+  
+  // Update refs when state changes
+  useEffect(() => { titleRef.current = title; }, [title]);
+  useEffect(() => { contentRef.current = content; }, [content]);
+  useEffect(() => { summaryRef.current = summary; }, [summary]);
+  useEffect(() => { tagsRef.current = tags; }, [tags]);
+  useEffect(() => { isPublicRef.current = isPublic; }, [isPublic]);
+  useEffect(() => { isArchivedRef.current = isArchived; }, [isArchived]);
+
+  // Collaboration state
+  const { user } = useAuth();
+  const [collaborativeUsers, setCollaborativeUsers] = useState<Array<{
+    userId: string;
+    username: string;
+    avatar?: string;
+    color: string;
+    cursor: { x: number; y: number; selection?: { start: number; end: number } };
+    isTyping: boolean;
+    lastSeen: Date;
+  }>>([]);
+  const [isCollaborating, setIsCollaborating] = useState(false);
+  const [collaborationStatus, setCollaborationStatus] = useState<'connecting' | 'connected' | 'error' | 'disconnected'>('disconnected');
+  const collaborationRef = useRef<any>(null);
+
+
 
 
   // Load page data
@@ -180,7 +222,11 @@ const CompleteTipTapPageEditor: React.FC = () => {
 
       } catch (err) {
         console.error('Failed to load page:', err);
-        toast.error('Failed to load page');
+        toast({
+          title: "Error",
+          description: "Failed to load page",
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -188,6 +234,71 @@ const CompleteTipTapPageEditor: React.FC = () => {
 
     loadPage();
   }, [pageId, currentWorkspace]);
+
+  // Initialize collaboration when page loads
+  useEffect(() => {
+    if (!pageId || !currentWorkspace || !user) return;
+
+    console.log('Initializing collaboration for:', { pageId, workspaceId: currentWorkspace._id, userId: user._id });
+
+    setCollaborationStatus('connecting');
+
+    // Set up status callback
+    collaborationService.setStatusCallback(setCollaborationStatus);
+
+    // Connect to collaboration service
+    collaborationService.connect(
+      pageId,
+      currentWorkspace._id,
+      user._id,
+      user.username || user.name || 'Unknown User'
+    );
+
+    // Set up collaboration event listeners
+    const handleCollaborationUpdate = (event: CustomEvent) => {
+      const { type, data, pageId: incomingPageId } = event.detail as { type: string; data: any; pageId?: string };
+      if (incomingPageId && incomingPageId !== pageId) return;
+      if (type !== 'content') return;
+
+      // Apply incoming content directly to editor to avoid local re-renders fighting
+      if (editorRef.current) {
+        try {
+          isApplyingRemoteRef.current = true;
+          editorRef.current.commands.setContent(data.content, { emitUpdate: false });
+        } finally {
+          // small timeout to ensure onUpdate triggered by setContent doesn't schedule autosave
+          setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
+        }
+      } else {
+        setContent(data.content);
+      }
+      isDirtyRef.current = false; // prevent autosave loop
+    };
+
+    // Listen for collaboration updates
+    window.addEventListener('collaboration-update', handleCollaborationUpdate as EventListener);
+
+    // Update collaborative users list
+    const updateCollaborativeUsers = () => {
+      const users = collaborationService.getActiveUsers();
+      console.log('Current collaborative users:', users);
+      setCollaborativeUsers(users);
+      setIsCollaborating(users.length > 0);
+    };
+
+    // Update users list every 2 seconds
+    const usersInterval = setInterval(updateCollaborativeUsers, 2000);
+    updateCollaborativeUsers(); // Initial update
+
+    return () => {
+      console.log('Cleaning up collaboration...');
+      window.removeEventListener('collaboration-update', handleCollaborationUpdate as EventListener);
+      clearInterval(usersInterval);
+      collaborationService.disconnect();
+    };
+  }, [pageId, currentWorkspace, user]);
+
+
 
   // Extract plain text from TipTap content
   const extractTextFromContent = useCallback((content: JSONContent): string => {
@@ -208,53 +319,114 @@ const CompleteTipTapPageEditor: React.FC = () => {
     return extractText(content.content).trim();
   }, []);
 
-  // Auto-save functionality
-  const debouncedSave = useCallback(
-    debounce(async () => {
+  // Auto-save functionality with stable debounce
+  const debouncedSaveRef = useRef<any>(null);
+
+  // Create debounced save function once
+  useEffect(() => {
+    debouncedSaveRef.current = debounce(async () => {
       if (!pageId || !currentWorkspace || !isDirtyRef.current) return;
+      
+      if (!permissions.canEditPages) {
+        console.warn('User does not have permission to edit pages');
+        return;
+      }
 
       try {
         setIsSaving(true);
         
         await pageApi.updatePage({
           pageId,
-          title: title || 'Untitled',
-          editorState: content,
-          content: extractTextFromContent(content),
-          summary,
-          tags,
-          isPublic,
-          isArchived,
+          title: titleRef.current || 'Untitled',
+          editorState: contentRef.current,
+          content: extractTextFromContent(contentRef.current),
+          summary: summaryRef.current,
+          tags: tagsRef.current,
+          isPublic: isPublicRef.current,
+          isArchived: isArchivedRef.current,
           workspace: currentWorkspace._id
         });
 
         setLastSavedAt(new Date());
         isDirtyRef.current = false;
         
+        // Optional: Show brief success indication
+        console.log('Page auto-saved successfully');
+        
       } catch (err) {
         console.error('Auto-save failed:', err);
-        toast.error('Failed to save changes');
+        toast({
+          title: "Error",
+          description: "Failed to save changes",
+          variant: "destructive",
+        });
       } finally {
         setIsSaving(false);
       }
-    }, 2000),
-    [pageId, currentWorkspace, title, content, summary, tags, isPublic, isArchived, extractTextFromContent]
-  );
+    }, 1000);
+
+    return () => {
+      if (debouncedSaveRef.current) {
+        debouncedSaveRef.current.cancel();
+      }
+    };
+  }, []);
+
+  const debouncedSave = useCallback(() => {
+    if (debouncedSaveRef.current) {
+      debouncedSaveRef.current();
+    }
+  }, []);
+
+
 
   // Handle editor updates
   const handleEditorUpdate = useCallback(({ editor }: { editor: Editor }) => {
+    // Cache editor instance
+    if (!editorRef.current) editorRef.current = editor;
+
+    // Ignore updates we just applied from remote
+    if (isApplyingRemoteRef.current) {
+      return;
+    }
+    if (!permissions.canEditPages) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to edit this page.",
+        variant: "destructive",
+      });
+      return;
+    }
     const json = editor.getJSON();
     setContent(json);
     isDirtyRef.current = true;
+    
+    // Send real-time collaboration update (content only)
+    if (isCollaborating) {
+      collaborationService.sendUpdate('content', { content: json });
+    }
+    
     debouncedSave();
-  }, [debouncedSave]);
+  }, [debouncedSave, permissions.canEditPages, toast, isCollaborating]);
 
   // Handle title changes
   const handleTitleChange = useCallback((newTitle: string) => {
+    if (!permissions.canEditPages) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to edit this page.",
+        variant: "destructive",
+      });
+      return;
+    }
     setTitle(newTitle);
     isDirtyRef.current = true;
     debouncedSave();
-  }, [debouncedSave]);
+  }, [debouncedSave, permissions.canEditPages, toast]);
+
+
+
+
 
   // Handle summary changes
   const handleSummaryChange = useCallback((newSummary: string) => {
@@ -307,7 +479,11 @@ const CompleteTipTapPageEditor: React.FC = () => {
   const generateAISuggestions = useCallback(async () => {
     const text = extractTextFromContent(content);
     if (!text.trim()) {
-      toast.error('Add some content first to get AI suggestions');
+      toast({
+        title: "Error",
+        description: "Add some content first to get AI suggestions",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -345,11 +521,19 @@ const CompleteTipTapPageEditor: React.FC = () => {
         debouncedSave();
       }
 
-      toast.success('AI suggestions generated!');
+      toast({
+        title: "Success",
+        description: "AI suggestions generated!",
+        variant: "success",
+      });
       
     } catch (err) {
       console.error('AI suggestions failed:', err);
-      toast.error('Failed to generate AI suggestions');
+      toast({
+        title: "Error",
+        description: "Failed to generate AI suggestions",
+        variant: "destructive",
+      });
     } finally {
       setIsAILoading(false);
     }
@@ -360,7 +544,11 @@ const CompleteTipTapPageEditor: React.FC = () => {
     const textToProcess = selectedText || extractTextFromContent(content);
     
     if (!textToProcess.trim()) {
-      toast.error('No content to process');
+      toast({
+        title: "Error",
+        description: "No content to process",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -376,7 +564,11 @@ const CompleteTipTapPageEditor: React.FC = () => {
           if (selectedText && editor) {
             editor.commands.insertContent(response.content);
           } else {
-            toast.success('Content improved! Check the suggestions.');
+            toast({
+              title: "Success",
+              description: "Content improved! Check the suggestions.",
+              variant: "success",
+            });
           }
           break;
         }
@@ -409,7 +601,11 @@ const CompleteTipTapPageEditor: React.FC = () => {
       
     } catch (err) {
       console.error('AI action failed:', err);
-      toast.error('AI action failed');
+      toast({
+        title: "Error",
+        description: "AI action failed",
+        variant: "destructive",
+      });
     } finally {
       setIsAILoading(false);
     }
@@ -436,11 +632,19 @@ const CompleteTipTapPageEditor: React.FC = () => {
 
       setLastSavedAt(new Date());
       isDirtyRef.current = false;
-      toast.success('Page saved successfully');
+      toast({
+        title: "Success",
+        description: "Page saved successfully",
+        variant: "success",
+      });
       
     } catch (err) {
       console.error('Manual save failed:', err);
-      toast.error('Failed to save page');
+      toast({
+        title: "Error",
+        description: "Failed to save page",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -458,7 +662,8 @@ const CompleteTipTapPageEditor: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <WorkspaceGuard type="page">
+      <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
         <div className="flex items-center justify-between px-6 py-3">
@@ -488,6 +693,55 @@ const CompleteTipTapPageEditor: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Collaboration Status */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border">
+              {collaborationStatus === 'connecting' && (
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span className="text-sm font-medium">Connecting...</span>
+                </div>
+              )}
+              {collaborationStatus === 'connected' && (
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">Connected</span>
+                </div>
+              )}
+              {collaborationStatus === 'error' && (
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span className="text-sm font-medium">Connection Error</span>
+                </div>
+              )}
+              {collaborationStatus === 'disconnected' && (
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                  <span className="text-sm font-medium">Disconnected</span>
+                </div>
+              )}
+            </div>
+
+            {/* Collaboration Indicator */}
+            {isCollaborating && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                  Live Collaboration
+                </span>
+                <Badge variant="secondary" className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
+                  {collaborativeUsers.length + 1} users
+                </Badge>
+                {collaborativeUsers.some(user => user.isTyping) && (
+                  <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                    <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <span className="text-xs font-medium">Someone is typing...</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             <Button
               variant="outline"
               size="sm"
@@ -569,7 +823,32 @@ const CompleteTipTapPageEditor: React.FC = () => {
               placeholder="Untitled"
               className="w-full border-none outline-none bg-transparent text-4xl font-bold placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-0"
             />
+            
+            {/* Save Status Indicator */}
+            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : lastSavedAt ? (
+                <>
+                  <span>Saved at {lastSavedAt.toLocaleTimeString()}</span>
+                </>
+              ) : (
+                <span>Auto-save enabled</span>
+              )}
+            </div>
           </div>
+
+          {/* Collaboration Panel */}
+          {isCollaborating && (
+            <div className="mb-6">
+              <CollaborativeUsersPanel 
+                users={collaborativeUsers}
+              />
+            </div>
+          )}
 
           {/* Tags & Summary Section */}
           <div className="mb-6 space-y-4">
@@ -800,6 +1079,7 @@ const CompleteTipTapPageEditor: React.FC = () => {
               content={content}
               onUpdate={handleEditorUpdate}
               placeholder="Start writing your page..."
+              onCreate={({ editor }) => { editorRef.current = editor; }}
             >
               <EditorFloatingMenu>
                 <EditorNodeHeading1 hideName />
@@ -893,7 +1173,9 @@ const CompleteTipTapPageEditor: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+
+      </div>
+      </WorkspaceGuard>
   );
 };
 

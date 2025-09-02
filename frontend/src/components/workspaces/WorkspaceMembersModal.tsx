@@ -232,7 +232,7 @@ const WorkspaceMembersModal: React.FC<WorkspaceMembersModalProps> = ({ isOpen, o
                   <SelectTrigger className="h-8 text-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" className="z-[10010] workspace-portal">
                     <SelectItem value="view">Viewer</SelectItem>
                     <SelectItem value="edit">Editor</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
@@ -289,14 +289,15 @@ const WorkspaceMembersModal: React.FC<WorkspaceMembersModalProps> = ({ isOpen, o
                       <div className="flex items-center gap-1">
                         <Select
                           value={member.role}
-                          onValueChange={(value: 'view' | 'edit' | 'admin') => 
-                            handleUpdateMemberRole(member.userId._id, value)
-                          }
+                          onValueChange={(value: 'view' | 'edit' | 'admin') => {
+                            console.log('Role change requested:', { userId: member.userId._id, newRole: value });
+                            handleUpdateMemberRole(member.userId._id, value);
+                          }}
                         >
                           <SelectTrigger className="h-6 w-20 text-xs">
-                            <SelectValue />
+                            <SelectValue placeholder={getRoleLabel(member.role)} />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper" className="z-[10010] workspace-portal">
                             <SelectItem value="view">Viewer</SelectItem>
                             <SelectItem value="edit">Editor</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>

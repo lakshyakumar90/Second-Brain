@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { workspaceApi, type Workspace } from '@/services/workspaceApi';
 import { useAppSelector } from '@/store/hooks';
+import { useToast } from '@/hooks/use-toast';
 
 interface WorkspaceContextType {
   workspaces: Workspace[];
@@ -35,6 +37,9 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   const [error, setError] = useState<string | null>(null);
   
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
 
   const loadWorkspaces = async () => {
     if (!isAuthenticated) {
@@ -73,6 +78,16 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     if (workspace) {
       setCurrentWorkspace(workspace);
       localStorage.setItem('currentWorkspaceId', workspaceId);
+      
+      // Redirect to home when switching workspaces
+      if (location.pathname !== '/home') {
+        navigate('/home');
+        toast({
+          title: 'Workspace switched',
+          description: `Switched to ${workspace.name}`,
+          variant: 'success',
+        });
+      }
     }
   };
 

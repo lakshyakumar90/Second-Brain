@@ -1,4 +1,5 @@
 import User from "../models/user.model";
+import Workspace from "../models/workspace.model";
 import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
@@ -379,6 +380,34 @@ const registerStep3 = async (
     { new: true }
   );
 
+  // Create default workspace for the user
+  try {
+    const defaultWorkspace = await Workspace.create({
+      name: `${updatedUser!.name || updatedUser!.username || 'My'} Workspace`,
+      description: "Your personal workspace to organize thoughts and ideas",
+      ownerId: updatedUser!._id,
+      isPublic: false,
+      allowInvites: true,
+      settings: {
+        theme: theme || "system",
+        defaultView: "grid",
+        aiEnabled: true,
+      },
+      members: [{
+        userId: updatedUser!._id,
+        role: "admin",
+        joinedAt: new Date(),
+        invitedBy: updatedUser!._id
+      }],
+      totalMembers: 1
+    });
+    
+    console.log(`Default workspace created for user ${updatedUser!._id}: ${defaultWorkspace._id}`);
+  } catch (workspaceError) {
+    console.error('Failed to create default workspace:', workspaceError);
+    // Don't fail registration if workspace creation fails
+  }
+
   const token = jwt.sign(
     { userId: updatedUser!._id, completedSteps: updatedUser!.completedSteps },
     process.env.JWT_ACCESS_SECRET!,
@@ -424,6 +453,47 @@ const login = async (req: Request, res: Response): Promise<void> => {
       requiresVerification: true,
     });
     return;
+  }
+
+  // Check if user has completed registration and has at least one workspace
+  if (user.completedSteps === 3 && user.isVerified && user.isActive) {
+    try {
+      const userWorkspaces = await Workspace.find({
+        $or: [
+          { ownerId: user._id },
+          { "members.userId": user._id }
+        ],
+        isDeleted: { $ne: true }
+      });
+
+      // If user has no workspaces, create a default one
+      if (userWorkspaces.length === 0) {
+        const defaultWorkspace = await Workspace.create({
+          name: `${user.name || user.username || 'My'} Workspace`,
+          description: "Your personal workspace to organize thoughts and ideas",
+          ownerId: user._id,
+          isPublic: false,
+          allowInvites: true,
+          settings: {
+            theme: user.preferences?.theme || "system",
+            defaultView: "grid",
+            aiEnabled: true,
+          },
+          members: [{
+            userId: user._id,
+            role: "admin",
+            joinedAt: new Date(),
+            invitedBy: user._id
+          }],
+          totalMembers: 1
+        });
+        
+        console.log(`Default workspace created for existing user ${user._id}: ${defaultWorkspace._id}`);
+      }
+    } catch (workspaceError) {
+      console.error('Failed to create default workspace during login:', workspaceError);
+      // Don't fail login if workspace creation fails
+    }
   }
 
   const token = jwt.sign(

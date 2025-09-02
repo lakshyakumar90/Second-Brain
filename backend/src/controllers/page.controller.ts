@@ -67,9 +67,16 @@ export const getPages = async (req: AuthRequest, res: Response) => {
 		const page = Number(req.query.page || 1);
 		const limit = Number(req.query.limit || 20);
 		const skip = (page - 1) * limit;
+		// Find all pages in the workspace (not just user's own pages)
 		const [pages, total] = await Promise.all([
-			Page.find({ userId: req.user.userId, workspace: workspaceId, isDeleted: false }).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
-			Page.countDocuments({ userId: req.user.userId, workspace: workspaceId, isDeleted: false }),
+			Page.find({ workspace: workspaceId, isDeleted: false })
+				.populate('userId', 'name username email avatar')
+				.populate('lastEditedBy', 'name username email avatar')
+				.sort({ updatedAt: -1 })
+				.skip(skip)
+				.limit(limit)
+				.lean(),
+			Page.countDocuments({ workspace: workspaceId, isDeleted: false }),
 		]);
 		res.status(200).json({
 			message: 'Pages retrieved',
@@ -110,7 +117,10 @@ export const getPage = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 		
-		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, workspace: workspaceId, isDeleted: false }).lean();
+		const page = await Page.findOne({ _id: pageId, workspace: workspaceId, isDeleted: false })
+			.populate('userId', 'name username email avatar')
+			.populate('lastEditedBy', 'name username email avatar')
+			.lean();
 		if (!page) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;
@@ -147,7 +157,7 @@ export const updatePage = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 		
-		const existing = await Page.findOne({ _id: pageId, userId: req.user.userId, workspace: workspaceId, isDeleted: false });
+		const existing = await Page.findOne({ _id: pageId, workspace: workspaceId, isDeleted: false });
 		if (!existing) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;
@@ -199,7 +209,7 @@ export const deletePage = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 		
-		const existing = await Page.findOne({ _id: pageId, userId: req.user.userId, workspace: workspaceId, isDeleted: false });
+		const existing = await Page.findOne({ _id: pageId, workspace: workspaceId, isDeleted: false });
 		if (!existing) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;
@@ -234,7 +244,7 @@ export const uploadAttachment = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 		
-		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, workspace: workspaceId, isDeleted: false });
+		const page = await Page.findOne({ _id: pageId, workspace: workspaceId, isDeleted: false });
 		if (!page) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;
@@ -346,7 +356,7 @@ export const deleteAttachment = async (req: AuthRequest, res: Response) => {
 			return;
 		}
 
-		const page = await Page.findOne({ _id: pageId, userId: req.user.userId, isDeleted: false });
+		const page = await Page.findOne({ _id: pageId, isDeleted: false });
 		if (!page) {
 			res.status(404).json({ message: 'Page not found', error: 'Not found' });
 			return;

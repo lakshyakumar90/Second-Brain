@@ -137,14 +137,14 @@ class WorkspaceApiService {
 
   // Remove a member from workspace
   async removeMember(workspaceId: string, userId: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/${workspaceId}/members/${userId}`, {
+    return this.request<{ message: string }>(`/${workspaceId}/member/${userId}`, {
       method: 'DELETE',
     });
   }
 
   // Update member role
   async updateMemberRole(workspaceId: string, userId: string, role: 'view' | 'edit' | 'admin'): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/${workspaceId}/members/${userId}/role`, {
+    return this.request<{ message: string }>(`/${workspaceId}/member/${userId}/role`, {
       method: 'PUT',
       body: JSON.stringify({ role }),
     });
@@ -153,6 +153,20 @@ class WorkspaceApiService {
   // Get workspace members
   async getWorkspaceMembers(workspaceId: string): Promise<{ message: string; members: WorkspaceMember[] }> {
     return this.request<{ message: string; members: WorkspaceMember[] }>(`/${workspaceId}/members`);
+  }
+
+  // Accept workspace invitation
+  async acceptInvite(workspaceId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/${workspaceId}/accept`, {
+      method: 'POST',
+    });
+  }
+
+  // Reject workspace invitation
+  async rejectInvite(workspaceId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/${workspaceId}/reject`, {
+      method: 'POST',
+    });
   }
 
   // Leave workspace

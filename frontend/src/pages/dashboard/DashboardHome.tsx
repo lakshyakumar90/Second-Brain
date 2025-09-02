@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
+import { useToast } from "@/hooks/use-toast";
 import RecentlyVisited from "@/components/dashboard/dashboard-home/RecentlyVisited";
 import HeroHeader from "@/components/dashboard/dashboard-home/HeroHeader";
 import WorkspaceOverview from "@/components/dashboard/dashboard-home/WorkspaceOverview";
@@ -16,11 +18,22 @@ const DashboardHome = () => {
   const [isCreating, setIsCreating] = useState(false);
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const { currentWorkspace } = useWorkspace();
+  const permissions = useWorkspacePermissions();
+  const { toast } = useToast();
 
   // Debug authentication state
   console.log('DashboardHome - Auth state:', { isAuthenticated, user: user ? { id: user._id, email: user.email } : null });
 
   const handleCreatePage = async () => {
+    if (!permissions.canCreatePages) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to create pages in this workspace.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       console.log('Creating page - Auth state:', { isAuthenticated, user: user ? { id: user._id, email: user.email } : null });
       setIsCreating(true);
@@ -47,11 +60,21 @@ const DashboardHome = () => {
       if (pageId) {
         // Navigate to the new page
         navigate(`/pages/${pageId}`);
+        toast({
+          title: "Success",
+          description: "Page created successfully",
+          variant: "success",
+        });
       } else {
         console.error('No page ID returned from server');
       }
     } catch (error) {
       console.error('Failed to create page:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create page",
+        variant: "destructive",
+      });
     } finally {
       setIsCreating(false);
     }
@@ -66,20 +89,30 @@ const DashboardHome = () => {
       </div>
 
       {/* Create Page Button */}
-      <div className="w-full flex justify-center">
-        <Button 
-          onClick={handleCreatePage} 
-          disabled={isCreating}
-          className="flex items-center gap-2"
-        >
-          {isCreating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Plus className="h-4 w-4" />
-          )}
-          {isCreating ? 'Creating...' : 'Create New Page'}
-        </Button>
-      </div>
+      {permissions.canCreatePages && (
+        <div className="w-full flex justify-center">
+          <Button 
+            onClick={handleCreatePage} 
+            disabled={isCreating}
+            className="flex items-center gap-2"
+          >
+            {isCreating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            {isCreating ? 'Creating...' : 'Create New Page'}
+          </Button>
+        </div>
+      )}
+      
+      {!permissions.canCreatePages && (
+        <div className="w-full flex justify-center">
+          <p className="text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-md">
+            You have view-only access to this workspace
+          </p>
+        </div>
+      )}
 
       <div className="w-full py-5">
         <WorkspaceOverview />

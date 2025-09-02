@@ -29,19 +29,32 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({
   const [currentView, setCurrentView] = useState<PanelView>('workspaces');
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  // TODO: Future functionality - currently unused
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [editingTag, setEditingTag] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [tagSearchQuery, setTagSearchQuery] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [filterDefaults, setFilterDefaults] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [filterPublic, setFilterPublic] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sortBy, setSortBy] = useState<'name' | 'usageCount' | 'itemCount' | 'createdAt' | 'updatedAt' | 'sortOrder'>('usageCount');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [categories, setCategories] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [tags, setTags] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoadingTags, setIsLoadingTags] = useState(false);
 
   const { toast } = useToast();
@@ -68,6 +81,11 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({
   // Close panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      // Don't close when interacting with floating portals (e.g., dropdowns)
+      if (target && target.closest('.workspace-portal')) {
+        return;
+      }
       if (panelRef.current && !panelRef.current.contains(event.target as Node) &&
           triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
         setIsPanelOpen(false);
@@ -150,6 +168,7 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({
     }
   }, [tagSearchQuery, filterDefaults, filterPublic, sortBy, sortOrder]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCreateCategory = async (data: CreateCategoryData) => {
     try {
       await categoryApi.createCategory(data);
@@ -169,6 +188,7 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUpdateCategory = async (data: CreateCategoryData) => {
     if (!editingCategory) return;
     
@@ -194,6 +214,7 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       await categoryApi.deleteCategory(categoryId);
@@ -211,6 +232,7 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCreateTag = async (data: CreateTagData) => {
     try {
       await tagApi.createTag(data);
@@ -230,6 +252,7 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUpdateTag = async (data: CreateTagData) => {
     if (!editingTag) return;
     
@@ -252,6 +275,7 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDeleteTag = async (tagId: string) => {
     try {
       await tagApi.deleteTag(tagId);

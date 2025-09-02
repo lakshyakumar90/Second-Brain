@@ -15,13 +15,10 @@ import {
   FileText,
   Star,
   Clock,
-  Hash,
   CircleQuestionMark,
-  Tag as TagIcon,
   BarChart3,
   Edit,
   MoreVertical,
-  X,
 } from "lucide-react";
 import SidebarHeader from "./SidebarHeader";
 import { cn } from "@/lib/utils";
@@ -35,7 +32,7 @@ import TagModal from "@/components/tags/TagModal";
 import PagesPanel from "./PagesPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -85,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Pages state
   const [pages, setPages] = useState<any[]>([]);
   const [isLoadingPages, setIsLoadingPages] = useState(false);
-  const [pageSearchQuery, setPageSearchQuery] = useState('');
+
 
   const isCollapsed = sidebarState === "collapsed";
   const showLabels = !isCollapsed;

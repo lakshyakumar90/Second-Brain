@@ -11,10 +11,15 @@ import { commentApi } from "@/services/commentApi";
 import { CommentsPanel } from "@/components/comments";
 import { useAppSelector } from "@/store/hooks";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
+import WorkspaceGuard from "@/components/workspace/WorkspaceGuard";
+import { useToast } from "@/hooks/use-toast";
 
 const ItemsPage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { currentWorkspace } = useWorkspace();
+  const permissions = useWorkspacePermissions();
+  const { toast } = useToast();
   const [items, setItems] = useState<UIItem[]>([]);
 
   const uiPayloadToBackend = ({ type, title, content, todos, url, tags }: { type: ItemType; title: string; content?: string; todos?: Array<{ id: string; text: string; done: boolean }>; url?: string; tags?: string[]; }) => {
@@ -228,16 +233,28 @@ const ItemsPage: React.FC = () => {
   // };
 
   return (
-    <div className="flex-1 flex flex-col gap-8 p-4 md:p-6 min-w-0">
+    <WorkspaceGuard type="item">
+      <div className="flex-1 flex flex-col gap-8 p-4 md:p-6 min-w-0">
       <div className="max-w-2xl mx-auto w-full">
         <div className="relative">
           <textarea
             className="w-full px-4 py-3 pr-12 rounded-lg border-2 border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/80 resize-none transition-all duration-300"
-            placeholder="Take a note..."
+            placeholder={permissions.canCreateItems ? "Take a note..." : "View-only mode - You cannot create items"}
             rows={quickNote ? 3 : 1}
             value={quickNote}
             onChange={(e) => setQuickNote(e.target.value)}
-            onFocus={() => { if (!previewItem) { setEditorOpen(true); } }}
+            onFocus={() => { 
+              if (!permissions.canCreateItems) {
+                toast({
+                  title: "Permission Denied",
+                  description: "You have view-only access to this workspace.",
+                  variant: "destructive",
+                });
+                return;
+              }
+              if (!previewItem) { setEditorOpen(true); } 
+            }}
+            disabled={!permissions.canCreateItems}
           />
         </div>
       </div>
@@ -258,9 +275,16 @@ const ItemsPage: React.FC = () => {
             <div className="text-muted-foreground mb-4">
               {currentWorkspace ? `No items found in ${currentWorkspace.name}` : 'No items found'}
             </div>
-            <Button onClick={() => setEditorOpen(true)}>
-              Create your first item
-            </Button>
+            {permissions.canCreateItems && (
+              <Button onClick={() => setEditorOpen(true)}>
+                Create your first item
+              </Button>
+            )}
+            {!permissions.canCreateItems && (
+              <p className="text-sm text-muted-foreground">
+                You have view-only access to this workspace
+              </p>
+            )}
           </div>
         ) : (
           <>
@@ -367,6 +391,7 @@ const ItemsPage: React.FC = () => {
         />
       )}
     </div>
+    </WorkspaceGuard>
   );
 };
 

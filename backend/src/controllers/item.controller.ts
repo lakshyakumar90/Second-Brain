@@ -194,9 +194,8 @@ const getItems = async (req: AuthRequest, res: Response) => {
       sortOrder = "desc",
     } = validationResult.data;
 
-    // Build filter object
+    // Build filter object - filter by workspace, not user
     const filter: any = {
-      userId: req.user.userId,
       isDeleted: false, // Always exclude deleted items
     };
 
@@ -291,6 +290,7 @@ const getItems = async (req: AuthRequest, res: Response) => {
         .limit(limit)
         .populate("categories", "name color icon")
         .populate("workspace", "name description")
+        .populate("userId", "name username email avatar")
         .populate("lastEditedBy", "name username")
         .lean(),
       Item.countDocuments(filter),
@@ -372,14 +372,14 @@ const getItem = async (req: AuthRequest, res: Response) => {
 
     const { itemId } = validationResult.data;
 
-    // Find the item and ensure it belongs to the authenticated user
+    // Find the item (workspace access is validated by middleware)
     const item = await Item.findOne({
       _id: itemId,
-      userId: req.user.userId,
       isDeleted: false,
     })
       .populate("categories", "name color icon")
       .populate("workspace", "name description")
+      .populate("userId", "name username email avatar")
       .populate("lastEditedBy", "name username")
       .populate("collaborators", "name username email")
       .lean();
@@ -468,10 +468,9 @@ const updateItem = async (req: AuthRequest, res: Response) => {
     const { itemId } = idValidationResult.data;
     const updateData = updateValidationResult.data;
 
-    // Find the item and ensure it belongs to the authenticated user
+    // Find the item (workspace access is validated by middleware)
     const existingItem = await Item.findOne({
       _id: itemId,
-      userId: req.user.userId,
       isDeleted: false,
     });
 
@@ -654,10 +653,9 @@ const restoreItem = async (req: AuthRequest, res: Response) => {
 
     const { itemId } = validationResult.data;
 
-    // Find the item and ensure it belongs to the authenticated user and is deleted
+    // Find the deleted item (workspace access is validated by middleware)
     const existingItem = await Item.findOne({
       _id: itemId,
-      userId: req.user.userId,
       isDeleted: true, // Only find deleted items
     });
 
@@ -740,7 +738,6 @@ const bulkDelete = async (req: AuthRequest, res: Response) => {
     const result = await Item.updateMany(
       {
         _id: { $in: ids },
-        userId: req.user.userId,
         isDeleted: false,
       },
       {
@@ -792,7 +789,6 @@ const bulkRestore = async (req: AuthRequest, res: Response) => {
     const result = await Item.updateMany(
       {
         _id: { $in: ids },
-        userId: req.user.userId,
         isDeleted: true,
       },
       {
@@ -845,10 +841,9 @@ const duplicateItem = async (req: AuthRequest, res: Response) => {
 
     const { itemId } = validationResult.data;
 
-    // Find the original item and ensure it belongs to the authenticated user
+    // Find the original item (workspace access is validated by middleware)
     const originalItem = await Item.findOne({
       _id: itemId,
-      userId: req.user.userId,
       isDeleted: false,
     }).lean();
 
@@ -959,10 +954,9 @@ const favoriteItem = async (req: AuthRequest, res: Response) => {
 
     const { itemId } = validationResult.data;
 
-    // Find the item and ensure it belongs to the authenticated user
+    // Find the item (workspace access is validated by middleware)
     const existingItem = await Item.findOne({
       _id: itemId,
-      userId: req.user.userId,
       isDeleted: false,
     });
 
@@ -1050,10 +1044,9 @@ const archiveItem = async (req: AuthRequest, res: Response) => {
 
     const { itemId } = validationResult.data;
 
-    // Find the item and ensure it belongs to the authenticated user
+    // Find the item (workspace access is validated by middleware)
     const existingItem = await Item.findOne({
       _id: itemId,
-      userId: req.user.userId,
       isDeleted: false,
     });
 
@@ -1141,10 +1134,9 @@ const getItemAnalytics = async (req: AuthRequest, res: Response) => {
 
     const { itemId } = validationResult.data;
 
-    // Find the item and ensure it belongs to the authenticated user
+    // Find the item (workspace access is validated by middleware)
     const item = await Item.findOne({
       _id: itemId,
-      userId: req.user.userId,
       isDeleted: false,
     }).lean();
 

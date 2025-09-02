@@ -78,4 +78,6 @@ export interface AuthRequest extends Request {
     isActive: boolean;
     // Add other user properties if needed
   };
+  userRole?: 'view' | 'edit' | 'admin';
+  isOwner?: boolean;
 }

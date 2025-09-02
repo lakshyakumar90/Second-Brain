@@ -1,33 +1,49 @@
 import { useCallback } from 'react';
+import { toast as sonnerToast } from 'sonner';
 
 interface ToastOptions {
   title: string;
   description?: string;
   variant?: 'default' | 'destructive' | 'success';
   duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export const useToast = () => {
   const toast = useCallback((options: ToastOptions) => {
-    // Simple console log for now - can be enhanced with a proper toast library later
-    const { title, description, variant = 'default' } = options;
+    const { title, description, variant = 'default', duration, action } = options;
     
-    const message = description ? `${title}: ${description}` : title;
+    const toastOptions = {
+      duration: duration || 4000,
+      action: action ? {
+        label: action.label,
+        onClick: action.onClick,
+      } : undefined,
+    };
     
     switch (variant) {
       case 'destructive':
-        console.error('Toast Error:', message);
+        sonnerToast.error(title, {
+          description,
+          ...toastOptions,
+        });
         break;
       case 'success':
-        console.log('Toast Success:', message);
+        sonnerToast.success(title, {
+          description,
+          ...toastOptions,
+        });
         break;
       default:
-        console.log('Toast:', message);
+        sonnerToast(title, {
+          description,
+          ...toastOptions,
+        });
         break;
     }
-    
-    // TODO: Implement proper toast UI component
-    // For now, we'll just use console.log as a fallback
   }, []);
 
   return { toast };

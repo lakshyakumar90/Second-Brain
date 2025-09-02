@@ -19,7 +19,7 @@ const PagesPanel: React.FC<PagesPanelProps> = ({
   isLoading,
 }) => {
   const navigate = useNavigate();
-  const { currentWorkspace } = useWorkspace();
+
   const [searchQuery, setSearchQuery] = useState("");
 
   if (!isOpen) return null;

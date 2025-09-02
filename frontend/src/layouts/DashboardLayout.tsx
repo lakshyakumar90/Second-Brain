@@ -4,6 +4,7 @@ import Sidebar from "@/components/dashboard/sidebar/Sidebar";
 import { motion } from "motion/react"; // Corrected import (assuming Framer Motion)
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import SearchModal from "@/components/search/SearchModal";
+import { Toaster } from "@/components/ui/sonner";
 import type { UIItem } from "@/types/items";
 
 interface DashboardLayoutProps {
@@ -114,6 +115,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           setIsSearchModalOpen(false);
         }}
       />
+      
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 };

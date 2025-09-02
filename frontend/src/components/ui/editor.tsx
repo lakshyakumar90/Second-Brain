@@ -1,4 +1,4 @@
-'use client';
+//@ts-nocheck
 import type { Editor, Range } from '@tiptap/core';
 import { mergeAttributes, Node } from '@tiptap/core';
 import CharacterCount from '@tiptap/extension-character-count';

@@ -36,6 +36,10 @@
     "socket.io": "^4.8.1",
     "textract": "^2.5.0",
     "typescript": "^5.8.3",
+    "ws": "^8.18.3",
+    "y-leveldb": "^0.2.0",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.27",
     "zod": "^4.0.2"
   },
   "devDependencies": {

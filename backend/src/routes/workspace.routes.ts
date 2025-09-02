@@ -13,10 +13,10 @@ router.get("/:workspaceId", getWorkspace);
 router.put("/:workspaceId", updateWorkspace);
 router.delete("/:workspaceId", deleteWorkspace);
 router.post("/:workspaceId/invite", inviteMember);
-router.delete("/:workspaceId/member/:memberId", removeMember);
+router.delete("/:workspaceId/member/:userId", removeMember);
 router.post("/:workspaceId/accept", acceptInvite);
 router.post("/:workspaceId/reject", rejectInvite);
-router.put("/:workspaceId/member/:memberId/role", updateMemberRole);
+router.put("/:workspaceId/member/:userId/role", updateMemberRole);
 router.get("/:workspaceId/members", getWorkspaceMembers);
 router.post("/:workspaceId/leave", leaveWorkspace);
 

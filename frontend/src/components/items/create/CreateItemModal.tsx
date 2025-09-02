@@ -40,7 +40,7 @@ const typeOptions: { label: string; value: ItemType }[] = [
 const CreateItemModal: React.FC<CreateItemModalProps> = ({ open, onClose, onCreate }) => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const { currentWorkspace } = useWorkspace();
+
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { type: "text", title: "", tags: [] }
@@ -52,8 +52,7 @@ const CreateItemModal: React.FC<CreateItemModalProps> = ({ open, onClose, onCrea
     setSubmitting(true);
     onCreate({ 
       ...data, 
-      tags: selectedTags,
-      workspace: currentWorkspace?._id 
+      tags: selectedTags
     });
     setSubmitting(false);
     onClose();

@@ -715,6 +715,7 @@ const getWorkspaceMembers = async (req: AuthRequest, res: Response): Promise<voi
     }
 
     res.status(200).json({
+      message: "Workspace members retrieved successfully",
       members: workspace.members,
       pendingInvites: workspace.pendingInvites
     });

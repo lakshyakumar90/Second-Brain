@@ -2,6 +2,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronsLeft, SquarePen, Edit3 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import NotificationButton from "@/components/notifications/NotificationButton";
+import UserRoleDisplay from "@/components/workspace/UserRoleDisplay";
 
 interface SidebarHeaderProps {
   onToggleSidebar?: () => void;
@@ -48,8 +50,10 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggleSidebar, sidebarS
         )}
       </div>
       
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <div 
+            <div className="flex items-center gap-1 flex-shrink-0">
+        <UserRoleDisplay />
+        <NotificationButton />
+        <div
           className="p-1 hover:bg-secondary rounded-sm cursor-pointer transition-colors"
           onClick={onToggleSidebar}
         >
