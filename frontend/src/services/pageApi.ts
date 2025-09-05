@@ -81,6 +81,16 @@ class PageApiService {
 		return this.request(`/pages/all${qs ? `?${qs}` : ''}`);
 	}
 
+	async getRecentPages(params: { limit?: number; workspace: string; sortBy?: string; sortOrder?: string }): Promise<any> {
+		const q = new URLSearchParams();
+		if (params.limit) q.set('limit', String(params.limit));
+		if (params.sortBy) q.set('sortBy', params.sortBy);
+		if (params.sortOrder) q.set('sortOrder', params.sortOrder);
+		q.set('workspace', params.workspace);
+		const qs = q.toString();
+		return this.request(`/pages/all${qs ? `?${qs}` : ''}`);
+	}
+
 	async getPage(pageId: string, workspace: string): Promise<any> {
 		const q = new URLSearchParams();
 		q.set('workspace', workspace);

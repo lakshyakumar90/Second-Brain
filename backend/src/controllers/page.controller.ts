@@ -67,12 +67,34 @@ export const getPages = async (req: AuthRequest, res: Response) => {
 		const page = Number(req.query.page || 1);
 		const limit = Number(req.query.limit || 20);
 		const skip = (page - 1) * limit;
+		
+		// Handle sorting
+		const sortBy = req.query.sortBy as string || 'updatedAt';
+		const sortOrder = req.query.sortOrder as string || 'desc';
+		const sortDirection = sortOrder === 'asc' ? 1 : -1;
+		
+		// Build sort object
+		const sortObj: any = {};
+		if (sortBy === 'lastViewedAt') {
+			sortObj.lastViewedAt = sortDirection;
+		} else if (sortBy === 'createdAt') {
+			sortObj.createdAt = sortDirection;
+		} else if (sortBy === 'updatedAt') {
+			sortObj.updatedAt = sortDirection;
+		} else if (sortBy === 'title') {
+			sortObj.title = sortDirection;
+		} else if (sortBy === 'viewCount') {
+			sortObj.viewCount = sortDirection;
+		} else {
+			sortObj.updatedAt = sortDirection; // default
+		}
+		
 		// Find all pages in the workspace (not just user's own pages)
 		const [pages, total] = await Promise.all([
 			Page.find({ workspace: workspaceId, isDeleted: false })
 				.populate('userId', 'name username email avatar')
 				.populate('lastEditedBy', 'name username email avatar')
-				.sort({ updatedAt: -1 })
+				.sort(sortObj)
 				.skip(skip)
 				.limit(limit)
 				.lean(),

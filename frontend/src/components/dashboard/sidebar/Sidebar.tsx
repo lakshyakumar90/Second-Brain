@@ -1,24 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   Search,
   Home,
-  Inbox,
   Plus,
   ChevronDown,
   ChevronRight,
   Settings,
-  FileStack,
   Trash2,
-  UserPlus,
   FileText,
   Star,
   Clock,
-  CircleQuestionMark,
   BarChart3,
   Edit,
   MoreVertical,
+  Share2,
 } from "lucide-react";
 import SidebarHeader from "./SidebarHeader";
 import { cn } from "@/lib/utils";
@@ -39,6 +37,17 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface SidebarProps {
   onToggleSidebar?: () => void;
@@ -54,6 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCloseSidebar,
 }) => {
   const { currentWorkspace } = useWorkspace();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -66,6 +76,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [isPagesPanelOpen, setIsPagesPanelOpen] = useState(false);
+  
+  // Delete confirmation states
+  const [deleteCategoryDialog, setDeleteCategoryDialog] = useState<{ isOpen: boolean; category: Category | null }>({ isOpen: false, category: null });
+  const [deleteTagDialog, setDeleteTagDialog] = useState<{ isOpen: boolean; tag: TagType | null }>({ isOpen: false, tag: null });
+  const [deletePageDialog, setDeletePageDialog] = useState<{ isOpen: boolean; page: any | null }>({ isOpen: false, page: null });
 
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
@@ -294,8 +309,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
-    
     try {
       await categoryApi.deleteCategory(categoryId);
       // reload categories
@@ -306,8 +319,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         sortOrder: "asc",
       });
       setCategories((res?.data?.categories || []) as Category[]);
+      toast({
+        title: "Success",
+        description: "Category deleted successfully",
+        variant: "success",
+      });
     } catch (e) {
       console.error('Failed to delete category:', e);
+      toast({
+        title: "Error",
+        description: "Failed to delete category",
+        variant: "destructive",
+      });
     }
   };
 
@@ -349,8 +372,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleDeleteTag = async (tagId: string) => {
-    if (!confirm('Are you sure you want to delete this tag?')) return;
-    
     try {
       await tagApi.deleteTag(tagId);
       // reload tags
@@ -361,15 +382,25 @@ const Sidebar: React.FC<SidebarProps> = ({
         sortOrder: "desc",
       });
       setTags((res?.data?.tags || []) as TagType[]);
+      toast({
+        title: "Success",
+        description: "Tag deleted successfully",
+        variant: "success",
+      });
     } catch (e) {
       console.error('Failed to delete tag:', e);
+      toast({
+        title: "Error",
+        description: "Failed to delete tag",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <div
       className={cn(
-        "h-full flex flex-col bg-background border-r transition-all duration-200",
+        "h-full flex flex-col bg-background border-r transition-all duration-200 relative z-[9998]",
         isCollapsed ? "w-0 overflow-hidden" : "w-64"
       )}
     >
@@ -383,7 +414,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Main Content */}
       <div className="flex-1 min-h-0 overflow-y-auto py-2">
-        {/* Section 1: Search, Home, Inbox */}
+        {/* Section 1: Search, Home */}
         <div className="px-2 space-y-1 mb-4">
           <MenuItem icon={Search} label="Search" onClick={handleSearchOpen} />
           <MenuItem
@@ -392,7 +423,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             isActive={location.pathname === "/home"}
             onClick={() => navigate("/home")}
           />
-          <MenuItem icon={Inbox} label="Inbox" count={3} />
         </div>
 
         {/* Section 2: Workspaces/Teamspaces */}
@@ -432,13 +462,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={Star}
                 label="Favorites"
                 onClick={() => navigate("/items?isFavorite=true")}
-              />
-              <MenuItem
-                icon={Clock}
-                label="Recent"
-                onClick={() =>
-                  navigate("/items?sortBy=lastViewedAt&sortOrder=desc")
-                }
               />
             </div>
           )}
@@ -494,13 +517,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
+                            className="h-5 w-5 p-0 opacity-60 hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Dropdown opened successfully
+                            }}
                           >
                             <MoreVertical className="h-3 w-3" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="z-[9999]" side="right" sideOffset={5} forceMount>
                           <DropdownMenuItem onClick={(e) => {
                             e.stopPropagation();
                             openCategoryEdit(category);
@@ -508,10 +534,21 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <Edit className="h-3 w-3 mr-2" />
                             Edit
                           </DropdownMenuItem>
+                                                                                <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            toast({
+                              title: "Share Category",
+                              description: `Sharing "${category.name}" - Feature coming soon!`,
+                              variant: "default",
+                            });
+                          }}>
+                            <Share2 className="h-3 w-3 mr-2" />
+                            Share
+                          </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteCategory(category._id);
+                              setDeleteCategoryDialog({ isOpen: true, category });
                             }}
                             className="text-destructive"
                           >
@@ -585,13 +622,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-5 w-5 p-0 opacity-60 hover:opacity-100 transition-opacity"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreVertical className="h-3 w-3" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="z-[9999]">
                           <DropdownMenuItem onClick={(e) => {
                             e.stopPropagation();
                             openTagEdit(tag);
@@ -599,10 +636,21 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <Edit className="h-3 w-3 mr-2" />
                             Edit
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            toast({
+                              title: "Share Tag",
+                              description: `Sharing "${tag.name}" - Feature coming soon!`,
+                              variant: "default",
+                            });
+                          }}>
+                            <Share2 className="h-3 w-3 mr-2" />
+                            Share
+                          </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteTag(tag._id);
+                              setDeleteTagDialog({ isOpen: true, tag });
                             }}
                             className="text-destructive"
                           >
@@ -652,6 +700,41 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <span className="flex-1 truncate">
                         {page.title || 'Untitled'}
                       </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-5 w-5 p-0 opacity-60 hover:opacity-100 transition-opacity"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="z-[9999]">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            toast({
+                              title: "Share Page",
+                              description: `Sharing "${page.title || 'Untitled'}" - Feature coming soon!`,
+                              variant: "default",
+                            });
+                          }}>
+                            <Share2 className="h-3 w-3 mr-2" />
+                            Share
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletePageDialog({ isOpen: true, page });
+                            }}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   ))}
                 {!isLoadingPages && pages.length === 0 && (
@@ -672,7 +755,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* Section 7: Settings, Templates, Trash */}
+        {/* Section 7: Settings */}
         <div className="px-2 mb-4">
           <MenuItem
             icon={BarChart3}
@@ -681,22 +764,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => navigate("/analytics")}
           />
           <MenuItem icon={Settings} label="Settings" />
-          <MenuItem icon={FileStack} label="Templates" />
-          <MenuItem icon={Trash2} label="Trash" />
         </div>
       </div>
 
-      {/* Footer - User section when expanded */}
-      {showLabels && (
-        <div className="border-t pb-2">
-          <div className="px-2 pt-4">
-            <MenuItem icon={UserPlus} label="Invite members" />
-          </div>
-          <div className="px-2">
-            <MenuItem icon={CircleQuestionMark} label="Help" />
-          </div>
-        </div>
-      )}
+      {/* Footer intentionally left empty (Invite members & Help removed) */}
 
       {/* Search Modal */}
       <SearchModal
@@ -728,6 +799,88 @@ const Sidebar: React.FC<SidebarProps> = ({
         pages={pages}
         isLoading={isLoadingPages}
       />
+
+      {/* Delete Category Confirmation Dialog */}
+      <AlertDialog open={deleteCategoryDialog.isOpen} onOpenChange={(open) => setDeleteCategoryDialog(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteCategoryDialog.category?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteCategoryDialog.category) {
+                  handleDeleteCategory(deleteCategoryDialog.category._id);
+                  setDeleteCategoryDialog({ isOpen: false, category: null });
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Tag Confirmation Dialog */}
+      <AlertDialog open={deleteTagDialog.isOpen} onOpenChange={(open) => setDeleteTagDialog(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Tag</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete "{deleteTagDialog.tag?.name}"? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              if (deleteTagDialog.tag) {
+                handleDeleteTag(deleteTagDialog.tag._id);
+                setDeleteTagDialog({ isOpen: false, tag: null });
+              }
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Delete Page Confirmation Dialog */}
+    <AlertDialog open={deletePageDialog.isOpen} onOpenChange={(open) => setDeletePageDialog(prev => ({ ...prev, isOpen: open }))}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Page</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete "{deletePageDialog.page?.title || 'Untitled'}"? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              if (deletePageDialog.page) {
+                toast({
+                  title: "Delete Page",
+                  description: `Delete "${deletePageDialog.page.title || 'Untitled'}" - Feature coming soon!`,
+                  variant: "destructive",
+                });
+                setDeletePageDialog({ isOpen: false, page: null });
+              }
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </div>
   );
 };
